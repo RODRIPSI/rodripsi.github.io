@@ -1,0 +1,615 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bloco Mágico</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#ECEEEA">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,500;1,7..72,400&display=swap" rel="stylesheet">
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#ECEEEA;--surface:#FFFFFF;--ink:#1D2330;--muted:#5C636E;--rule:#D3D7D0;--soft:#E2E6DF;--focus:#2F6FC0;
+--sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--serif:"Literata",Georgia,"Times New Roman",serif}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#15181E;--surface:#1F232B;--ink:#E6E8EB;--muted:#9BA2AC;--rule:#343A45;--soft:#2A2F38;--focus:#76A8EA}}
+:root[data-theme="dark"]{--bg:#15181E;--surface:#1F232B;--ink:#E6E8EB;--muted:#9BA2AC;--rule:#343A45;--soft:#2A2F38;--focus:#76A8EA}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.5;-webkit-text-size-adjust:100%}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.app{min-height:100%}
+.side{display:none}
+.topbar{display:flex;align-items:center;gap:10px;padding:14px 16px 4px;max-width:720px;margin:0 auto}
+.brand{font-family:var(--serif);font-size:19px;font-weight:500;letter-spacing:.01em}
+.mark{width:30px;height:30px;flex:none;display:inline-block}.mark svg{width:100%;height:100%;display:block}.topbar{--kbg:var(--bg)}.side{--kbg:var(--surface)}
+main{max-width:720px;margin:0 auto;padding:12px 16px 110px}
+.tabs{position:fixed;left:0;right:0;bottom:0;display:flex;background:var(--surface);border-top:1px solid var(--rule);padding-bottom:env(safe-area-inset-bottom,0px);z-index:10}
+.tabs button{flex:1;border:0;background:none;padding:12px 4px 14px;font-size:13px;color:var(--muted);position:relative}
+.tabs button[aria-current="true"]{color:var(--ink);font-weight:600}
+.tabs button[aria-current="true"]::before{content:"";position:absolute;top:0;left:25%;right:25%;height:2px;background:var(--ink)}
+.badge-n{display:inline-block;min-width:18px;padding:0 5px;margin-left:4px;border-radius:9px;background:var(--ink);color:var(--surface);font-size:11px;line-height:18px;font-weight:600}
+h1{font-family:var(--serif);font-weight:500;font-size:28px;line-height:1.2;margin:8px 0 18px}
+.label{display:block;font-size:14px;font-weight:500;color:var(--muted);margin:22px 0 8px}
+textarea,input[type=text],select{width:100%;background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:12px 14px}
+textarea{font-family:var(--serif);font-size:18px;line-height:1.6;resize:vertical;min-height:150px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--rule);background:var(--surface);border-radius:999px;padding:7px 13px;font-size:14px}
+.chip .dot{width:9px;height:9px;border-radius:50%;flex:none}
+.chip[aria-pressed="true"]{border-color:var(--ink);background:var(--ink);color:var(--surface)}
+.chip.sug{border-style:dashed;border-color:var(--ink)}
+.chip.add{border-style:dashed;color:var(--muted)}
+.inline{display:flex;gap:8px;margin-top:10px}
+.inline input{flex:1}
+.primary{display:block;width:100%;margin-top:26px;border:0;border-radius:10px;background:var(--ink);color:var(--surface);padding:14px;font-weight:600;font-size:16px}
+.secondary{border:1px solid var(--rule);background:var(--surface);border-radius:10px;padding:9px 14px;font-size:14px}
+.hint{font-size:14px;color:var(--muted);margin:10px 0 0}
+.err{font-size:14px;color:#B3261E;margin:8px 0 0}
+.clist{list-style:none;margin:0;padding:0;border-top:1px solid var(--rule)}
+.clist button{display:flex;align-items:center;gap:14px;width:100%;text-align:left;border:0;border-bottom:1px solid var(--rule);background:none;padding:16px 4px}
+.cbar{width:5px;align-self:stretch;border-radius:3px;flex:none}
+.cname{font-family:var(--serif);font-size:20px;display:block}
+.cmeta{font-size:14px;color:var(--muted)}
+.idea{position:relative;background:var(--surface);border-radius:10px;padding:14px 16px 14px 22px;margin:0 0 12px;overflow:hidden}
+.stripe{position:absolute;left:0;top:0;bottom:0;width:6px;display:flex;flex-direction:column}
+.stripe span{flex:1}
+.idea .when{font-size:13px;color:var(--muted);margin:0 0 6px}
+.idea .txt{font-family:var(--serif);font-size:17px;line-height:1.6;margin:0}
+.idea .moment{font-family:var(--serif);font-style:italic;color:var(--muted);font-size:15px;margin:8px 0 0}
+.idea .ref{font-size:13px;color:var(--muted);margin:4px 0 0}
+.tags{display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:10px;font-size:13px;color:var(--muted)}
+.tags span{display:inline-flex;align-items:center;gap:5px}
+.tags i{width:7px;height:7px;border-radius:50%;display:inline-block}
+.back{border:0;background:none;color:var(--muted);padding:6px 0;font-size:15px}
+.chead{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;border-left:6px solid;padding-left:14px;margin:10px 0 22px}
+.chead h1{margin:0}
+details.block{margin:0 0 18px}
+details.block>summary{list-style:none;cursor:pointer;display:flex;align-items:baseline;gap:10px;padding:10px 0;border-bottom:1px solid var(--rule);margin-bottom:12px;font-weight:600}
+details.block>summary::-webkit-details-marker{display:none}
+details.block>summary::before{content:"";width:8px;height:8px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(-45deg);transition:transform .15s;align-self:center;margin-right:4px}
+details.block[open]>summary::before{transform:rotate(45deg)}
+.count{font-weight:400;color:var(--muted)}
+.doc{background:var(--surface);border-radius:10px;padding:14px 16px;margin:0 0 12px}
+.doc .fname{font-family:var(--serif);font-size:17px;margin:0 0 8px}
+.state{display:inline-block;font-size:13px;border:1px solid var(--rule);border-radius:6px;padding:2px 8px}
+.doc dl{margin:10px 0 0;font-size:14px;display:grid;grid-template-columns:auto 1fr;gap:4px 12px}
+.doc dt{color:var(--muted)}
+.doc dd{margin:0}
+.doc .row{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.day{font-size:14px;font-weight:600;color:var(--muted);margin:22px 0 10px;text-transform:none}
+.day:first-of-type{margin-top:0}
+.empty{background:var(--surface);border-radius:10px;padding:22px;color:var(--muted);text-align:center}
+.foot{margin-top:28px}
+.link{border:0;background:none;color:var(--muted);text-decoration:underline;padding:0;font-size:14px}
+.toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);background:var(--ink);color:var(--surface);padding:11px 18px;border-radius:10px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:20;max-width:calc(100% - 32px)}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.proto{font-size:12px;color:var(--muted);border:1px dashed var(--rule);border-radius:8px;padding:8px 10px;margin-top:22px}
+@media (min-width:768px){
+ .app{display:grid;grid-template-columns:260px 1fr}
+ .topbar,.tabs{display:none}
+ .side{display:flex;flex-direction:column;position:sticky;top:env(safe-area-inset-top,0px);height:100vh;max-height:100%;overflow-y:auto;border-right:1px solid var(--rule);padding:24px 18px;background:var(--surface)}
+ .side .topb{display:flex;align-items:center;gap:10px;margin-bottom:26px}
+ .side nav button{display:flex;justify-content:space-between;align-items:center;width:100%;text-align:left;border:0;background:none;border-radius:8px;padding:9px 10px;font-size:15px}
+ .side nav button[aria-current="true"]{background:var(--soft);font-weight:600}
+ .side .sub{font-size:13px;font-weight:500;color:var(--muted);margin:22px 10px 6px}
+ .side .cl button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:0;background:none;border-radius:8px;padding:7px 10px;font-size:15px}
+ .side .cl button[aria-current="true"]{background:var(--soft)}
+ main{padding:36px 44px 48px;max-width:760px;margin:0}
+ .toast{bottom:28px}
+}
+.excerpt{font-family:var(--serif);font-size:15px;line-height:1.6;color:var(--muted);margin:0}
+.rename{background:var(--surface);border-radius:10px;padding:12px 16px;margin-top:22px}
+.rename .old{margin:0;font-size:14px;color:var(--muted);text-decoration:line-through}
+.rename .new{margin:4px 0 0;font-family:var(--serif);font-size:17px}
+.progress{height:4px;background:var(--rule);border-radius:2px;margin:0 0 18px;overflow:hidden}
+.progress span{display:block;height:100%;background:var(--ink)}
+.seg{display:flex;border:1px solid var(--rule);border-radius:10px;overflow:hidden;margin-bottom:14px}
+.seg button{flex:1;border:0;background:var(--surface);padding:10px;font-size:14px;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--surface);font-weight:600}
+.res{display:block;width:100%;text-align:left;border:1px solid var(--rule);background:var(--bg);border-radius:10px;padding:12px 14px;margin-top:10px}
+.res .fname{font-size:16px;margin:0 0 4px}
+.res .excerpt{font-size:14px}
+mark{background:#F2D98A;color:#1D2330;border-radius:3px;padding:0 2px}
+.panel{background:var(--surface);border-radius:10px;padding:16px;margin:0 0 12px;border:1px solid var(--rule)}
+.panel .rename{background:var(--bg)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+.syncbtn{border:1px solid var(--rule);background:var(--surface);border-radius:999px;padding:5px 12px;font-size:13px;color:var(--muted);margin-left:auto;max-width:62%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.side .syncbtn{margin:0 0 18px;max-width:100%;text-align:left}
+.warn{background:#FBE9E7;color:#8A1F17;border-radius:8px;padding:8px 10px;font-size:14px;margin:0 0 10px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .warn{background:#3A2220;color:#F2B8B0}}
+:root[data-theme="dark"] .warn{background:#3A2220;color:#F2B8B0}
+.idea .acts{margin-top:8px}
+.row{display:flex;gap:8px 16px;flex-wrap:wrap;align-items:center;margin-top:12px}
+.incrow{display:flex;align-items:center;gap:10px;margin-top:8px;flex-wrap:wrap}
+input.cites{width:90px;padding:6px 8px;border:1px solid var(--rule);border-radius:8px;background:var(--surface)}
+textarea.small{min-height:110px;font-size:16px}
+.primary[disabled]{opacity:.6}
+a{color:inherit}
+</style>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js" defer></script>
+</head>
+<body>
+<div class="app">
+ <aside class="side" id="side"></aside>
+ <div>
+  <div class="topbar"><span class="mark" data-knot></span><span class="brand">Bloco Mágico</span><button class="syncbtn" data-a="sync"></button></div>
+  <main id="main"></main>
+ </div>
+</div>
+<nav class="tabs" id="tabs" aria-label="Seções"></nav>
+<div class="toast" id="toast" role="status"></div>
+<script>
+const KNOT='<svg viewBox="140 36 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="190" cy="70" r="26" fill="none" stroke="#C8372D" stroke-width="7"/><circle cx="174" cy="98" r="26" fill="none" stroke="#2F6FC0" stroke-width="7"/><circle cx="206" cy="98" r="26" fill="none" stroke="#2E9A57" stroke-width="7"/>'+
+[["M206.3 90.2 A26 26 0 0 1 192.2 95.9","#C8372D"],["M166.6 81.2 A26 26 0 0 1 164.3 66.2","#C8372D"],["M183.3 73.7 A26 26 0 0 1 195.3 83.1","#2F6FC0"],["M195.3 112.9 A26 26 0 0 1 183.3 122.3","#2F6FC0"],["M180.3 101.8 A26 26 0 0 1 182.5 86.8","#2E9A57"],["M208.2 72.1 A26 26 0 0 1 222.3 77.8","#2E9A57"]]
+.map(([d,c])=>`<path d="${d}" fill="none" stroke="var(--kbg)" stroke-width="13"/><path d="${d}" fill="none" stroke="${c}" stroke-width="7"/>`).join('')+'</svg>';
+
+const CLIENT_ID="631476153010-sm6d1udia8cn34mn3t7p4gnaaghcr9qh.apps.googleusercontent.com";
+const SCOPE="https://www.googleapis.com/auth/drive";
+const FOLDER_NAME="Bloco Mágico",DATA_NAME="bloco-magico-dados.json",KEY="bloco-magico-v1";
+const DOCX="application/vnd.openxmlformats-officedocument.wordprocessingml.document",GDOC="application/vnd.google-apps.document";
+const DOCQ=`(mimeType='${DOCX}' or mimeType='application/msword' or mimeType='${GDOC}')`;
+const PALETTE=["#2A8C82","#7A4E8C","#4A6FA5","#B8862B","#A4563A","#5E7F3A","#9A4668","#3F7F99","#8C6A3F","#5B5FA8","#A13D3D","#3E8A63"];
+const STATES={sem:"Sem fundamentação",parcial:"Parcialmente fundamentado",fund:"Fundamentado",concl:"Concluído"};
+const TYPES={prim:"Fontes primárias",com:"Comentadores contemporâneos"};
+const SEED=["Sujeito","Outro","Constituição do sujeito","Transferência","Repetição","Sujeito suposto saber","Posição do analista","Desejo do analista","Manejo","Demanda","Desejo","Sugestão","Pulsão","Afeto","Juízo","Disposição","Desamparo","Eu","Id","Supereu","Complexo de Édipo","Aparelho psíquico","Real","Simbólico","Imaginário","Fantasia","Saber","Interpretação","Interpretação da cena","Sintoma","Histeria","Psicose","Ética"];
+
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const uid=p=>p+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const nowIso=()=>new Date().toISOString();
+const isoDay=t=>t.getFullYear()+"-"+String(t.getMonth()+1).padStart(2,"0")+"-"+String(t.getDate()).padStart(2,"0");
+const todayIso=()=>isoDay(new Date());
+const slug=s=>s.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,"-");
+const fold=t=>String(t).split("").map(c=>c.normalize("NFD")[0]||"").join("").toLowerCase();
+const fmtTime=d=>new Date(d).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
+const cap=s=>s?s[0].toUpperCase()+s.slice(1):s;
+const fmtDay=ts=>cap(new Date(ts).toLocaleDateString("pt-BR",{weekday:"long",day:"numeric",month:"long"}));
+const fmtShort=ts=>new Date(ts).toLocaleDateString("pt-BR",{day:"numeric",month:"short"})+", "+fmtTime(ts);
+const fmtFull=ts=>new Date(ts).toLocaleDateString("pt-BR",{day:"numeric",month:"long",year:"numeric"})+", "+fmtTime(ts);
+const brDate=iso=>iso?iso.slice(0,10).split("-").reverse().join("/"):"";
+
+/* ---------- dados ---------- */
+function seed(){return{version:1,concepts:SEED.map((n,i)=>({id:"seed-"+slug(n),name:n,color:PALETTE[i%PALETTE.length],updatedAt:"2026-01-01T00:00:00.000Z"})),refs:[],ideas:[],docs:[],meta:{}}}
+function loadLocal(){try{const s=localStorage.getItem(KEY);if(s){const d=JSON.parse(s);for(const k of["concepts","refs","ideas","docs"])d[k]=d[k]||[];d.meta=d.meta||{};return d}}catch(e){}return seed()}
+let db=loadLocal();
+function saveLocal(){try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){toast("Não foi possível salvar no aparelho.")}}
+const L=k=>db[k].filter(x=>!x.deleted);
+const C=id=>db.concepts.find(c=>c.id===id&&!c.deleted);
+const R=id=>db.refs.find(r=>r.id===id&&!r.deleted);
+const touch=o=>{o.updatedAt=nowIso();return o};
+const usage=id=>L("ideas").filter(i=>i.concepts.includes(id)).length;
+const sortedConcepts=()=>L("concepts").sort((a,b)=>usage(b.id)-usage(a.id)||a.name.localeCompare(b.name,"pt"));
+const pending=()=>L("ideas").filter(i=>!i.concepts.some(id=>C(id)));
+const docsOf=id=>L("docs").filter(d=>d.concepts.includes(id));
+function changed(){saveLocal();setDirty(true);scheduleSync()}
+function merge(a,b){
+ const out={version:1,meta:{...(b.meta||{}),...(a.meta||{})}};
+ if(((b.meta||{}).lastBackup||"")>((a.meta||{}).lastBackup||""))out.meta.lastBackup=b.meta.lastBackup;
+ for(const k of["concepts","refs","ideas","docs"]){const m=new Map();for(const x of(b[k]||[]))m.set(x.id,x);
+  for(const x of(a[k]||[])){const y=m.get(x.id);if(!y||(x.updatedAt||"")>=(y.updatedAt||""))m.set(x.id,x)}out[k]=[...m.values()]}
+ return out}
+function makeConcept(name){name=name.trim();if(!name){toast("Digite o nome do conceito.");return null}
+ const ex=L("concepts").find(c=>fold(c.name)===fold(name));if(ex){toast("Esse conceito já existe.");return null}
+ const c=touch({id:uid("c"),name,color:PALETTE[db.concepts.length%PALETTE.length]});db.concepts.push(c);changed();return c}
+
+/* ---------- Google ---------- */
+let token=null,tokenExp=0,tokenClient=null,tokenWait=null;
+const hasToken=()=>!!token&&Date.now()<tokenExp-60000;
+function gisReady(){return new Promise((res,rej)=>{if(window.google&&google.accounts&&google.accounts.oauth2)return res();let n=0;const t=setInterval(()=>{if(window.google&&google.accounts&&google.accounts.oauth2){clearInterval(t);res()}else if(++n>80){clearInterval(t);rej(new Error("Não foi possível carregar o login do Google."))}},100)})}
+async function getToken(interactive){
+ if(hasToken())return token;
+ if(!interactive)throw new Error("auth");
+ await gisReady();
+ if(!tokenClient)tokenClient=google.accounts.oauth2.initTokenClient({client_id:CLIENT_ID,scope:SCOPE,
+  callback:r=>{const w=tokenWait;tokenWait=null;if(!w)return;if(r.error)w.rej(new Error("auth"));else{token=r.access_token;tokenExp=Date.now()+(+r.expires_in||3600)*1000;try{localStorage.setItem("bm-connected","1")}catch(e){}w.res(token)}},
+  error_callback:e=>{const w=tokenWait;tokenWait=null;if(w)w.rej(new Error("auth"))}});
+ let first=true;try{first=!localStorage.getItem("bm-connected")}catch(e){}
+ return new Promise((res,rej)=>{tokenWait={res,rej};tokenClient.requestAccessToken({prompt:first?"consent":""})})}
+async function api(path,opts={}){
+ const t=await getToken(false);
+ const r=await fetch("https://www.googleapis.com/"+path,{...opts,headers:{Authorization:"Bearer "+t,...(opts.headers||{})}});
+ if(r.status===401){token=null;throw new Error("auth")}
+ if(!r.ok){let m="";try{m=(await r.json()).error.message}catch(e){}const er=new Error(m||("Erro "+r.status));er.status=r.status;throw er}
+ return r}
+const qs=o=>new URLSearchParams(o).toString();
+const qesc=s=>s.replace(/\\/g,"\\\\").replace(/'/g,"\\'");
+async function listFiles(q,fields="files(id,name,modifiedTime,mimeType,webViewLink,parents)",extra={}){
+ let out=[],pt="";do{const r=await(await api("drive/v3/files?"+qs({q,fields:"nextPageToken,"+fields,pageSize:"1000",...extra,...(pt?{pageToken:pt}:{})}))).json();out=out.concat(r.files||[]);pt=r.nextPageToken||""}while(pt&&out.length<5000);return out}
+const fids={};
+async function ensureFolder(name,parent){const f=await listFiles(`name='${qesc(name)}' and mimeType='application/vnd.google-apps.folder' and '${parent}' in parents and trashed=false`,"files(id)");if(f.length)return f[0].id;
+ return(await(await api("drive/v3/files?fields=id",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name,mimeType:"application/vnd.google-apps.folder",parents:[parent]})})).json()).id}
+async function appFolder(){if(!fids.app)fids.app=await ensureFolder(FOLDER_NAME,"root");return fids.app}
+async function subFolder(n){if(!fids[n])fids[n]=await ensureFolder(n,await appFolder());return fids[n]}
+async function upload(meta,blob,id){const b="bm"+Date.now();
+ const body=new Blob([`--${b}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(meta)}\r\n--${b}\r\nContent-Type: ${blob.type||"application/octet-stream"}\r\n\r\n`,blob,`\r\n--${b}--`]);
+ return(await api("upload/drive/v3/files"+(id?"/"+id:"")+"?uploadType=multipart&fields=id,name,webViewLink",{method:id?"PATCH":"POST",headers:{"Content-Type":"multipart/related; boundary="+b},body})).json()}
+async function renameFile(id,name){return(await api(`drive/v3/files/${id}?fields=id,name,webViewLink`,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({name})})).json()}
+async function fileText(f){
+ if(f.mimeType===GDOC)return(await api(`drive/v3/files/${f.id}/export?mimeType=text/plain`)).text();
+ if(f.mimeType===DOCX||/\.docx$/i.test(f.name)){if(!window.mammoth)return "";const ab=await(await api(`drive/v3/files/${f.id}?alt=media`)).arrayBuffer();return(await mammoth.extractRawText({arrayBuffer:ab})).value||""}
+ return ""}
+const fnames={root:"Meu Drive"};
+async function folderNames(files){const ids=[...new Set(files.flatMap(f=>f.parents||[]))].filter(id=>!(id in fnames));
+ await Promise.all(ids.map(async id=>{try{fnames[id]=(await(await api(`drive/v3/files/${id}?fields=name`)).json()).name}catch(e){fnames[id]=""}}))}
+const extOf=f=>f.mimeType===GDOC?"":((f.name.match(/\.(docx|doc)$/i)||[".docx"])[0].toLowerCase());
+const nameFor=(cid,title,date,ext)=>`${C(cid)?C(cid).name:""} — ${title.trim()} — ${date}${ext}`;
+const driveLink=d=>d.webViewLink||`https://drive.google.com/file/d/${d.fileId}/view`;
+
+/* ---------- Word ---------- */
+const CT=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>`;
+const RELS=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>`;
+async function buildDocx(paras){
+ if(!window.JSZip)throw new Error("Componente de Word ainda carregando. Tente de novo em instantes.");
+ const clean=t=>String(t).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g,"");
+ const P=p=>{const[sz,b,i,before,after]={title:[36,1,0,0,120],h:[28,1,0,360,160],b:[24,1,0,120,40],p:[24,0,0,0,80],meta:[20,0,1,0,60]}[p.s]||[24,0,0,0,80];
+  const txt=clean(p.t).split("\n").map(esc).join('</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman"/><w:sz w:val="'+sz+'"/></w:rPr><w:br/><w:t xml:space="preserve">');
+  return `<w:p><w:pPr><w:spacing w:before="${before}" w:after="${after}"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:cs="Times New Roman"/>${b?"<w:b/>":""}${i?"<w:i/>":""}<w:sz w:val="${sz}"/></w:rPr><w:t xml:space="preserve">${txt}</w:t></w:r></w:p>`};
+ const z=new JSZip();z.file("[Content_Types].xml",CT);z.file("_rels/.rels",RELS);
+ z.file("word/document.xml",`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>${paras.map(P).join("")}<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1417" w:right="1417" w:bottom="1417" w:left="1701" w:header="708" w:footer="708" w:gutter="0"/></w:sectPr></w:body></w:document>`);
+ return z.generateAsync({type:"blob",mimeType:DOCX})}
+
+/* ---------- sincronização ---------- */
+let syncing=false,syncErr=false,syncTimer=null,lastSync=null,dirty=false;
+try{dirty=localStorage.getItem("bm-dirty")==="1"}catch(e){}
+function setDirty(v){dirty=v;try{localStorage.setItem("bm-dirty",v?"1":"0")}catch(e){}setSync()}
+function scheduleSync(){clearTimeout(syncTimer);syncTimer=setTimeout(()=>sync(false),2500)}
+function syncText(){
+ if(syncing)return "Sincronizando…";
+ if(!navigator.onLine)return "Sem internet, salvo no aparelho";
+ if(syncErr)return "Falha ao sincronizar. Toque para tentar";
+ if(!hasToken())return lastSync?"Toque para sincronizar":"Toque para conectar ao Drive";
+ if(dirty)return "Enviando alterações…";
+ return lastSync?`Sincronizado às ${fmtTime(lastSync)}`:"Conectado ao Drive"}
+function setSync(){document.querySelectorAll(".syncbtn").forEach(b=>b.textContent=syncText())}
+async function sync(interactive){
+ if(syncing)return;
+ if(!navigator.onLine){setSync();if(interactive)toast("Sem internet. Tudo continua salvo no aparelho.");return}
+ if(!interactive&&!hasToken()){setSync();return}
+ syncing=true;syncErr=false;setSync();
+ const before=JSON.stringify(db);
+ try{
+  await getToken(interactive);
+  const folder=await appFolder();
+  const found=await listFiles(`name='${DATA_NAME}' and '${folder}' in parents and trashed=false`,"files(id)");
+  const fileId=found[0]&&found[0].id;let remote=null;
+  if(fileId)remote=await(await api(`drive/v3/files/${fileId}?alt=media`)).json();
+  const merged=remote?merge(db,remote):JSON.parse(JSON.stringify(db));
+  const today=todayIso();
+  if(remote&&(!merged.meta.lastBackup||(new Date(today)-new Date(merged.meta.lastBackup))/864e5>=7)){
+   await upload({name:`backup-${today}.json`,parents:[folder]},new Blob([JSON.stringify(remote)],{type:"application/json"}));merged.meta.lastBackup=today}
+  const blob=new Blob([JSON.stringify(merged)],{type:"application/json"});
+  if(fileId)await upload({},blob,fileId);else await upload({name:DATA_NAME,parents:[folder]},blob);
+  const editedMeanwhile=JSON.stringify(db)!==before;
+  db=merge(db,merged);saveLocal();lastSync=new Date();
+  if(editedMeanwhile){dirty=true;scheduleSync()}else setDirty(false);
+  if(JSON.stringify(db)!==before)softRender();
+ }catch(e){
+  if(e.message!=="auth"){syncErr=true;if(interactive)toast("Não foi possível sincronizar. Tudo continua salvo no aparelho.")}
+  else if(interactive)toast("Login não concluído. Toque de novo para conectar.");
+ }finally{syncing=false;setSync();if(route.name==="batch"||link)softRender()}}
+
+/* ---------- estado da tela ---------- */
+const wide=()=>matchMedia("(min-width:768px)").matches;
+let route={name:wide()?"concepts":"capture"};
+let draft={text:"",moment:"",refId:"",concepts:new Set()};
+let psel={},err="",showNew=false,showNew2=false,showAll=false,showNewRef=false,showBulk=false;
+let editIdea=null,ieSel=[],editDoc=null,de=null,link=null,batch=null,searchTimer=null;
+const exportLinks={},checked=new Set();
+function go(r){route=r;err="";showNew=showNew2=showNewRef=showBulk=false;editIdea=null;editDoc=null;link=null;render();window.scrollTo(0,0);if(r.name==="concept")checkDocs(r.id)}
+function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("on");clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove("on"),3200)}
+
+/* ---------- componentes ---------- */
+const chip=(c,a,on,cls="",attrs="")=>`<button class="chip ${cls}" data-a="${a}" data-id="${c.id}" ${attrs} aria-pressed="${on}"><span class="dot" style="background:${c.color}"></span>${esc(c.name)}</button>`;
+function refSelect(id,val){return `<select id="${id}"><option value="">Ideia minha, sem leitura por trás</option>${Object.entries(TYPES).map(([k,t])=>{const l=L("refs").filter(r=>r.type===k).sort((a,b)=>a.label.localeCompare(b.label,"pt"));return l.length?`<optgroup label="${t}">${l.map(r=>`<option value="${r.id}" ${val===r.id?"selected":""}>${esc(r.label)}</option>`).join("")}</optgroup>`:""}).join("")}</select>`}
+function ideaCard(i,extra=""){
+ if(editIdea===i.id)return ideaEditor(i);
+ const cs=i.concepts.map(C).filter(Boolean);
+ const stripe=cs.length?cs.map(c=>`<span style="background:${c.color}"></span>`).join(""):`<span style="background:var(--rule)"></span>`;
+ const r=i.refId&&R(i.refId);
+ return `<article class="idea"><div class="stripe" aria-hidden="true">${stripe}</div>
+ <p class="when">${esc(fmtShort(i.ts))}</p><p class="txt">${esc(i.text).replace(/\n/g,"<br>")}</p>
+ ${i.moment?`<p class="moment">${esc(i.moment)}</p>`:""}
+ ${r?`<p class="ref">Procedência${r.type==="com"?" (comentador)":""}: ${esc(r.label)}</p>`:""}
+ ${cs.length?`<div class="tags">${cs.map(c=>`<span><i style="background:${c.color}"></i>${esc(c.name)}</span>`).join("")}</div>`:""}
+ ${extra||`<div class="acts"><button class="link" data-a="iedit" data-id="${i.id}">Editar</button></div>`}</article>`}
+function ideaEditor(i){return `<div class="panel"><label class="label" for="ie-t" style="margin-top:0">Ideia</label><textarea id="ie-t" class="small">${esc(i.text)}</textarea>
+ <label class="label" for="ie-m">Momento</label><input type="text" id="ie-m" value="${esc(i.moment)}">
+ <label class="label" for="ie-r">Procedência</label>${refSelect("ie-r",i.refId)}
+ <span class="label">Conceitos</span><div class="chips">${sortedConcepts().map(c=>chip(c,"ietog",ieSel.includes(c.id))).join("")}</div>
+ <button class="primary" data-a="iesave" data-id="${i.id}">Salvar alterações</button>
+ <div class="row"><button class="link" data-a="iecancel">Cancelar</button><button class="link" data-a="iedel" data-id="${i.id}">Excluir ideia</button></div></div>`}
+function incRows(inc){return Object.entries(TYPES).map(([k])=>{const l=inc.filter(x=>R(x.ref)&&R(x.ref).type===k);return l.length?`<dt>${k==="prim"?"Primárias":"Comentadores"}</dt><dd>${l.map(x=>esc(R(x.ref).label)+` (${x.cites})`).join("<br>")}</dd>`:""}).join("")}
+function citeLine(d){const inc=d.incorporated.filter(x=>R(x.ref));if(inc.length){const p=inc.filter(x=>R(x.ref).type==="prim").reduce((s,x)=>s+(+x.cites||0),0),c=inc.filter(x=>R(x.ref).type==="com").reduce((s,x)=>s+(+x.cites||0),0);return `${p+c} no total: ${p} de fontes primárias, ${c} de comentadores`}
+ return d.citesFound?`${d.citesFound} encontradas automaticamente, a conferir`:"nenhuma registrada"}
+function docCard(d){
+ if(editDoc===d.id)return docEditor(d);
+ const main=C(d.main),inPat=main&&d.name&&d.name.startsWith(main.name+" — ");
+ const others=d.concepts.filter(x=>x!==d.main).map(C).filter(Boolean);
+ const intended=d.intended.map(R).filter(Boolean);
+ return `<div class="doc">${d.missing?`<p class="warn">Arquivo não encontrado no Drive. Ele pode ter sido apagado ou movido para a lixeira.</p>`:""}
+ <p class="fname">${esc(d.name)}</p>${!inPat&&!d.missing?`<p class="hint" style="margin:-4px 0 8px">Fora do padrão de nome.</p>`:""}<span class="state">${STATES[d.state]}</span>
+ <dl>${others.length?`<dt>Também em</dt><dd>${others.map(c=>esc(c.name)).join(", ")}</dd>`:""}
+ ${intended.length?`<dt>A buscar</dt><dd>${intended.map(r=>esc(r.label)).join("<br>")}</dd>`:""}
+ ${incRows(d.incorporated)}<dt>Citações</dt><dd>${citeLine(d)}</dd>
+ ${d.oldName&&d.oldName!==d.name?`<dt>Nome anterior</dt><dd>${esc(d.oldName)}</dd>`:""}</dl>
+ <div class="row"><button class="secondary" data-a="dopen" data-id="${d.id}">Abrir no Drive</button><button class="secondary" data-a="dedit" data-id="${d.id}">Editar</button>${d.missing?`<button class="secondary" data-a="dunlink" data-id="${d.id}">Desvincular</button>`:""}</div></div>`}
+function docEditor(d){
+ const refs=L("refs").sort((a,b)=>a.label.localeCompare(b.label,"pt"));const main=C(d.main);
+ return `<div class="panel"><p class="fname" style="font-family:var(--serif);font-size:17px;margin:0 0 6px">${esc(d.name)}</p>
+ <label class="label" for="de-s">Estado</label><select id="de-s">${Object.entries(STATES).map(([k,v])=>`<option value="${k}" ${de.state===k?"selected":""}>${v}</option>`).join("")}</select>
+ <span class="label">Conceitos</span><p class="hint" style="margin:-4px 0 10px">${main?esc(main.name)+" é o conceito principal, que abre o nome do arquivo.":""}</p>
+ <div class="chips">${sortedConcepts().map(c=>chip(c,"detog",de.concepts.includes(c.id))).join("")}</div>
+ ${refs.length?`<span class="label">Fontes a buscar</span><div class="chips">${refs.map(r=>`<button class="chip" data-a="deint" data-id="${r.id}" aria-pressed="${de.intended.includes(r.id)}">${esc(r.label)}</button>`).join("")}</div>
+ <span class="label">Fontes já incorporadas e número de citações</span>${refs.map(r=>`<div class="incrow"><button class="chip" data-a="deinc" data-id="${r.id}" aria-pressed="${r.id in de.inc}">${esc(r.label)}</button>${r.id in de.inc?`<input type="number" min="0" inputmode="numeric" class="cites" data-ref="${r.id}" value="${de.inc[r.id]}" aria-label="Citações">`:""}</div>`).join("")}`
+ :`<p class="hint" style="margin-top:16px">Para registrar fontes, cadastre as obras em Bibliografia.</p>`}
+ <button class="primary" data-a="desave" data-id="${d.id}">Salvar alterações</button>
+ <div class="row"><button class="link" data-a="decancel">Cancelar</button><button class="link" data-a="dunlink" data-id="${d.id}">Desvincular do aplicativo</button></div></div>`}
+function connectBox(msg){return `<div class="panel"><p style="margin:0 0 12px">${msg||"Para ver os seus arquivos, conecte o aplicativo à sua conta Google."}</p><button class="primary" style="margin-top:0" data-a="connect">Conectar ao Drive</button></div>`}
+
+/* ---------- sugestões e títulos ---------- */
+const STOP=new Set("para como mais pelo pela entre sobre isso esse essa este esta onde quando porque ainda entao aqui nao seja estao pode cada mesmo mesma tambem muito todo toda coisa coisas seria parece duas tempo sera pois apenas assim desde sendo seus suas nossa nosso qual quais".split(" "));
+const words=t=>(fold(t).match(/[a-z]{4,}/g)||[]).filter(w=>!STOP.has(w));
+function suggestFor(text){const iw=new Set(words(text)),score={};
+ L("concepts").forEach(c=>{let s=0;words(c.name).forEach(w=>{if(iw.has(w))s+=3});L("ideas").filter(x=>x.concepts.includes(c.id)).forEach(x=>new Set(words(x.text)).forEach(w=>{if(iw.has(w))s+=1}));score[c.id]=s});
+ return L("concepts").filter(c=>score[c.id]>=2).sort((a,b)=>score[b.id]-score[a.id]).slice(0,4).map(c=>c.id)}
+function cleanTitle(n){if(/sem t[ií]tulo|untitled/i.test(n))return "";let t=n.replace(/\.(docx|doc)$/i,"").replace(/\(\d+\)/g,"").replace(/(^|\s)(final|revisado|revis[aã]o|rascunho|texto|ideias|notas|vers[aã]o|v\d+)(?=\s|$|-)/gi," ").replace(/[-_]+/g," ").replace(/\s+/g," ").trim();return cap(t)}
+const countCites=t=>(t.match(/\(([A-ZÀ-Ú][A-Za-zÀ-ú\-]+)(?: et al\.)?,\s*\d{4}|[A-ZÀ-Ú][a-zà-ú]+ \(\d{4}/g)||[]).length;
+
+/* ---------- telas ---------- */
+function vCapture(){
+ const cs=sortedConcepts(),vis=showAll?cs:cs.slice(0,12);cs.filter(c=>draft.concepts.has(c.id)&&!vis.includes(c)).forEach(c=>vis.push(c));
+ return `<h1>Nova ideia</h1><label class="label" for="t" style="margin-top:0">Ideia</label>
+ <textarea id="t" placeholder="Escreva a ideia enquanto ela está aí…">${esc(draft.text)}</textarea>${err?`<p class="err">${esc(err)}</p>`:""}
+ <span class="label">Conceitos</span><div class="chips">${vis.map(c=>chip(c,"dtog",draft.concepts.has(c.id))).join("")}
+ ${cs.length>12?`<button class="chip add" data-a="showall">${showAll?"Mostrar menos":`Mostrar todos (${cs.length})`}</button>`:""}<button class="chip add" data-a="newc">+ Novo conceito</button></div>
+ ${showNew?`<div class="inline"><input type="text" id="nc" placeholder="Nome do conceito" aria-label="Nome do novo conceito"><button class="secondary" data-a="mkc">Criar</button></div>`:""}
+ <label class="label" for="m">Momento</label><input type="text" id="m" value="${esc(draft.moment)}" placeholder="Ex.: lendo no café, depois da sessão">
+ <label class="label" for="r">Procedência</label>${refSelect("r",draft.refId)}
+ <button class="primary" data-a="save">Salvar ideia</button><p class="hint">Data e hora são registradas sozinhas. Sem conceito marcado, a ideia vai para Pendentes.</p>`}
+function vConcepts(){
+ return `<h1>Conceitos</h1><div class="row" style="margin:-6px 0 18px"><button class="secondary" data-a="nav" data-to="batch">Organizar pasta do Drive</button><button class="secondary" data-a="nav" data-to="bib">Bibliografia</button><button class="secondary" data-a="newc2">+ Novo conceito</button></div>
+ ${showNew2?`<div class="inline" style="margin:-6px 0 18px"><input type="text" id="nc2" placeholder="Nome do conceito" aria-label="Nome do novo conceito"><button class="secondary" data-a="mkc2">Criar</button></div>`:""}
+ <ul class="clist">${sortedConcepts().map(c=>{const n=usage(c.id),d=docsOf(c.id).length;
+  return `<li><button data-a="open" data-id="${c.id}"><span class="cbar" style="background:${c.color}"></span><span><span class="cname">${esc(c.name)}</span><span class="cmeta">${n} ${n===1?"fragmento":"fragmentos"}, ${d} ${d===1?"texto":"textos"}</span></span></button></li>`}).join("")}</ul>`}
+function vConcept(){
+ const c=C(route.id);if(!c)return vConcepts();
+ const ideas=L("ideas").filter(i=>i.concepts.includes(c.id)).sort((a,b)=>b.ts.localeCompare(a.ts));
+ const docs=docsOf(c.id),wip=docs.filter(d=>d.state!=="concl"),done=docs.filter(d=>d.state==="concl");
+ return `<button class="back" data-a="nav" data-to="concepts">‹ Conceitos</button>
+ <div class="chead" style="border-color:${c.color}"><h1>${esc(c.name)}</h1><button class="secondary" data-a="export" data-id="${c.id}">Exportar para Word</button></div>
+ ${exportLinks[c.id]?`<p class="hint" style="margin:-8px 0 18px"><a href="${esc(exportLinks[c.id])}" target="_blank" rel="noopener">Abrir o Word exportado</a>, salvo em Bloco Mágico / Exportações.</p>`:""}
+ <details class="block" open><summary>Fragmentos <span class="count">${ideas.length}</span></summary>${ideas.length?ideas.map(i=>ideaCard(i)).join(""):`<div class="empty">Nenhuma ideia marcada com este conceito ainda.</div>`}</details>
+ <details class="block" open><summary>Em construção <span class="count">${wip.length}</span></summary>${wip.map(docCard).join("")}
+  ${link&&link.cid===c.id?vLink(c):`<button class="secondary" data-a="lopen">+ Vincular um texto do Drive</button>`}</details>
+ <details class="block"><summary>Prontos <span class="count">${done.length}</span></summary>${done.length?done.map(docCard).join(""):`<div class="empty">Nenhum texto concluído ainda.</div>`}</details>
+ <div class="row" style="margin-top:8px"><button class="link" data-a="crename" data-id="${c.id}">Renomear conceito</button><button class="link" data-a="cdel" data-id="${c.id}">Excluir conceito</button></div>`}
+function weekStart(){const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-(d.getDay()+6)%7);return d}
+function dayGroups(list){let out="",last="";list.forEach(i=>{const d=fmtDay(i.ts);if(d!==last){out+=`<h2 class="day">${esc(d)}</h2>`;last=d}out+=ideaCard(i)});return out}
+function vTimeline(){
+ const ws=weekStart(),all=L("ideas").sort((a,b)=>b.ts.localeCompare(a.ts));
+ const week=all.filter(i=>new Date(i.ts)>=ws),older=all.filter(i=>new Date(i.ts)<ws),months={};
+ older.forEach(i=>{const d=new Date(i.ts),k=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");(months[k]=months[k]||[]).push(i)});
+ const mname=k=>{const[y,m]=k.split("-");return cap(new Date(+y,+m-1,1).toLocaleDateString("pt-BR",{month:"long",year:"numeric"}))};
+ const keys=Object.keys(months).sort().reverse();
+ return `<h1>Linha do tempo</h1><details class="block" open><summary>Esta semana <span class="count">${week.length}</span></summary>${week.length?dayGroups(week):`<div class="empty">Nenhuma ideia desde segunda-feira.</div>`}</details>
+ ${keys.length?`<p class="label">Semanas anteriores, por mês</p>`:""}${keys.map(k=>`<details class="block"><summary>${mname(k)} <span class="count">${months[k].length}</span></summary>${dayGroups(months[k])}</details>`).join("")}`}
+function vPending(){
+ const p=pending().sort((a,b)=>b.ts.localeCompare(a.ts));
+ if(!p.length)return `<h1>Pendentes</h1><div class="empty">Nenhuma ideia esperando conceito.</div>`;
+ return `<h1>Pendentes</h1><p class="hint" style="margin:-8px 0 18px">As sugestões vêm das palavras que você já usou em cada conceito. Você decide.</p>`+p.map(i=>{
+  const sug=suggestFor(i.text),sel=psel[i.id]||(psel[i.id]=new Set());
+  const order=[...sug.map(C),...sortedConcepts().filter(c=>!sug.includes(c.id))];
+  return ideaCard(i,`<span class="label">${sug.length?"Sugestões primeiro, com borda tracejada":"Escolha os conceitos"}</span><div class="chips">${order.map(c=>chip(c,"ptog",sel.has(c.id),sug.includes(c.id)?"sug":"",`data-i="${i.id}"`)).join("")}</div><div class="row"><button class="secondary" data-a="classify" data-i="${i.id}">Classificar</button><button class="link" data-a="iedit" data-id="${i.id}">Editar</button></div>`)}).join("")}
+function vBib(){
+ const block=k=>{const l=L("refs").filter(r=>r.type===k).sort((a,b)=>a.label.localeCompare(b.label,"pt"));
+  return `<details class="block" open><summary>${TYPES[k]} <span class="count">${l.length}</span></summary>${l.map(r=>{
+   const ni=L("ideas").filter(i=>i.refId===r.id).length,nd=L("docs").filter(d=>d.incorporated.some(x=>x.ref===r.id)).length,np=L("docs").filter(d=>d.intended.includes(r.id)).length;
+   return `<div class="doc"><p class="fname">${esc(r.label)}</p><p class="hint" style="margin:0">${ni} ${ni===1?"ideia nascida da leitura":"ideias nascidas da leitura"}, citado em ${nd} ${nd===1?"texto":"textos"}${np?`, a buscar em ${np}`:""}</p><div class="row"><button class="link" data-a="rdel" data-id="${r.id}">Excluir</button></div></div>`}).join("")||`<div class="empty">Nenhuma obra cadastrada ainda.</div>`}</details>`};
+ const typeSel=id=>`<select id="${id}"><option value="prim">Fonte primária</option><option value="com">Comentador contemporâneo</option></select>`;
+ return `<button class="back" data-a="nav" data-to="concepts">‹ Conceitos</button><h1>Bibliografia</h1>
+ <div class="row" style="margin:-6px 0 18px"><button class="secondary" data-a="newref">+ Cadastrar obra</button><button class="secondary" data-a="bulkref">Colar lista de obras</button></div>
+ ${showNewRef?`<div class="panel"><label class="label" for="rl" style="margin-top:0">Autor e obra</label><input type="text" id="rl" placeholder="Ex.: Freud, O Eu e o Id (1923)"><label class="label" for="rt">Tipo</label>${typeSel("rt")}<button class="primary" data-a="mkref">Cadastrar</button></div>`:""}
+ ${showBulk?`<div class="panel"><label class="label" for="rb" style="margin-top:0">Uma obra por linha</label><textarea id="rb" class="small" placeholder="Freud, A interpretação dos sonhos (1900)&#10;Lacan, O Seminário, livro 5"></textarea><label class="label" for="rbt">Todas as linhas são</label>${typeSel("rbt")}<button class="primary" data-a="mkbulk">Cadastrar todas</button></div>`:""}
+ ${block("prim")}${block("com")}`}
+function vLink(c){
+ const close=`<div class="row"><button class="link" data-a="lclose">Cancelar</button></div>`;
+ if(!hasToken())return `<div class="panel"><p style="margin:0 0 12px">Para buscar ou criar textos, conecte o aplicativo ao seu Drive.</p><button class="primary" style="margin-top:0" data-a="connect">Conectar ao Drive</button>${close}</div>`;
+ const seg=`<div class="seg"><button data-a="lmode" data-m="search" aria-pressed="${link.mode==="search"}">Texto que já existe</button><button data-a="lmode" data-m="new" aria-pressed="${link.mode==="new"}">Criar texto novo</button></div>`;
+ if(link.mode==="new")return `<div class="panel">${seg}<label class="label" for="lt" style="margin-top:0">Título curto</label><input type="text" id="lt" value="${esc(link.title)}" placeholder="Ex.: O lugar vazio do analista">
+  <div class="rename"><span class="label" style="margin-top:0">Documento novo no Drive, em Bloco Mágico / Textos</span><p class="new" id="ln">${esc(nameFor(c.id,link.title||"[título]",todayIso(),".docx"))}</p></div>${err?`<p class="err">${esc(err)}</p>`:""}
+  <button class="primary" data-a="lcreate" ${link.busy?"disabled":""}>${link.busy?"Criando…":"Criar no Drive e vincular"}</button>${close}</div>`;
+ if(!link.file)return `<div class="panel">${seg}<label class="label" for="lq" style="margin-top:0">Buscar nos seus arquivos do Drive</label><p class="hint" style="margin:-4px 0 10px">Procura o termo no nome e no texto dos seus documentos Word.</p><input type="text" id="lq" value="${esc(link.q)}" placeholder="Parte do nome ou um termo, ex.: suposto saber"><div id="lres">${lResults()}</div>${close}</div>`;
+ const f=link.file;
+ return `<div class="panel"><button class="back" data-a="lback">‹ Voltar à busca</button><p class="fname" style="font-family:var(--serif);font-size:17px;margin:6px 0">${esc(f.name)}</p><div id="lex">${exHtml(link.text)}</div>
+ <span class="label">Conceitos</span><p class="hint" style="margin:-4px 0 10px">${esc(c.name)} já vem marcado como principal. Tracejados são sugestões.</p><div class="chips" id="lchips">${lChips()}</div>
+ <label class="label" for="lt">Título curto</label><input type="text" id="lt" value="${esc(link.title)}">
+ <label class="label" for="ls">Estado</label><select id="ls">${Object.entries(STATES).map(([k,v])=>`<option value="${k}" ${link.state===k?"selected":""}>${v}</option>`).join("")}</select>
+ <div class="rename"><span class="label" style="margin-top:0">Nome no Drive</span><p class="old">${esc(f.name)}</p><p class="new" id="ln">${esc(nameFor(link.cid,link.title||"[título]",f.modifiedTime.slice(0,10),extOf(f)))}</p></div>${err?`<p class="err">${esc(err)}</p>`:""}
+ <button class="primary" data-a="llink" ${link.busy?"disabled":""}>${link.busy?"Renomeando…":"Renomear e vincular"}</button>${close}</div>`}
+function exHtml(text){if(text===null)return `<p class="hint">Lendo o texto…</p>`;if(!text)return `<p class="hint">Não foi possível ler o conteúdo deste arquivo.</p>`;const n=countCites(text);
+ return `<p class="excerpt">${esc(text.slice(0,420))}${text.length>420?"…":""}</p><p class="hint">${n?`${n} ${n===1?"citação encontrada":"citações encontradas"} automaticamente. Confira no texto.`:"Nenhuma citação encontrada automaticamente."}</p>`}
+function lChips(){const sug=link.text?suggestFor(link.text):[],c=C(link.cid);const order=[c,...sug.filter(x=>x!==c.id).map(C),...sortedConcepts().filter(x=>x.id!==c.id&&!sug.includes(x.id))];
+ return order.map(x=>chip(x,"ltog",link.sel.includes(x.id),sug.includes(x.id)&&x.id!==c.id?"sug":"")).join("")}
+function lResults(){
+ if(link.loading)return `<p class="hint">Buscando no Drive…</p>`;
+ if(link.errMsg)return `<p class="err">${esc(link.errMsg)}</p>`;
+ if(!link.results)return `<p class="hint">Digite ao menos três letras.</p>`;
+ if(!link.results.length)return `<p class="hint">Nenhum documento ainda não vinculado com esse termo no nome ou no texto.</p>`;
+ return `<p class="hint">${link.results.length} ${link.results.length===1?"arquivo encontrado":"arquivos encontrados"}. Toque no certo.</p>`+link.results.map(f=>`<button class="res" data-a="lpick" data-id="${f.id}"><p class="fname">${esc(f.name)}</p><p class="hint" style="margin:4px 0 0">${(f.parents||[]).map(p=>fnames[p]).filter(Boolean).length?"Pasta "+esc((f.parents||[]).map(p=>fnames[p]).filter(Boolean)[0])+", ":""}modificado em ${brDate(f.modifiedTime)}</p></button>`).join("")}
+function updLres(){const e=$("#lres");if(e)e.innerHTML=lResults()}
+async function doSearch(){
+ const q=link.q.trim();if(fold(q).length<3){link.results=null;link.errMsg="";updLres();return}
+ link.loading=true;link.errMsg="";updLres();const t=qesc(q);
+ try{const r=await(await api("drive/v3/files?"+qs({q:`trashed=false and ${DOCQ} and (name contains '${t}' or fullText contains '${t}')`,fields:"files(id,name,modifiedTime,mimeType,webViewLink,parents)",pageSize:"30"}))).json();
+  if(!link||link.q.trim()!==q)return;const linked=new Set(L("docs").map(d=>d.fileId));link.results=(r.files||[]).filter(f=>!linked.has(f.id));await folderNames(link.results)}
+ catch(e){if(!link)return;if(e.message==="auth"){link.loading=false;return render()}link.results=null;link.errMsg="Não foi possível buscar. Verifique a internet."}
+ if(link){link.loading=false;updLres()}}
+function vBatch(){
+ const back=`<button class="back" data-a="nav" data-to="concepts">‹ Conceitos</button>`;
+ if(!hasToken())return back+`<h1>Organizar uma pasta do Drive</h1>${connectBox()}`;
+ if(batch.step==="folders"){
+  if(!batch.folders){loadFolders();return back+`<h1>Organizar uma pasta do Drive</h1><p class="hint">Carregando as suas pastas do Drive…</p>`}
+  return back+`<h1>Organizar uma pasta do Drive</h1><p class="hint" style="margin-top:-6px">Passo 1 de 2. Escolha a pasta onde estão os textos. Depois, o aplicativo mostra os textos dela, um por vez, para você classificar e renomear.</p>
+  <input type="text" id="bfq" value="${esc(batch.filter)}" placeholder="Filtrar pastas pelo nome" style="margin-top:12px"><div id="bfl">${folderList()}</div>`}
+ if(batch.step==="files"){
+  if(!batch.files)return back+`<h1>Pasta ${esc(batch.folder.name)}</h1><p class="hint">Procurando os textos Word desta pasta…</p>`;
+  return back+`<h1>Pasta ${esc(batch.folder.name)}</h1><p class="hint" style="margin-top:-6px">Passo 2 de 2. Estes são os textos Word desta pasta que ainda não estão no aplicativo.</p>
+  ${batch.files.length?batch.files.map(f=>`<div class="doc"><p class="fname" style="margin:0 0 4px">${esc(f.name)}</p><p class="hint" style="margin:0">Modificado em ${brDate(f.modifiedTime)}</p></div>`).join("")+`<button class="primary" data-a="bstart">Começar a classificar</button>`:`<div class="empty">Nenhum texto Word desta pasta ficou de fora: todos já estão vinculados, ou a pasta não tem documentos Word.</div>`}
+  <button class="secondary" style="margin-top:12px;width:100%" data-a="bfolders">Escolher outra pasta</button>`}
+ const f=batch.queue[batch.idx],total=batch.queue.length;
+ if(!f)return back+`<h1>Pasta concluída</h1><div class="empty">${batch.done} ${batch.done===1?"texto vinculado":"textos vinculados"}${batch.skipped.length?`, ${batch.skipped.length} a classificar`:""}.</div>
+  ${batch.skipped.length?`<button class="primary" data-a="brevisit">Classificar os pulados</button>`:""}<button class="secondary" style="margin-top:14px;width:100%" data-a="bfolders">Organizar outra pasta</button>`;
+ return back+`<h1>Classificar textos</h1><div class="progress"><span style="width:${batch.idx/total*100}%"></span></div>
+ <p class="hint" style="margin:-8px 0 12px">Pasta ${esc(batch.folder.name)}, texto ${batch.idx+1} de ${total}</p>
+ <div class="doc"><p class="fname">${esc(f.name)}</p><div id="bex">${exHtml(batch.text)}</div></div>
+ <span class="label">Conceitos</span><p class="hint" style="margin:-4px 0 10px">O primeiro que você marcar vira o conceito principal. Tracejados são sugestões.</p><div class="chips" id="bchips">${bChips()}</div>
+ <label class="label" for="bt">Título curto</label><input type="text" id="bt" value="${esc(batch.title)}" placeholder="Ex.: Amor de transferência">
+ <label class="label" for="bs">Estado</label><select id="bs">${Object.entries(STATES).map(([k,v])=>`<option value="${k}" ${batch.state===k?"selected":""}>${v}</option>`).join("")}</select>
+ <div class="rename"><span class="label" style="margin-top:0">Nome no Drive</span><p class="old">${esc(f.name)}</p><p class="new" id="nn">${esc(bName())}</p></div>${err?`<p class="err">${esc(err)}</p>`:""}
+ <button class="primary" data-a="blink" ${batch.busy?"disabled":""}>${batch.busy?"Renomeando…":"Renomear e vincular"}</button>
+ <button class="secondary" style="margin-top:12px;width:100%" data-a="bskip">Pular por enquanto</button>`}
+function bChips(){const sug=batch.text?suggestFor(batch.text):[];const order=[...sug.map(C),...sortedConcepts().filter(c=>!sug.includes(c.id))];return order.map(c=>chip(c,"btog",batch.sel.includes(c.id),sug.includes(c.id)?"sug":"")).join("")}
+function bName(){const f=batch.queue[batch.idx];return `${C(batch.sel[0])?C(batch.sel[0]).name:"[conceito]"} — ${batch.title.trim()||"[título]"} — ${f.modifiedTime.slice(0,10)}${extOf(f)}`}
+function folderList(){const q=fold(batch.filter.trim()),l=batch.folders.filter(x=>!q||fold(x.name).includes(q));
+ if(!l.length)return `<p class="hint">Nenhuma pasta com esse nome.</p>`;
+ return l.slice(0,150).map(x=>`<button class="res" data-a="bfolder" data-id="${x.id}"><p class="fname" style="font-family:var(--serif);margin:0">Pasta ${esc(x.name)}</p></button>`).join("")+(l.length>150?`<p class="hint">Mostrando 150 de ${l.length}. Use o filtro para achar a pasta.</p>`:"")}
+async function loadFolders(){if(batch.loadingF)return;batch.loadingF=true;
+ try{batch.folders=(await listFiles("mimeType='application/vnd.google-apps.folder' and trashed=false","files(id,name)",{orderBy:"name"})).filter(x=>x.name!==FOLDER_NAME)}
+ catch(e){batch.folders=[];toast(e.message==="auth"?"Conecte ao Drive de novo.":"Não foi possível listar as pastas.")}
+ batch.loadingF=false;if(route.name==="batch")render()}
+async function loadBatchText(){const f=batch.queue[batch.idx];if(!f)return;let t="";try{t=await fileText(f)}catch(e){t=""}
+ if(batch.queue[batch.idx]!==f)return;batch.text=t;const ex=$("#bex"),ch=$("#bchips");if(ex)ex.innerHTML=exHtml(t);if(ch)ch.innerHTML=bChips()}
+function primeBatch(){const f=batch.queue[batch.idx];batch.sel=[];batch.state="sem";batch.text=null;if(!f)return;batch.title=cleanTitle(f.name);loadBatchText()}
+async function checkDocs(cid){
+ if(!hasToken())return;const ds=docsOf(cid).filter(d=>d.fileId&&!checked.has(d.id));if(!ds.length)return;let ch=false;
+ await Promise.all(ds.map(async d=>{checked.add(d.id);try{const m=await(await api(`drive/v3/files/${d.fileId}?fields=id,name,trashed,webViewLink`)).json();
+  if(m.trashed){if(!d.missing){d.missing=true;ch=true}}else{if(d.missing){d.missing=false;ch=true}if(m.name!==d.name){d.name=m.name;d.webViewLink=m.webViewLink||d.webViewLink;touch(d);ch=true}}}
+  catch(e){if(e.status===404&&!d.missing){d.missing=true;ch=true}}}));
+ if(ch){changed();if(route.name==="concept")softRender()}}
+
+/* ---------- desenho geral ---------- */
+const NAV=[["capture","Capturar"],["concepts","Conceitos"],["timeline","Linha do tempo","Tempo"],["pending","Pendentes"]];
+function renderNav(){
+ const sub=["concept","batch","bib"].includes(route.name),cur=sub?"concepts":route.name,np=pending().length;
+ $("#tabs").innerHTML=NAV.map(([k,l,s])=>`<button data-a="nav" data-to="${k}" aria-current="${cur===k}">${s||l}${k==="pending"&&np?`<span class="badge-n">${np}</span>`:""}</button>`).join("");
+ $("#side").innerHTML=`<div class="topb"><span class="mark">${KNOT}</span><span class="brand">Bloco Mágico</span></div><button class="syncbtn" data-a="sync"></button>
+ <nav>${NAV.map(([k,l])=>`<button data-a="nav" data-to="${k}" aria-current="${cur===k&&!sub}">${l}${k==="pending"&&np?`<span class="badge-n">${np}</span>`:""}</button>`).join("")}
+ <button data-a="nav" data-to="batch" aria-current="${route.name==="batch"}">Organizar pasta do Drive</button><button data-a="nav" data-to="bib" aria-current="${route.name==="bib"}">Bibliografia</button></nav>
+ <p class="sub">Seus conceitos</p><div class="cl">${sortedConcepts().map(c=>`<button data-a="open" data-id="${c.id}" aria-current="${route.name==="concept"&&route.id===c.id}"><span style="width:9px;height:9px;border-radius:50%;background:${c.color};display:inline-block;flex:none"></span>${esc(c.name)}</button>`).join("")}</div>`;
+ setSync()}
+function render(){renderNav();$("#main").innerHTML=({capture:vCapture,concepts:vConcepts,concept:vConcept,timeline:vTimeline,pending:vPending,batch:vBatch,bib:vBib}[route.name]||vConcepts)();bind()}
+function softRender(){const a=document.activeElement;if(a&&$("#main").contains(a)&&/INPUT|TEXTAREA|SELECT/.test(a.tagName)){renderNav()}else render()}
+function on(sel,ev,fn){const e=$(sel);if(e)e.addEventListener(ev,fn);return e}
+function bind(){
+ on("#t","input",e=>{draft.text=e.target.value;if(err){err="";const x=$(".err");if(x)x.remove()}});
+ on("#m","input",e=>draft.moment=e.target.value);on("#r","change",e=>draft.refId=e.target.value);
+ const nc=on("#nc","keydown",e=>{if(e.key==="Enter")act("mkc")});if(nc&&showNew)nc.focus();
+ const nc2=on("#nc2","keydown",e=>{if(e.key==="Enter")act("mkc2")});if(nc2&&showNew2)nc2.focus();
+ const lq=on("#lq","input",e=>{link.q=e.target.value;clearTimeout(searchTimer);searchTimer=setTimeout(doSearch,500)});
+ if(lq&&link&&link.focus){lq.focus();lq.setSelectionRange(lq.value.length,lq.value.length)}
+ const lt=on("#lt","input",e=>{link.title=e.target.value;const n=$("#ln");if(n)n.textContent=link.mode==="new"?nameFor(link.cid,link.title||"[título]",todayIso(),".docx"):nameFor(link.cid,link.title||"[título]",link.file.modifiedTime.slice(0,10),extOf(link.file))});
+ if(lt&&link&&link.focus&&link.mode==="new")lt.focus();if(link)link.focus=false;
+ on("#ls","change",e=>link.state=e.target.value);
+ on("#bt","input",e=>{batch.title=e.target.value;const n=$("#nn");if(n)n.textContent=bName()});on("#bs","change",e=>batch.state=e.target.value);
+ on("#bfq","input",e=>{batch.filter=e.target.value;$("#bfl").innerHTML=folderList()});
+ on("#de-s","change",e=>de.state=e.target.value);
+ document.querySelectorAll(".cites").forEach(i=>i.addEventListener("input",e=>de.inc[e.target.dataset.ref]=Math.max(0,parseInt(e.target.value)||0)));}
+
+/* ---------- ações ---------- */
+function tog(arr,id){const i=arr.indexOf(id);i>=0?arr.splice(i,1):arr.push(id);return arr.includes(id)}
+async function act(a,el){
+ const id=el&&el.dataset.id;
+ try{switch(a){
+ case "nav":if(el.dataset.to==="batch"&&(!batch||batch.step==="classify"&&batch.idx>=batch.queue.length))batch={step:"folders",folders:null,filter:"",queue:[],idx:0,skipped:[],done:0,sel:[],title:"",state:"sem",text:null};return go({name:el.dataset.to});
+ case "open":return go({name:"concept",id});
+ case "sync":case "connect":await sync(true);return render();
+ case "dtog":draft.concepts.has(id)?draft.concepts.delete(id):draft.concepts.add(id);return el.setAttribute("aria-pressed",draft.concepts.has(id));
+ case "showall":showAll=!showAll;return render();
+ case "newc":showNew=!showNew;return render();
+ case "newc2":showNew2=!showNew2;return render();
+ case "mkc":{const c=makeConcept(($("#nc")||{}).value||"");if(c){draft.concepts.add(c.id);showNew=false;render();toast(`Conceito criado: ${c.name}`)}return}
+ case "mkc2":{const c=makeConcept(($("#nc2")||{}).value||"");if(c){showNew2=false;render();toast(`Conceito criado: ${c.name}`)}return}
+ case "save":{if(!draft.text.trim()){err="Escreva a ideia antes de salvar.";render();$("#t").focus();return}
+  db.ideas.push(touch({id:uid("i"),text:draft.text.trim(),moment:draft.moment.trim(),refId:draft.refId,concepts:[...draft.concepts],ts:nowIso()}));
+  const pend=!draft.concepts.size;draft={text:"",moment:"",refId:"",concepts:new Set()};changed();render();return toast(pend?"Ideia salva em Pendentes":"Ideia salva")}
+ case "ptog":{const s=psel[el.dataset.i];s.has(id)?s.delete(id):s.add(id);return el.setAttribute("aria-pressed",s.has(id))}
+ case "classify":{const s=psel[el.dataset.i];if(!s||!s.size)return toast("Marque ao menos um conceito.");const i=db.ideas.find(x=>x.id===el.dataset.i);i.concepts=[...s];touch(i);delete psel[i.id];changed();render();return toast("Ideia classificada")}
+ case "iedit":{const i=db.ideas.find(x=>x.id===id);editIdea=id;ieSel=i.concepts.filter(C);return render()}
+ case "ietog":return el.setAttribute("aria-pressed",tog(ieSel,id));
+ case "iecancel":editIdea=null;return render();
+ case "iesave":{const i=db.ideas.find(x=>x.id===id),t=$("#ie-t").value.trim();if(!t)return toast("A ideia não pode ficar vazia.");
+  Object.assign(i,{text:t,moment:$("#ie-m").value.trim(),refId:$("#ie-r").value,concepts:[...ieSel]});touch(i);editIdea=null;changed();render();return toast("Ideia atualizada")}
+ case "iedel":{if(!confirm("Excluir esta ideia?"))return;const i=db.ideas.find(x=>x.id===id);i.deleted=true;touch(i);editIdea=null;changed();render();return toast("Ideia excluída")}
+ case "crename":{const c=C(id),n=prompt("Novo nome do conceito",c.name);if(!n||!n.trim()||n.trim()===c.name)return;
+  if(L("concepts").some(x=>x.id!==id&&fold(x.name)===fold(n.trim())))return toast("Já existe um conceito com esse nome.");c.name=n.trim();touch(c);changed();render();return toast("Conceito renomeado. Os arquivos já vinculados mantêm o nome atual.")}
+ case "cdel":{const c=C(id);if(!confirm(`Excluir o conceito "${c.name}"? As ideias e os textos continuam, só perdem esta etiqueta.`))return;
+  c.deleted=true;touch(c);L("ideas").forEach(i=>{if(i.concepts.includes(id)){i.concepts=i.concepts.filter(x=>x!==id);touch(i)}});
+  L("docs").forEach(d=>{if(d.concepts.includes(id)){d.concepts=d.concepts.filter(x=>x!==id);if(d.main===id)d.main=d.concepts[0]||null;touch(d)}});changed();return go({name:"concepts"})}
+ case "dopen":{const d=db.docs.find(x=>x.id===id);return window.open(driveLink(d),"_blank","noopener")}
+ case "dedit":{const d=db.docs.find(x=>x.id===id);editDoc=id;de={state:d.state,concepts:[...d.concepts],intended:[...d.intended],inc:Object.fromEntries(d.incorporated.map(x=>[x.ref,x.cites]))};return render()}
+ case "detog":{const d=db.docs.find(x=>x.id===editDoc);if(id===d.main)return toast("Este é o conceito principal do texto.");return el.setAttribute("aria-pressed",tog(de.concepts,id))}
+ case "deint":return el.setAttribute("aria-pressed",tog(de.intended,id));
+ case "deinc":{if(id in de.inc)delete de.inc[id];else{de.inc[id]=1;de.intended=de.intended.filter(x=>x!==id)}return render()}
+ case "decancel":editDoc=null;return render();
+ case "desave":{const d=db.docs.find(x=>x.id===id);Object.assign(d,{state:de.state,concepts:de.concepts,intended:de.intended,incorporated:Object.entries(de.inc).map(([ref,cites])=>({ref,cites:+cites||0}))});touch(d);editDoc=null;changed();render();return toast("Texto atualizado")}
+ case "dunlink":{if(!confirm("Desvincular este texto do aplicativo? O arquivo continua no Drive, sem nenhuma alteração."))return;const d=db.docs.find(x=>x.id===id);d.deleted=true;touch(d);editDoc=null;changed();render();return toast("Texto desvinculado")}
+ case "export":{const c=C(id);toast("Gerando o Word…");await getToken(true);
+  const ideas=L("ideas").filter(i=>i.concepts.includes(id)).sort((a,b)=>a.ts.localeCompare(b.ts)),docs=docsOf(id);
+  const P=[{t:c.name,s:"title"},{t:"Exportado do Bloco Mágico em "+fmtFull(nowIso()),s:"meta"},{t:"Fragmentos",s:"h"}];
+  if(!ideas.length)P.push({t:"Nenhum fragmento.",s:"meta"});
+  ideas.forEach(i=>{P.push({t:fmtFull(i.ts)+(i.moment?". "+i.moment:""),s:"meta"});P.push({t:i.text,s:"p"});const r=i.refId&&R(i.refId);if(r)P.push({t:"Procedência"+(r.type==="com"?" (comentador)":"")+": "+r.label,s:"meta"})});
+  P.push({t:"Textos vinculados",s:"h"});if(!docs.length)P.push({t:"Nenhum texto vinculado.",s:"meta"});
+  docs.forEach(d=>{P.push({t:d.name,s:"b"});P.push({t:"Estado: "+STATES[d.state]+". Citações: "+citeLine(d)+".",s:"meta"});P.push({t:driveLink(d),s:"meta"})});
+  const r=await upload({name:`Exportação — ${c.name} — ${todayIso()}.docx`,parents:[await subFolder("Exportações")]},await buildDocx(P));
+  exportLinks[id]=r.webViewLink;render();return toast("Word salvo no Drive, em Bloco Mágico / Exportações.")}
+ case "lopen":link={cid:route.id,mode:"search",q:"",results:null,file:null,text:null,sel:[route.id],title:"",state:"sem",focus:true};render();return scrollPanel();
+ case "lclose":link=null;err="";return render();
+ case "lmode":Object.assign(link,{mode:el.dataset.m,file:null,title:"",sel:[link.cid],focus:true});err="";render();return scrollPanel();
+ case "lpick":{const f=link.results.find(x=>x.id===id);Object.assign(link,{file:f,text:null,title:cleanTitle(f.name),sel:[link.cid],state:"sem"});err="";render();scrollPanel();
+  let t="";try{t=await fileText(f)}catch(e){}if(link&&link.file===f){link.text=t;const ex=$("#lex"),ch=$("#lchips");if(ex)ex.innerHTML=exHtml(t);if(ch)ch.innerHTML=lChips()}return}
+ case "lback":link.file=null;link.focus=true;err="";return render();
+ case "ltog":if(id===link.cid)return toast("O conceito desta tela é o principal.");return el.setAttribute("aria-pressed",tog(link.sel,id));
+ case "llink":{if(!link.title.trim()){err="Escreva um título curto.";return render()}await getToken(true);link.busy=true;render();const f=link.file,name=nameFor(link.cid,link.title,f.modifiedTime.slice(0,10),extOf(f));
+  try{const m=await renameFile(f.id,name);db.docs.push(touch({id:uid("d"),fileId:f.id,name:m.name,oldName:f.name,main:link.cid,concepts:[...link.sel],title:link.title.trim(),date:f.modifiedTime.slice(0,10),state:link.state,intended:[],incorporated:[],citesFound:link.text?countCites(link.text):0,webViewLink:m.webViewLink||f.webViewLink}));
+   link=null;err="";changed();render();return toast("Renomeado e vinculado")}catch(e){link.busy=false;err="Não foi possível renomear no Drive. Verifique a internet e tente de novo.";return render()}}
+ case "lcreate":{if(!link.title.trim()){err="Escreva um título curto.";return render()}await getToken(true);link.busy=true;render();const name=nameFor(link.cid,link.title,todayIso(),".docx");
+  try{const m=await upload({name,parents:[await subFolder("Textos")]},await buildDocx([{t:link.title.trim(),s:"title"},{t:"",s:"p"}]));
+   db.docs.push(touch({id:uid("d"),fileId:m.id,name:m.name,oldName:"",main:link.cid,concepts:[link.cid],title:link.title.trim(),date:todayIso(),state:"sem",intended:[],incorporated:[],citesFound:0,webViewLink:m.webViewLink}));
+   link=null;err="";changed();render();return toast("Documento criado no Drive e vinculado")}catch(e){link.busy=false;err="Não foi possível criar o documento. Verifique a internet e tente de novo.";return render()}}
+ case "bfolder":{const f=batch.folders.find(x=>x.id===id);batch.folder=f;batch.step="files";batch.files=null;render();window.scrollTo(0,0);
+  try{const linked=new Set(L("docs").map(d=>d.fileId));batch.files=(await listFiles(`'${f.id}' in parents and trashed=false and ${DOCQ}`,undefined,{orderBy:"name"})).filter(x=>!linked.has(x.id))}catch(e){batch.files=[];toast("Não foi possível ler a pasta.")}
+  if(route.name==="batch")render();return}
+ case "bfolders":batch.step="folders";batch.files=null;return render();
+ case "bstart":Object.assign(batch,{step:"classify",queue:batch.files,idx:0,skipped:[],done:0});primeBatch();render();return window.scrollTo(0,0);
+ case "btog":{tog(batch.sel,id);document.querySelectorAll('[data-a="btog"]').forEach(b=>b.setAttribute("aria-pressed",batch.sel.includes(b.dataset.id)));const n=$("#nn");if(n)n.textContent=bName();return}
+ case "blink":{if(!batch.sel.length){err="Marque ao menos um conceito.";return render()}if(!batch.title.trim()){err="Escreva um título curto.";render();return $("#bt").focus()}
+  await getToken(true);const f=batch.queue[batch.idx],name=bName();batch.busy=true;render();
+  try{const m=await renameFile(f.id,name);db.docs.push(touch({id:uid("d"),fileId:f.id,name:m.name,oldName:f.name,main:batch.sel[0],concepts:[...batch.sel],title:batch.title.trim(),date:f.modifiedTime.slice(0,10),state:batch.state,intended:[],incorporated:[],citesFound:batch.text?countCites(batch.text):0,webViewLink:m.webViewLink||f.webViewLink}));
+   batch.done++;batch.idx++;batch.busy=false;err="";changed();primeBatch();render();window.scrollTo(0,0);return toast("Renomeado e vinculado")}
+  catch(e){batch.busy=false;err="Não foi possível renomear no Drive. Verifique a internet e tente de novo.";return render()}}
+ case "bskip":batch.skipped.push(batch.queue[batch.idx]);batch.idx++;err="";primeBatch();render();return window.scrollTo(0,0);
+ case "brevisit":Object.assign(batch,{queue:batch.skipped,skipped:[],idx:0});primeBatch();return render();
+ case "newref":showNewRef=!showNewRef;showBulk=false;render();return $("#rl")&&$("#rl").focus();
+ case "bulkref":showBulk=!showBulk;showNewRef=false;render();return $("#rb")&&$("#rb").focus();
+ case "mkref":{const v=$("#rl").value.trim();if(!v)return toast("Digite autor e obra.");db.refs.push(touch({id:uid("r"),type:$("#rt").value,label:v}));showNewRef=false;changed();render();return toast("Obra cadastrada")}
+ case "mkbulk":{const type=$("#rbt").value,have=new Set(L("refs").map(r=>fold(r.label)));const lines=$("#rb").value.split("\n").map(s=>s.trim()).filter(s=>s&&!have.has(fold(s)));
+  if(!lines.length)return toast("Nenhuma obra nova na lista.");lines.forEach(label=>db.refs.push(touch({id:uid("r"),type,label})));showBulk=false;changed();render();return toast(`${lines.length} ${lines.length===1?"obra cadastrada":"obras cadastradas"}`)}
+ case "rdel":{const r=R(id);if(!confirm(`Excluir "${r.label}" da bibliografia?`))return;r.deleted=true;touch(r);changed();render();return toast("Obra excluída")}
+ }}catch(e){if(e.message==="auth"){toast("Conecte ao Drive tocando no aviso de sincronização.");render()}else toast(e.message||"Algo deu errado.")}}
+function scrollPanel(){const p=$(".panel");if(p)p.scrollIntoView({block:"start",behavior:"smooth"})}
+document.addEventListener("click",e=>{const el=e.target.closest("[data-a]");if(el&&!el.disabled){e.preventDefault();act(el.dataset.a,el)}});
+window.addEventListener("online",()=>{setSync();if(hasToken())sync(false)});
+window.addEventListener("offline",setSync);
+document.querySelectorAll(".mark[data-knot]").forEach(m=>m.innerHTML=KNOT);
+render();
+if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
+
+</script>
+</body>
+</html>
