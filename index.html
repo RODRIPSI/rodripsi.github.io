@@ -164,6 +164,17 @@ a.d-docl span:nth-child(2){text-decoration:underline;text-underline-offset:3px}
 .d-no .d-ck{background:none;border:2px solid var(--rule)}.d-no span:nth-child(2){color:var(--muted)}
 .d-esq{background:var(--ink);color:var(--surface)}
 .a-item{display:flex;align-items:center;gap:12px;margin-top:6px}.a-ck{width:22px;height:22px;flex:none;border-radius:6px;border:2px solid var(--ink);display:grid;place-items:center;font-size:13px;font-weight:600}.a-item[aria-pressed="true"] .a-ck{background:var(--ink);color:var(--surface)}
+.a-img{display:block;width:100%;max-height:420px;object-fit:contain;border-radius:10px;background:var(--surface);margin:0 0 14px}
+.a-img.big{max-height:520px}.a-ph{display:grid;place-items:center;height:220px;color:var(--muted);font-size:14px;border:1px dashed var(--rule)}
+.a-imgs{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+.a-cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;margin-bottom:14px}
+@media (max-width:620px){.a-cols,.a-imgs{grid-template-columns:1fr}}
+.a-col{overflow-wrap:anywhere;background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:14px}.a-col.vazio{border-style:dashed;background:none}
+.a-h{font-family:var(--serif);font-size:19px;margin:0 0 10px}.a-h span{font-family:var(--sans);font-size:13px;color:var(--muted)}
+.a-doc{display:inline-block;text-decoration:none}
+.a-l{font-size:14px;margin:10px 0 0}.a-l b{display:block;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.a-obs{font-size:13.5px;color:var(--muted);border-left:3px solid var(--rule);padding-left:9px;margin:10px 0 0}
+.a-texto{margin-top:12px;max-height:60vh;overflow-y:auto;font-family:var(--serif);font-size:15.5px;line-height:1.6;border-top:1px solid var(--rule);padding-top:10px}
 .d-loose{margin:0;padding:6px 0;font-size:14px;border-bottom:1px dashed var(--rule)}
 .d-wrap{flex-wrap:wrap}.d-wrap input{flex:1 1 150px}
 input[type=date]{width:100%;background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:10px 12px}
@@ -339,7 +350,7 @@ let draft={text:"",moment:"",refId:"",concepts:new Set()};
 let psel={},err="",showNew=false,showNew2=false,showAll=false,showNewRef=false,showBulk=false;
 let editIdea=null,ieSel=[],editDoc=null,de=null,link=null,batch=null,searchTimer=null;
 const exportLinks={},checked=new Set();
-function go(r){route=r;err="";showNew=showNew2=showNewRef=showBulk=false;editIdea=null;editDoc=null;link=null;render();window.scrollTo(0,0);if(r.name==="concept")checkDocs(r.id);if(r.name==="diss"&&db.meta.dissFolder&&(!dscan||dscan.folder!==db.meta.dissFolder.id||Date.now()-new Date(dscan.at)>6e5))scanDiss(false)}
+function go(r){route=r;err="";showNew=showNew2=showNewRef=showBulk=false;editIdea=null;editDoc=null;link=null;render();window.scrollTo(0,0);if(r.name==="concept"){checkDocs(r.id);if(!acv&&hasToken())syncAcervo(false)}if(r.name==="diss"&&db.meta.dissFolder&&(!dscan||dscan.folder!==db.meta.dissFolder.id||Date.now()-new Date(dscan.at)>6e5))scanDiss(false)}
 function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("on");clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove("on"),3200)}
 
 /* ---------- componentes ---------- */
@@ -411,7 +422,7 @@ function vCapture(){
  <label class="label" for="r">Procedência</label>${refSelect("r",draft.refId)}
  <button class="primary" data-a="save">Salvar ideia</button><p class="hint">Data e hora são registradas sozinhas. Sem conceito marcado, a ideia vai para Pendentes.</p>`}
 function vConcepts(){
- return `<h1>Conceitos</h1><div class="row" style="margin:-6px 0 18px"><button class="secondary" data-a="nav" data-to="auto">Trazer textos já nomeados</button><button class="secondary" data-a="nav" data-to="batch">Organizar pasta do Drive</button><button class="secondary" data-a="nav" data-to="bib">Bibliografia</button><button class="secondary" data-a="newc2">+ Novo conceito</button></div>
+ return `<h1>Conceitos</h1><div class="row" style="margin:-6px 0 18px"><button class="secondary" data-a="nav" data-to="acervo">Acervo Freud e Lacan</button><button class="secondary" data-a="nav" data-to="auto">Trazer textos já nomeados</button><button class="secondary" data-a="nav" data-to="batch">Organizar pasta do Drive</button><button class="secondary" data-a="nav" data-to="bib">Bibliografia</button><button class="secondary" data-a="newc2">+ Novo conceito</button></div>
  ${showNew2?`<div class="inline" style="margin:-6px 0 18px"><input type="text" id="nc2" placeholder="Nome do conceito" aria-label="Nome do novo conceito"><button class="secondary" data-a="mkc2">Criar</button></div>`:""}
  <ul class="clist">${sortedConcepts().map(c=>{const n=usage(c.id),d=docsOf(c.id).length;
   return `<li><button data-a="open" data-id="${c.id}"><span class="cbar" style="background:${c.color}"></span><span><span class="cname">${esc(c.name)}</span><span class="cmeta">${n} ${n===1?"fragmento":"fragmentos"}, ${d} ${d===1?"texto":"textos"}</span></span></button></li>`}).join("")}</ul>`}
@@ -422,6 +433,7 @@ function vConcept(){
  return `<button class="back" data-a="nav" data-to="concepts">‹ Conceitos</button>
  <div class="chead" style="border-color:${c.color}"><h1>${esc(c.name)}</h1><button class="secondary" data-a="export" data-id="${c.id}">Exportar para Word</button></div>
  ${exportLinks[c.id]?`<p class="hint" style="margin:-8px 0 18px"><a href="${esc(exportLinks[c.id])}" target="_blank" rel="noopener">Abrir o Word exportado</a>, salvo em Bloco Mágico / Exportações.</p>`:""}
+ ${acvBloco(c)}
  <details class="block" open><summary>Fragmentos <span class="count">${ideas.length}</span></summary>${ideas.length?ideas.map(i=>ideaCard(i)).join(""):`<div class="empty">Nenhuma ideia marcada com este conceito ainda.</div>`}</details>
  <details class="block" open><summary>Em construção <span class="count">${wip.length}</span></summary>${wip.map(docCard).join("")}
   ${link&&link.cid===c.id?vLink(c):`<button class="secondary" data-a="lopen">+ Vincular um texto do Drive</button>`}</details>
@@ -710,17 +722,112 @@ async function actAuto(a,el){
  }
  return actDiss(a,el)}
 
+/* ---------- acervo: planilha de conceitos em Freud e Lacan ---------- */
+const XLSXT="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",GSHEET="application/vnd.google-apps.spreadsheet";
+let acv=null,acvBusy=false,acvErr="",acvQ="",acvF="todos",acvPick=null;const imgCache={};
+try{acv=JSON.parse(localStorage.getItem("bm-acervo")||"null")}catch(e){}
+const akey=s=>fold(String(s||"")).replace(/\(.*?\)/g,"").replace(/^\s*(o que e|o|a|os|as)\s+/,"").replace(/[^a-z0-9 ]+/g," ").replace(/\s+/g," ").trim();
+const driveId=u=>{const m=String(u||"").match(/\/(?:file\/d|document\/d|spreadsheets\/d)\/([\w-]+)/)||String(u||"").match(/[?&]id=([\w-]+)/);return m?m[1]:""};
+async function lerPlanilha(ab){
+ if(!window.JSZip)throw new Error("Componente de planilha ainda carregando. Tente de novo em instantes.");
+ const z=await JSZip.loadAsync(ab),P=new DOMParser(),xml=async p=>{const f=z.file(p);return f?P.parseFromString(await f.async("string"),"application/xml"):null};
+ const tags=(d,n)=>d?[...d.getElementsByTagName("*")].filter(e=>e.localName===n):[];
+ const ss=tags(await xml("xl/sharedStrings.xml"),"si").map(si=>tags(si,"t").map(t=>t.textContent).join(""));
+ const wb=await xml("xl/workbook.xml"),wbr=await xml("xl/_rels/workbook.xml.rels");
+ const relT=d=>Object.fromEntries(tags(d,"Relationship").map(r=>[r.getAttribute("Id"),r.getAttribute("Target")]));
+ const wrels=relT(wbr),out=[];
+ for(const sh of tags(wb,"sheet")){
+  const nome=sh.getAttribute("name"),rid=sh.getAttribute("r:id")||[...sh.attributes].find(a=>a.localName==="id").value;
+  let path=wrels[rid]||"";path=path.startsWith("/")?path.slice(1):"xl/"+path.replace(/^\.\//,"");
+  const d=await xml(path);if(!d)continue;
+  const rels=relT(await xml(path.replace(/([^/]+)$/,"_rels/$1.rels"))),links={};
+  tags(d,"hyperlink").forEach(h=>{const id=h.getAttribute("r:id")||([...h.attributes].find(a=>a.localName==="id")||{}).value;if(id&&rels[id])links[h.getAttribute("ref")]=rels[id]});
+  const val=c=>{const t=c.getAttribute("t"),v=tags(c,"v")[0];if(t==="s")return ss[+v.textContent]||"";if(t==="inlineStr")return tags(c,"t").map(x=>x.textContent).join("");return v?v.textContent:""};
+  let ini=false;
+  for(const row of tags(d,"row")){const cel={};tags(row,"c").forEach(c=>{const ref=c.getAttribute("r"),col=ref.replace(/\d+/g,"");cel[col]={v:val(c).trim(),l:links[ref]||"",num:!c.getAttribute("t")}});
+   const A=(cel.A||{}).v||"";if(A==="Conceito"){ini=true;continue}if(!ini||!A)continue;
+   const g=k=>(cel[k]||{}),doc=g("C").l||(/^http/.test(g("C").v)?g("C").v:"");
+   let data=g("F").v;if(g("F").num&&/^\d+(\.\d+)?$/.test(data)){const dt=new Date(Date.UTC(1899,11,30)+Math.round(+data)*864e5);data=dt.toISOString().slice(0,10)}
+   out.push({a:nome,n:A.replace(/\s+/g," "),img:g("B").l||g("B").v,doc,dn:/^http/.test(g("C").v)?"":g("C").v,f:g("D").v,s:g("E").v,d:data,o:g("G").v})}}
+ return out}
+async function syncAcervo(interactive){
+ if(acvBusy)return;if(!hasToken()){if(interactive)await getToken(true);else return}
+ acvBusy=true;acvErr="";softRender();
+ try{
+  let p=db.meta.planilha;
+  if(!p){const l=await listFiles(`trashed=false and (mimeType='${XLSXT}' or mimeType='${GSHEET}') and name contains 'planilha_conceitos'`,"files(id,name,mimeType,modifiedTime)");
+   if(!l.length)throw new Error("Não encontrei a planilha de conceitos no Drive.");l.sort((a,b)=>b.modifiedTime.localeCompare(a.modifiedTime));p={id:l[0].id,name:l[0].name};db.meta.planilha=p;changed()}
+  const m=await(await api(`drive/v3/files/${p.id}?fields=id,name,mimeType,modifiedTime`)).json();
+  const ab=await(await api(m.mimeType===GSHEET?`drive/v3/files/${p.id}/export?mimeType=${encodeURIComponent(XLSXT)}`:`drive/v3/files/${p.id}?alt=media`)).arrayBuffer();
+  const rows=await lerPlanilha(ab);if(!rows.length)throw new Error("A planilha não tem a coluna “Conceito”.");
+  acv={at:nowIso(),mod:m.modifiedTime,nome:m.name,rows};try{localStorage.setItem("bm-acervo",JSON.stringify(acv))}catch(e){}
+  if(interactive)toast(`Planilha lida: ${rows.length} linhas`);
+ }catch(e){acvErr=e.message==="auth"?"Conecte ao Drive de novo.":(e.message||"Não foi possível ler a planilha.")}
+ acvBusy=false;softRender()}
+function acvGrupos(){const g={};(acv?acv.rows:[]).forEach(r=>{const k=akey(r.n);(g[k]||(g[k]={k,nome:r.n,F:null,L:null}))[r.a==="Freud"?"F":"L"]=r});
+ Object.values(g).forEach(x=>{if(x.F&&x.L)x.nome=x.L.n.length<=x.F.n.length?x.L.n:x.F.n;x.cid=(L("concepts").find(c=>akey(c.name)===x.k)||{}).id});return Object.values(g)}
+const acvPend=r=>r&&(!r.s||!r.doc||/pend|apag|ausente|n[ãa]o recuperad|duplicat/i.test(r.o));
+function vAcervo(){
+ const back=`<button class="back" data-a="nav" data-to="concepts">‹ Conceitos</button><h1>Acervo Freud e Lacan</h1>`;
+ if(!acv){if(hasToken()&&!acvBusy&&!acvErr)syncAcervo(false);
+  return back+(acvErr?`<p class="warn">${esc(acvErr)}</p>`:"")+(hasToken()?`<p class="hint">${acvBusy?"Lendo a planilha de conceitos no Drive…":""}</p>${acvBusy?"":`<button class="secondary" data-a="acvsync">Ler a planilha</button>`}`:connectBox("Para trazer a planilha de conceitos, conecte o aplicativo ao Drive."))}
+ let gs=acvGrupos();const cont={todos:gs.length,app:gs.filter(g=>g.cid).length,F:gs.filter(g=>g.F).length,L:gs.filter(g=>g.L).length,ambos:gs.filter(g=>g.F&&g.L).length,pend:gs.filter(g=>acvPend(g.F)||acvPend(g.L)).length};
+ const q=akey(acvQ);gs=gs.filter(g=>acvF==="todos"||(acvF==="app"&&g.cid)||(acvF==="F"&&g.F)||(acvF==="L"&&g.L)||(acvF==="ambos"&&g.F&&g.L)||(acvF==="pend"&&(acvPend(g.F)||acvPend(g.L)))).filter(g=>!q||g.k.includes(q));
+ gs.sort((a,b)=>(!!b.cid-!!a.cid)||a.nome.localeCompare(b.nome,"pt"));
+ return back+`<p class="hint" style="margin-top:-8px">Lido da planilha ${esc(acv.nome)} em ${esc(fmtShort(acv.at))}. A planilha continua sendo onde você atualiza; o aplicativo só lê. ${acvBusy?"Lendo de novo…":`<button class="link" data-a="acvsync">Ler de novo</button>`}</p>
+ ${acvErr?`<p class="warn">${esc(acvErr)}</p>`:""}
+ <input type="text" id="acvq" value="${esc(acvQ)}" placeholder="Buscar conceito" style="margin:6px 0 10px">
+ <div class="chips" style="margin-bottom:14px">${[["todos","Todos"],["app","Também no app"],["F","Freud"],["L","Lacan"],["ambos","Nos dois"],["pend","Pendências"]].map(([k,t])=>`<button class="chip" data-a="acvf" data-f="${k}" aria-pressed="${acvF===k}">${t} ${cont[k]}</button>`).join("")}</div>
+ <ul class="clist">${gs.map(g=>{const c=g.cid&&C(g.cid);return `<li><button data-a="aficha" data-k="${esc(g.k)}"><span class="cbar" style="background:${c?c.color:"var(--rule)"}"></span><span style="flex:1"><span class="cname">${esc(g.nome)}</span><span class="cmeta">${[g.F?"Freud":"",g.L?"Lacan":""].filter(Boolean).join(" e ")}${c?" · conceito do app":""}${acvPend(g.F)||acvPend(g.L)?" · pendência":""}</span></span></button></li>`}).join("")||`<li class="hint" style="padding:16px 0">Nenhum conceito encontrado.</li>`}</ul>`}
+function imgTag(r,big){
+ const id=driveId(r&&r.img);if(!r||!r.img)return "";if(!id)return `<p><a class="link" href="${esc(r.img)}" target="_blank" rel="noopener">Abrir a imagem no Drive</a></p>`;
+ const u=imgCache[id];if(u===undefined){imgCache[id]=null;api(`drive/v3/files/${id}?alt=media`).then(x=>x.blob()).then(b=>{imgCache[id]=URL.createObjectURL(b);softRender()}).catch(()=>{imgCache[id]="";softRender()})}
+ if(u)return `<img class="a-img ${big?"big":""}" src="${u}" alt="Sua imagem de ${esc(r.n)}">`;
+ if(u==="")return `<p><a class="link" href="${esc(r.img)}" target="_blank" rel="noopener">Abrir a imagem no Drive</a></p>`;
+ return `<div class="a-img a-ph ${big?"big":""}">Carregando a imagem…</div>`}
+function colAutor(r,aut){
+ if(!r)return `<div class="a-col vazio"><p class="a-h">${aut}</p><p class="hint" style="margin:0">Sem compilação deste conceito em ${aut}.</p></div>`;
+ return `<div class="a-col"><p class="a-h">${aut}${r.n?` <span>${esc(r.n)}</span>`:""}</p>
+ ${r.doc?`<a class="secondary a-doc" href="${esc(r.doc)}" target="_blank" rel="noopener">Abrir a compilação no Drive</a>${driveId(r.doc)?`<button class="link" data-a="aler" data-id="${driveId(r.doc)}" style="display:block;margin-top:8px">${acvLer[driveId(r.doc)]!==undefined?"Fechar o texto":"Ler o texto aqui"}</button>`:""}`:`<p class="err" style="margin:0">Sem documento vinculado na planilha.</p>`}
+ ${r.dn?`<p class="hint" style="margin:6px 0 0">${esc(r.dn)}</p>`:""}
+ ${r.f?`<p class="a-l"><b>Fontes</b>${esc(r.f)}</p>`:""}
+ <p class="a-l"><b>Status</b>${r.s?esc(r.s):"em branco"}${r.d?" · "+esc(r.d):""}</p>
+ ${r.o?`<p class="a-obs">${esc(r.o)}</p>`:""}
+ ${r.doc&&acvLer[driveId(r.doc)]!==undefined?`<div class="a-texto">${acvLer[driveId(r.doc)]===null?"Lendo o documento…":esc(acvLer[driveId(r.doc)]||"Não foi possível ler este documento.").replace(/\n/g,"<br>")}</div>`:""}</div>`}
+const acvLer={};
+function vAficha(){
+ const g=acvGrupos().find(x=>x.k===route.k);if(!g)return vAcervo();const c=g.cid&&C(g.cid),main=g.L||g.F;
+ return `<button class="back" data-a="nav" data-to="acervo">‹ Acervo</button>
+ <div class="chead" style="border-color:${c?c.color:"var(--rule)"}"><h1>${esc(g.nome)}</h1>${c?`<button class="secondary" data-a="open" data-id="${c.id}">Abrir no app</button>`:`<button class="secondary" data-a="acvcriar" data-k="${esc(g.k)}">Usar como conceito do app</button>`}</div>
+ ${g.F&&g.L&&driveId(g.F.img)!==driveId(g.L.img)?`<div class="a-imgs">${imgTag(g.F,1)}${imgTag(g.L,1)}</div>`:imgTag(main,1)}
+ <div class="a-cols">${colAutor(g.F,"Freud")}${colAutor(g.L,"Lacan")}</div>
+ ${c?"":`<p class="hint">Este conceito ainda não é uma etiqueta do aplicativo. Ele só vira etiqueta, e aparece em Capturar, se você tocar em “Usar como conceito do app”.</p>`}`}
+function acvBloco(c){ // na página do conceito do app
+ if(!acv)return "";const g=acvGrupos().find(x=>x.cid===c.id);if(!g)return "";
+ return `<details class="block" open><summary>No acervo Freud e Lacan <span class="count">${[g.F?"Freud":"",g.L?"Lacan":""].filter(Boolean).join(" e ")}</span></summary>
+ ${imgTag(g.L||g.F,0)}<div class="a-cols">${colAutor(g.F,"Freud")}${colAutor(g.L,"Lacan")}</div></details>`}
+async function actAcervo(a,el){
+ switch(a){
+ case "acvsync":return syncAcervo(true);
+ case "acvf":acvF=el.dataset.f;return render();
+ case "aficha":return go({name:"aficha",k:el.dataset.k});
+ case "acvcriar":{const g=acvGrupos().find(x=>x.k===el.dataset.k),c=makeConcept(g.nome);if(!c)return;render();return toast(`${c.name} agora é um conceito do app`)}
+ case "aler":{const id=el.dataset.id;if(acvLer[id]!==undefined){delete acvLer[id];return render()}acvLer[id]=null;render();
+  try{const m=await(await api(`drive/v3/files/${id}?fields=id,name,mimeType`)).json();acvLer[id]=await fileText(m)}catch(e){acvLer[id]=""}return softRender()}
+ }
+ return actAuto(a,el)}
+
 /* ---------- desenho geral ---------- */
 const NAV=[["capture","Capturar"],["concepts","Conceitos"],["timeline","Linha do tempo","Tempo"],["pending","Pendentes"],["diss","Dissertação"]];
 function renderNav(){
- const sub=["concept","batch","bib","auto"].includes(route.name),cur=sub?"concepts":route.name,np=pending().length;
+ const sub=["concept","batch","bib","auto","acervo","aficha"].includes(route.name),cur=sub?"concepts":route.name,np=pending().length;
  $("#tabs").classList.toggle("cinco",NAV.length>4);$("#tabs").innerHTML=NAV.map(([k,l,s])=>`<button data-a="nav" data-to="${k}" aria-current="${cur===k}">${s||l}${k==="pending"&&np?`<span class="badge-n">${np}</span>`:""}</button>`).join("");
  $("#side").innerHTML=`<div class="topb"><span class="mark">${KNOT}</span><span class="brand">Bloco Mágico</span></div><button class="syncbtn" data-a="sync"></button>
  <nav>${NAV.map(([k,l])=>`<button data-a="nav" data-to="${k}" aria-current="${cur===k&&!sub}">${l}${k==="pending"&&np?`<span class="badge-n">${np}</span>`:""}</button>`).join("")}
- <button data-a="nav" data-to="batch" aria-current="${route.name==="batch"}">Organizar pasta do Drive</button><button data-a="nav" data-to="bib" aria-current="${route.name==="bib"}">Bibliografia</button></nav>
+ <button data-a="nav" data-to="batch" aria-current="${route.name==="batch"}">Organizar pasta do Drive</button><button data-a="nav" data-to="bib" aria-current="${route.name==="bib"}">Bibliografia</button><button data-a="nav" data-to="acervo" aria-current="${route.name==="acervo"||route.name==="aficha"}">Acervo Freud e Lacan</button></nav>
  <p class="sub">Seus conceitos</p><div class="cl">${sortedConcepts().map(c=>`<button data-a="open" data-id="${c.id}" aria-current="${route.name==="concept"&&route.id===c.id}"><span style="width:9px;height:9px;border-radius:50%;background:${c.color};display:inline-block;flex:none"></span>${esc(c.name)}</button>`).join("")}</div>`;
  setSync()}
-function render(){renderNav();$("#main").innerHTML=({capture:vCapture,concepts:vConcepts,concept:vConcept,timeline:vTimeline,pending:vPending,batch:vBatch,bib:vBib,diss:vDiss,auto:vAuto}[route.name]||vConcepts)();bind()}
+function render(){renderNav();$("#main").innerHTML=({capture:vCapture,concepts:vConcepts,concept:vConcept,timeline:vTimeline,pending:vPending,batch:vBatch,bib:vBib,diss:vDiss,auto:vAuto,acervo:vAcervo,aficha:vAficha}[route.name]||vConcepts)();bind()}
 function softRender(){const a=document.activeElement;if(a&&$("#main").contains(a)&&/INPUT|TEXTAREA|SELECT/.test(a.tagName)){renderNav()}else render()}
 function on(sel,ev,fn){const e=$(sel);if(e)e.addEventListener(ev,fn);return e}
 function bind(){
@@ -737,6 +844,7 @@ function bind(){
  on("#bfq","input",e=>{batch.filter=e.target.value;$("#bfl").innerHTML=folderList()});
  on("#de-s","change",e=>de.state=e.target.value);
  document.querySelectorAll(".cites").forEach(i=>i.addEventListener("input",e=>de.inc[e.target.dataset.ref]=Math.max(0,parseInt(e.target.value)||0)));
+ on("#acvq","input",e=>{acvQ=e.target.value;const pos=e.target.selectionStart;render();const n=$("#acvq");if(n){n.focus();n.setSelectionRange(pos,pos)}});
  bindDiss()}
 
 /* ---------- ações ---------- */
@@ -819,7 +927,7 @@ async function act(a,el){
  case "mkbulk":{const type=$("#rbt").value,have=new Set(L("refs").map(r=>fold(r.label)));const lines=$("#rb").value.split("\n").map(s=>s.trim()).filter(s=>s&&!have.has(fold(s)));
   if(!lines.length)return toast("Nenhuma obra nova na lista.");lines.forEach(label=>db.refs.push(touch({id:uid("r"),type,label})));showBulk=false;changed();render();return toast(`${lines.length} ${lines.length===1?"obra cadastrada":"obras cadastradas"}`)}
  case "rdel":{const r=R(id);if(!confirm(`Excluir "${r.label}" da bibliografia?`))return;r.deleted=true;touch(r);changed();render();return toast("Obra excluída")}
- default:return actAuto(a,el)
+ default:return actAcervo(a,el)
  }}catch(e){if(e.message==="auth"){toast("Conecte ao Drive tocando no aviso de sincronização.");render()}else toast(e.message||"Algo deu errado.")}}
 function scrollPanel(){const p=$(".panel");if(p)p.scrollIntoView({block:"start",behavior:"smooth"})}
 document.addEventListener("click",e=>{const el=e.target.closest("[data-a]");if(el&&!el.disabled){e.preventDefault();act(el.dataset.a,el)}});
