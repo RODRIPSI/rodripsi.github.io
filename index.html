@@ -163,6 +163,7 @@ a.d-docl span:nth-child(2){text-decoration:underline;text-underline-offset:3px}
 .d-ck{width:20px;height:20px;border-radius:50%;flex:none;display:grid;place-items:center;font-size:12px;font-weight:600;background:var(--t-ok);color:#fff}
 .d-no .d-ck{background:none;border:2px solid var(--rule)}.d-no span:nth-child(2){color:var(--muted)}
 .d-esq{background:var(--ink);color:var(--surface)}
+.a-item{display:flex;align-items:center;gap:12px;margin-top:6px}.a-ck{width:22px;height:22px;flex:none;border-radius:6px;border:2px solid var(--ink);display:grid;place-items:center;font-size:13px;font-weight:600}.a-item[aria-pressed="true"] .a-ck{background:var(--ink);color:var(--surface)}
 .d-loose{margin:0;padding:6px 0;font-size:14px;border-bottom:1px dashed var(--rule)}
 .d-wrap{flex-wrap:wrap}.d-wrap input{flex:1 1 150px}
 input[type=date]{width:100%;background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:10px 12px}
@@ -410,7 +411,7 @@ function vCapture(){
  <label class="label" for="r">Procedência</label>${refSelect("r",draft.refId)}
  <button class="primary" data-a="save">Salvar ideia</button><p class="hint">Data e hora são registradas sozinhas. Sem conceito marcado, a ideia vai para Pendentes.</p>`}
 function vConcepts(){
- return `<h1>Conceitos</h1><div class="row" style="margin:-6px 0 18px"><button class="secondary" data-a="nav" data-to="batch">Organizar pasta do Drive</button><button class="secondary" data-a="nav" data-to="bib">Bibliografia</button><button class="secondary" data-a="newc2">+ Novo conceito</button></div>
+ return `<h1>Conceitos</h1><div class="row" style="margin:-6px 0 18px"><button class="secondary" data-a="nav" data-to="auto">Trazer textos já nomeados</button><button class="secondary" data-a="nav" data-to="batch">Organizar pasta do Drive</button><button class="secondary" data-a="nav" data-to="bib">Bibliografia</button><button class="secondary" data-a="newc2">+ Novo conceito</button></div>
  ${showNew2?`<div class="inline" style="margin:-6px 0 18px"><input type="text" id="nc2" placeholder="Nome do conceito" aria-label="Nome do novo conceito"><button class="secondary" data-a="mkc2">Criar</button></div>`:""}
  <ul class="clist">${sortedConcepts().map(c=>{const n=usage(c.id),d=docsOf(c.id).length;
   return `<li><button data-a="open" data-id="${c.id}"><span class="cbar" style="background:${c.color}"></span><span><span class="cname">${esc(c.name)}</span><span class="cmeta">${n} ${n===1?"fragmento":"fragmentos"}, ${d} ${d===1?"texto":"textos"}</span></span></button></li>`}).join("")}</ul>`}
@@ -662,17 +663,64 @@ async function actDiss(a,el){
  case "dcapsave":{const k=el.dataset.k,v=($("#dcap").value||"").trim();let c=db.chapters.find(x=>x.n===k&&!x.deleted);if(!c){c={id:"cap-"+k,n:k};db.chapters.push(c)}c.title=v;touch(c);dcapEdit=null;changed();return render()}
  }}
 
+/* ---------- trazer textos que já seguem o padrão Conceito — título — data ---------- */
+let auto=null; // {loading, err, found:[{f,cname,title,date,cid}], off:Set}
+function parsePadrao(name){
+ const base=name.replace(/\.(docx?|odt)$/i,""),parts=base.split(/\s[—–-]\s/);
+ if(parts.length<3)return null;const date=parts[parts.length-1].trim();if(!/^\d{4}-\d{2}-\d{2}$/.test(date))return null;
+ const cname=parts[0].trim(),title=parts.slice(1,-1).join(" — ").trim();if(!cname||!title)return null;return{cname,title,date}}
+const conceptByName=n=>L("concepts").find(c=>fold(c.name.trim())===fold(n.trim()));
+async function scanAuto(){
+ auto={loading:true,found:[],off:new Set(),err:""};render();
+ try{
+  const names=L("concepts").map(c=>c.name.trim()).filter(Boolean),qs_=[`trashed=false and ${DOCQ} and name contains '—'`];
+  for(let i=0;i<names.length;i+=12)qs_.push(`trashed=false and ${DOCQ} and (${names.slice(i,i+12).map(n=>`name contains '${qesc(n)}'`).join(" or ")})`);
+  const seen=new Map();
+  for(const q of qs_){try{(await listFiles(q)).forEach(f=>seen.set(f.id,f))}catch(e){if(e.message==="auth")throw e}}
+  const linked=new Set(L("docs").map(d=>d.fileId));
+  auto.found=[...seen.values()].filter(f=>!linked.has(f.id)).map(f=>{const p=parsePadrao(f.name);if(!p)return null;const c=conceptByName(p.cname);return{f,...p,cid:c?c.id:null}}).filter(Boolean)
+   .sort((a,b)=>a.cname.localeCompare(b.cname,"pt")||a.title.localeCompare(b.title,"pt"));
+  auto.jaVinc=[...seen.values()].filter(f=>linked.has(f.id)&&parsePadrao(f.name)).length;
+ }catch(e){auto.err=e.message==="auth"?"Conecte ao Drive de novo.":"Não foi possível buscar no Drive. Verifique a internet."}
+ auto.loading=false;if(route.name==="auto")render()}
+function autoDoc(x,cid){return touch({id:uid("d"),fileId:x.f.id,name:x.f.name,oldName:x.f.name,main:cid,concepts:[cid],title:x.title,date:x.date,state:"sem",intended:[],incorporated:[],citesFound:0,webViewLink:x.f.webViewLink})}
+function vAuto(){
+ const back=`<button class="back" data-a="nav" data-to="concepts">‹ Conceitos</button><h1>Textos já nomeados</h1>`;
+ if(!hasToken())return back+connectBox();
+ if(!auto){scanAuto();return back+`<p class="hint">Procurando no Drive…</p>`}
+ if(auto.loading)return back+`<p class="hint">Procurando no Drive os textos com nome no padrão Conceito — título — data…</p>`;
+ if(auto.err)return back+`<p class="warn">${esc(auto.err)}</p><button class="secondary" data-a="autoscan">Tentar de novo</button>`;
+ const ok=auto.found.filter(x=>x.cid),sem=auto.found.filter(x=>!x.cid),marc=ok.filter(x=>!auto.off.has(x.f.id));
+ const grupos={};sem.forEach(x=>(grupos[fold(x.cname)]=grupos[fold(x.cname)]||{nome:x.cname,l:[]}).l.push(x));
+ const porC={};ok.forEach(x=>(porC[x.cid]=porC[x.cid]||[]).push(x));
+ return back+`<p class="hint" style="margin-top:-8px">Estes arquivos já têm o nome no padrão, então entram sem ser renomeados. Cada um fica vinculado ao conceito do começo do nome, com o estado "Sem fundamentação", que você muda depois.${auto.jaVinc?` ${auto.jaVinc} ${auto.jaVinc===1?"já estava vinculado":"já estavam vinculados"}.`:""}</p>
+ ${!auto.found.length?`<div class="empty">Nenhum texto novo no padrão Conceito — título — data.</div>`:""}
+ ${ok.length?`<details class="block" open><summary>Prontos para vincular <span class="count">${ok.length}</span></summary>
+  ${Object.entries(porC).map(([cid,l])=>`<p class="label" style="margin:14px 0 6px"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${C(cid).color};margin-right:6px"></span>${esc(C(cid).name)}</p>${l.map(x=>`<button class="res a-item" data-a="autotog" data-id="${x.f.id}" aria-pressed="${!auto.off.has(x.f.id)}"><span class="a-ck">${auto.off.has(x.f.id)?"":"✓"}</span><span><span class="fname" style="display:block;margin:0">${esc(x.title)}</span><span class="hint" style="margin:0">${esc(brDate(x.date))}</span></span></button>`).join("")}`).join("")}
+  <button class="primary" data-a="autolink" ${marc.length?"":"disabled"}>Vincular ${marc.length} ${marc.length===1?"texto":"textos"}</button></details>`:""}
+ ${sem.length?`<details class="block" open><summary>Conceito ainda não cadastrado no aplicativo <span class="count">${sem.length}</span></summary><p class="hint" style="margin:-4px 0 10px">O começo do nome não corresponde a nenhum conceito seu. Você pode criar o conceito e vincular os textos de uma vez.</p>
+  ${Object.values(grupos).map(g=>`<div class="doc"><p class="fname" style="margin:0 0 6px">${esc(g.nome)}</p>${g.l.map(x=>`<p class="hint" style="margin:0 0 4px">${esc(x.title)}</p>`).join("")}<div class="row"><button class="secondary" data-a="autocreate" data-n="${esc(g.nome)}">Criar “${esc(g.nome)}” e vincular ${g.l.length===1?"o texto":`os ${g.l.length} textos`}</button></div></div>`).join("")}</details>`:""}
+ <button class="secondary" style="margin-top:14px;width:100%" data-a="autoscan">Procurar de novo</button>`}
+async function actAuto(a,el){
+ switch(a){
+ case "autoscan":auto=null;return render();
+ case "autotog":{const id=el.dataset.id;auto.off.has(id)?auto.off.delete(id):auto.off.add(id);return render()}
+ case "autolink":{const l=auto.found.filter(x=>x.cid&&!auto.off.has(x.f.id));l.forEach(x=>db.docs.push(autoDoc(x,x.cid)));const ids=new Set(l.map(x=>x.f.id));auto.found=auto.found.filter(x=>!ids.has(x.f.id));auto.jaVinc=(auto.jaVinc||0)+l.length;changed();render();return toast(`${l.length} ${l.length===1?"texto vinculado":"textos vinculados"}`)}
+ case "autocreate":{const n=el.dataset.n,c=conceptByName(n)||makeConcept(n);if(!c)return;const l=auto.found.filter(x=>!x.cid&&fold(x.cname)===fold(n));l.forEach(x=>db.docs.push(autoDoc(x,c.id)));const ids=new Set(l.map(x=>x.f.id));auto.found=auto.found.filter(x=>!ids.has(x.f.id));auto.found.forEach(x=>{if(!x.cid){const cc=conceptByName(x.cname);if(cc)x.cid=cc.id}});changed();render();return toast(`Conceito ${c.name} criado, ${l.length} ${l.length===1?"texto vinculado":"textos vinculados"}`)}
+ }
+ return actDiss(a,el)}
+
 /* ---------- desenho geral ---------- */
 const NAV=[["capture","Capturar"],["concepts","Conceitos"],["timeline","Linha do tempo","Tempo"],["pending","Pendentes"],["diss","Dissertação"]];
 function renderNav(){
- const sub=["concept","batch","bib"].includes(route.name),cur=sub?"concepts":route.name,np=pending().length;
+ const sub=["concept","batch","bib","auto"].includes(route.name),cur=sub?"concepts":route.name,np=pending().length;
  $("#tabs").classList.toggle("cinco",NAV.length>4);$("#tabs").innerHTML=NAV.map(([k,l,s])=>`<button data-a="nav" data-to="${k}" aria-current="${cur===k}">${s||l}${k==="pending"&&np?`<span class="badge-n">${np}</span>`:""}</button>`).join("");
  $("#side").innerHTML=`<div class="topb"><span class="mark">${KNOT}</span><span class="brand">Bloco Mágico</span></div><button class="syncbtn" data-a="sync"></button>
  <nav>${NAV.map(([k,l])=>`<button data-a="nav" data-to="${k}" aria-current="${cur===k&&!sub}">${l}${k==="pending"&&np?`<span class="badge-n">${np}</span>`:""}</button>`).join("")}
  <button data-a="nav" data-to="batch" aria-current="${route.name==="batch"}">Organizar pasta do Drive</button><button data-a="nav" data-to="bib" aria-current="${route.name==="bib"}">Bibliografia</button></nav>
  <p class="sub">Seus conceitos</p><div class="cl">${sortedConcepts().map(c=>`<button data-a="open" data-id="${c.id}" aria-current="${route.name==="concept"&&route.id===c.id}"><span style="width:9px;height:9px;border-radius:50%;background:${c.color};display:inline-block;flex:none"></span>${esc(c.name)}</button>`).join("")}</div>`;
  setSync()}
-function render(){renderNav();$("#main").innerHTML=({capture:vCapture,concepts:vConcepts,concept:vConcept,timeline:vTimeline,pending:vPending,batch:vBatch,bib:vBib,diss:vDiss}[route.name]||vConcepts)();bind()}
+function render(){renderNav();$("#main").innerHTML=({capture:vCapture,concepts:vConcepts,concept:vConcept,timeline:vTimeline,pending:vPending,batch:vBatch,bib:vBib,diss:vDiss,auto:vAuto}[route.name]||vConcepts)();bind()}
 function softRender(){const a=document.activeElement;if(a&&$("#main").contains(a)&&/INPUT|TEXTAREA|SELECT/.test(a.tagName)){renderNav()}else render()}
 function on(sel,ev,fn){const e=$(sel);if(e)e.addEventListener(ev,fn);return e}
 function bind(){
@@ -696,7 +744,7 @@ function tog(arr,id){const i=arr.indexOf(id);i>=0?arr.splice(i,1):arr.push(id);r
 async function act(a,el){
  const id=el&&el.dataset.id;
  try{switch(a){
- case "nav":if(el.dataset.to==="batch"&&(!batch||batch.step==="classify"&&batch.idx>=batch.queue.length))batch={step:"folders",folders:null,filter:"",queue:[],idx:0,skipped:[],done:0,sel:[],title:"",state:"sem",text:null};return go({name:el.dataset.to});
+ case "nav":if(el.dataset.to==="auto")auto=null;if(el.dataset.to==="batch"&&(!batch||batch.step==="classify"&&batch.idx>=batch.queue.length))batch={step:"folders",folders:null,filter:"",queue:[],idx:0,skipped:[],done:0,sel:[],title:"",state:"sem",text:null};return go({name:el.dataset.to});
  case "open":return go({name:"concept",id});
  case "sync":case "connect":await sync(true);return render();
  case "dtog":draft.concepts.has(id)?draft.concepts.delete(id):draft.concepts.add(id);return el.setAttribute("aria-pressed",draft.concepts.has(id));
@@ -771,7 +819,7 @@ async function act(a,el){
  case "mkbulk":{const type=$("#rbt").value,have=new Set(L("refs").map(r=>fold(r.label)));const lines=$("#rb").value.split("\n").map(s=>s.trim()).filter(s=>s&&!have.has(fold(s)));
   if(!lines.length)return toast("Nenhuma obra nova na lista.");lines.forEach(label=>db.refs.push(touch({id:uid("r"),type,label})));showBulk=false;changed();render();return toast(`${lines.length} ${lines.length===1?"obra cadastrada":"obras cadastradas"}`)}
  case "rdel":{const r=R(id);if(!confirm(`Excluir "${r.label}" da bibliografia?`))return;r.deleted=true;touch(r);changed();render();return toast("Obra excluída")}
- default:return actDiss(a,el)
+ default:return actAuto(a,el)
  }}catch(e){if(e.message==="auth"){toast("Conecte ao Drive tocando no aviso de sincronização.");render()}else toast(e.message||"Algo deu errado.")}}
 function scrollPanel(){const p=$(".panel");if(p)p.scrollIntoView({block:"start",behavior:"smooth"})}
 document.addEventListener("click",e=>{const el=e.target.closest("[data-a]");if(el&&!el.disabled){e.preventDefault();act(el.dataset.a,el)}});
