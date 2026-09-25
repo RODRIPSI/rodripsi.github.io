@@ -175,6 +175,18 @@ a.d-docl span:nth-child(2){text-decoration:underline;text-underline-offset:3px}
 .a-l{font-size:14px;margin:10px 0 0}.a-l b{display:block;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
 .a-obs{font-size:13.5px;color:var(--muted);border-left:3px solid var(--rule);padding-left:9px;margin:10px 0 0}
 .a-texto{margin-top:12px;max-height:60vh;overflow-y:auto;font-family:var(--serif);font-size:15.5px;line-height:1.6;border-top:1px solid var(--rule);padding-top:10px}
+.f-sym .f-s,.f-op .f-s{font-family:var(--serif);font-size:24px;margin:0;line-height:1.3;overflow-wrap:anywhere}
+.f-l{margin:4px 0 0;font-size:14.5px;color:var(--muted)}
+.f-g summary{display:flex;justify-content:space-between;gap:12px;align-items:center;cursor:pointer;list-style:none;font-size:16px}
+.f-g summary::-webkit-details-marker{display:none}.f-gs{font-family:var(--serif);font-size:20px;flex:none}
+.f-op{border-top:1px solid var(--rule);margin-top:14px;padding-top:12px}
+.f-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin:12px 0}
+.f-img{position:relative;display:flex;flex-direction:column;gap:6px;border:2px solid var(--rule);border-radius:10px;background:var(--surface);padding:8px;text-align:left}
+.f-img[aria-pressed="true"]{border-color:var(--ink)}.f-img img{width:100%;height:120px;object-fit:contain;background:#fff;border-radius:6px}
+.f-img span{font-size:12.5px;color:var(--muted);line-height:1.35}
+.f-img i{position:absolute;top:6px;right:6px;width:22px;height:22px;border-radius:50%;background:var(--ink);color:var(--surface);display:grid;place-items:center;font-style:normal;font-size:12px}
+.f-img[aria-pressed="false"] i{background:var(--surface);border:2px solid var(--rule)}
+.idea .a-img{max-height:360px;margin:4px 0 10px}
 .d-loose{margin:0;padding:6px 0;font-size:14px;border-bottom:1px dashed var(--rule)}
 .d-wrap{flex-wrap:wrap}.d-wrap input{flex:1 1 150px}
 input[type=date]{width:100%;background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:10px 12px}
@@ -224,8 +236,8 @@ const fmtFull=ts=>new Date(ts).toLocaleDateString("pt-BR",{day:"numeric",month:"
 const brDate=iso=>iso?iso.slice(0,10).split("-").reverse().join("/"):"";
 
 /* ---------- dados ---------- */
-function seed(){return{version:1,concepts:SEED.map((n,i)=>({id:"seed-"+slug(n),name:n,color:PALETTE[i%PALETTE.length],updatedAt:"2026-01-01T00:00:00.000Z"})),refs:[],ideas:[],docs:[],subs:[],chapters:[],meta:{}}}
-function loadLocal(){try{const s=localStorage.getItem(KEY);if(s){const d=JSON.parse(s);for(const k of["concepts","refs","ideas","docs","subs","chapters"])d[k]=d[k]||[];d.meta=d.meta||{};return d}}catch(e){}return seed()}
+function seed(){return{version:1,concepts:SEED.map((n,i)=>({id:"seed-"+slug(n),name:n,color:PALETTE[i%PALETTE.length],updatedAt:"2026-01-01T00:00:00.000Z"})),refs:[],ideas:[],docs:[],subs:[],chapters:[],symbols:[],meta:{}}}
+function loadLocal(){try{const s=localStorage.getItem(KEY);if(s){const d=JSON.parse(s);for(const k of["concepts","refs","ideas","docs","subs","chapters","symbols"])d[k]=d[k]||[];d.meta=d.meta||{};return d}}catch(e){}return seed()}
 let db=loadLocal();
 function saveLocal(){try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){toast("Não foi possível salvar no aparelho.")}}
 const L=k=>db[k].filter(x=>!x.deleted);
@@ -240,7 +252,7 @@ function changed(){saveLocal();setDirty(true);scheduleSync()}
 function merge(a,b){
  const out={version:1,meta:{...(b.meta||{}),...(a.meta||{})}};
  if(((b.meta||{}).lastBackup||"")>((a.meta||{}).lastBackup||""))out.meta.lastBackup=b.meta.lastBackup;
- for(const k of["concepts","refs","ideas","docs","subs","chapters"]){const m=new Map();for(const x of(b[k]||[]))m.set(x.id,x);
+ for(const k of["concepts","refs","ideas","docs","subs","chapters","symbols"]){const m=new Map();for(const x of(b[k]||[]))m.set(x.id,x);
   for(const x of(a[k]||[])){const y=m.get(x.id);if(!y||(x.updatedAt||"")>=(y.updatedAt||""))m.set(x.id,x)}out[k]=[...m.values()]}
  return out}
 function makeConcept(name){name=name.trim();if(!name){toast("Digite o nome do conceito.");return null}
@@ -350,7 +362,7 @@ let draft={text:"",moment:"",refId:"",concepts:new Set()};
 let psel={},err="",showNew=false,showNew2=false,showAll=false,showNewRef=false,showBulk=false;
 let editIdea=null,ieSel=[],editDoc=null,de=null,link=null,batch=null,searchTimer=null;
 const exportLinks={},checked=new Set();
-function go(r){route=r;err="";showNew=showNew2=showNewRef=showBulk=false;editIdea=null;editDoc=null;link=null;render();window.scrollTo(0,0);if(r.name==="concept"){checkDocs(r.id);if(!acv&&hasToken())syncAcervo(false)}if(r.name==="diss"&&db.meta.dissFolder&&(!dscan||dscan.folder!==db.meta.dissFolder.id||Date.now()-new Date(dscan.at)>6e5))scanDiss(false)}
+function go(r){route=r;err="";showNew=showNew2=showNewRef=showBulk=false;editIdea=null;editDoc=null;link=null;render();window.scrollTo(0,0);if(r.name==="concept"){checkDocs(r.id);if(!acv&&hasToken())syncAcervo(false)}if(["concept","acervo","aficha"].includes(r.name))checkPlanilha();if(r.name==="diss"&&db.meta.dissFolder&&(!dscan||dscan.folder!==db.meta.dissFolder.id||Date.now()-new Date(dscan.at)>6e5))scanDiss(false)}
 function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("on");clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove("on"),3200)}
 
 /* ---------- componentes ---------- */
@@ -362,7 +374,7 @@ function ideaCard(i,extra=""){
  const stripe=cs.length?cs.map(c=>`<span style="background:${c.color}"></span>`).join(""):`<span style="background:var(--rule)"></span>`;
  const r=i.refId&&R(i.refId);
  return `<article class="idea"><div class="stripe" aria-hidden="true">${stripe}</div>
- <p class="when">${esc(fmtShort(i.ts))}</p><p class="txt">${esc(i.text).replace(/\n/g,"<br>")}</p>
+ <p class="when">${esc(fmtShort(i.ts))}</p>${ideaImg(i)}<p class="txt">${esc(i.text).replace(/\n/g,"<br>")}</p>
  ${i.moment?`<p class="moment">${esc(i.moment)}</p>`:""}
  ${r?`<p class="ref">Procedência${r.type==="com"?" (comentador)":""}: ${esc(r.label)}</p>`:""}
  ${cs.length?`<div class="tags">${cs.map(c=>`<span><i style="background:${c.color}"></i>${esc(c.name)}</span>`).join("")}</div>`:""}
@@ -608,7 +620,8 @@ function vDiss(){
  const urg=subs.filter(s=>info[s.id].nv&&info[s.id].nv.r<=7).sort((a,b)=>info[a.id].nv.r-info[b.id].nv.r);
  const caps=[...new Set(subs.map(s=>capOf(s.n)))];
  return `<h1>Dissertação</h1>
- <p class="hint" style="margin:-10px 0 14px">Pasta ${esc(fo.name)} · ${dscanning?"lendo o Drive…":dscan&&dscan.folder===fo.id?"lida "+esc(fmtShort(dscan.at)):"ainda não lida"}</p>
+ <div class="row" style="margin:-8px 0 12px"><button class="secondary" data-a="nav" data-to="form">Formalização</button></div>
+ <p class="hint" style="margin:0 0 14px">Pasta ${esc(fo.name)} · ${dscanning?"lendo o Drive…":dscan&&dscan.folder===fo.id?"lida "+esc(fmtShort(dscan.at)):"ainda não lida"}</p>
  ${!hasToken()?connectBox("Para ler os documentos da dissertação, conecte o aplicativo ao Drive."):""}
  ${dscanErr?`<p class="warn">${esc(dscanErr)}</p>`:""}
  ${urg.map(s=>`<button class="d-alert d-${info[s.id].nv.c}" data-a="dtoggle" data-id="${s.id}"><b>${esc(s.n)}</b> ${esc(s.title||"")} — ${esc(info[s.id].nv.t)}</button>`).join("")}
@@ -764,6 +777,10 @@ async function syncAcervo(interactive){
   if(interactive)toast(`Planilha lida: ${rows.length} linhas`);
  }catch(e){acvErr=e.message==="auth"?"Conecte ao Drive de novo.":(e.message||"Não foi possível ler a planilha.")}
  acvBusy=false;softRender()}
+let acvCheck=0;
+async function checkPlanilha(){ // relê a planilha sozinho quando ela mudou no Drive
+ if(!acv||!db.meta.planilha||!hasToken()||acvBusy||Date.now()-acvCheck<60000)return;acvCheck=Date.now();
+ try{const m=await(await api(`drive/v3/files/${db.meta.planilha.id}?fields=modifiedTime`)).json();if(m.modifiedTime&&m.modifiedTime!==acv.mod)await syncAcervo(false)}catch(e){}}
 function acvGrupos(){const g={};(acv?acv.rows:[]).forEach(r=>{const k=akey(r.n);(g[k]||(g[k]={k,nome:r.n,F:null,L:null}))[r.a==="Freud"?"F":"L"]=r});
  Object.values(g).forEach(x=>{if(x.F&&x.L)x.nome=x.L.n.length<=x.F.n.length?x.L.n:x.F.n;x.cid=(L("concepts").find(c=>akey(c.name)===x.k)||{}).id});return Object.values(g)}
 const acvPend=r=>r&&(!r.s||!r.doc||/pend|apag|ausente|n[ãa]o recuperad|duplicat/i.test(r.o));
@@ -774,7 +791,7 @@ function vAcervo(){
  let gs=acvGrupos();const cont={todos:gs.length,app:gs.filter(g=>g.cid).length,F:gs.filter(g=>g.F).length,L:gs.filter(g=>g.L).length,ambos:gs.filter(g=>g.F&&g.L).length,pend:gs.filter(g=>acvPend(g.F)||acvPend(g.L)).length};
  const q=akey(acvQ);gs=gs.filter(g=>acvF==="todos"||(acvF==="app"&&g.cid)||(acvF==="F"&&g.F)||(acvF==="L"&&g.L)||(acvF==="ambos"&&g.F&&g.L)||(acvF==="pend"&&(acvPend(g.F)||acvPend(g.L)))).filter(g=>!q||g.k.includes(q));
  gs.sort((a,b)=>(!!b.cid-!!a.cid)||a.nome.localeCompare(b.nome,"pt"));
- return back+`<p class="hint" style="margin-top:-8px">Lido da planilha ${esc(acv.nome)} em ${esc(fmtShort(acv.at))}. A planilha continua sendo onde você atualiza; o aplicativo só lê. ${acvBusy?"Lendo de novo…":`<button class="link" data-a="acvsync">Ler de novo</button>`}</p>
+ return back+`<p class="hint" style="margin-top:-8px">Lido da planilha ${esc(acv.nome)} em ${esc(fmtShort(acv.at))}. A planilha continua sendo onde você atualiza; quando ela muda no Drive, o aplicativo lê de novo sozinho. ${acvBusy?"Lendo de novo…":`<button class="link" data-a="acvsync">Ler de novo</button>`}</p>
  ${acvErr?`<p class="warn">${esc(acvErr)}</p>`:""}
  <input type="text" id="acvq" value="${esc(acvQ)}" placeholder="Buscar conceito" style="margin:6px 0 10px">
  <div class="chips" style="margin-bottom:14px">${[["todos","Todos"],["app","Também no app"],["F","Freud"],["L","Lacan"],["ambos","Nos dois"],["pend","Pendências"]].map(([k,t])=>`<button class="chip" data-a="acvf" data-f="${k}" aria-pressed="${acvF===k}">${t} ${cont[k]}</button>`).join("")}</div>
@@ -817,17 +834,180 @@ async function actAcervo(a,el){
  }
  return actAuto(a,el)}
 
+/* ---------- formalização: notação da pesquisa, guia, IA e desenhos ---------- */
+const NOTACAO_INICIAL=[
+ ["L","conjunto dos lugares","conjunto","L = conjunto dos lugares considerados.",""],
+ ["V","conjunto dos valores","conjunto","V = conjunto dos valores/significações considerados.",""],
+ ["S","conjunto dos sujeitos","conjunto","S = conjunto dos sujeitos considerados.",""],
+ ["P","conjunto das pessoas","conjunto","P = conjunto das pessoas consideradas.","A mesma letra P aparece em P(V), com outro sentido (conjunto potência)."],
+ ["x","um lugar particular","elemento","x ∈ L. Usado no lugar de l, para não confundir com I ou com o número 1.",""],
+ ["v","um valor particular","elemento","v ∈ V.",""],
+ ["s","um sujeito particular","elemento","s ∈ S.",""],
+ ["p","uma pessoa particular","elemento","p ∈ P.",""],
+ ["P(V)","conjunto potência de V","conjunto de conjuntos","O conjunto de todos os subconjuntos de V.","Usa a letra P, já reservada ao conjunto das pessoas. Uma saída comum é escrever 𝒫(V) ou 2^V."],
+ ["f : L → P(V)","f associa a cada lugar um conjunto de valores","função","Recebe um lugar x e devolve um subconjunto de V: f(x) ⊆ V.",""],
+ ["g : S × L → P(V)","g associa a cada par sujeito-lugar um conjunto de valores","função","Recebe o par (s,x) e devolve um subconjunto de V: g(s,x) ⊆ V.",""],
+ ["S × L","produto cartesiano de sujeitos e lugares","conjunto de pares","Conjunto dos pares ordenados (s,x), com s ∈ S e x ∈ L.",""],
+ ["f(x) ∩ g(s,x) ≠ ∅ e f(x) ≠ g(s,x)","há algo em comum, sem identidade","condição entre conjuntos","Os dois subconjuntos compartilham ao menos um valor, mas não são iguais.",""],
+ ["R ⊆ P × L","relação entre pessoas e lugares","relação binária","(p,x) ∈ R registra que a pessoa p ocupa o lugar x. Permite várias pessoas por lugar e vários lugares por pessoa.",""]];
+const GUIA=[
+ ["Algo faz parte de um grupo","∈","pertencimento","x ∈ L","Liga um elemento a um conjunto.","Não confundir com ⊆, que liga um conjunto a outro conjunto."],
+ ["Um grupo está contido em outro","⊆","subconjunto","f(x) ⊆ V","Todo elemento do primeiro também está no segundo.","⊂ diz que está contido e é diferente."],
+ ["A cada coisa corresponde exatamente uma outra","f : A → B","função","f : L → V","Para cada elemento de A há um, e só um, resultado em B.","Se pode haver vários resultados, a função não serve assim."],
+ ["A cada coisa correspondem várias outras","f : A → 𝒫(B)","função para o conjunto potência","f : L → 𝒫(V)","O resultado é um conjunto de elementos, não um só.","O conjunto potência costuma ser escrito 𝒫(B) ou 2^B."],
+ ["O resultado depende de duas coisas juntas","A × B","produto cartesiano","g : S × L → 𝒫(V)","A entrada é o par (a,b), com a ∈ A e b ∈ B.","A ordem do par importa: (s,x) não é (x,s)."],
+ ["Vários se ligam a vários, sem regra única","R ⊆ A × B","relação binária","R ⊆ P × L; (p,x) ∈ R","Registra quais pares estão ligados, sem exigir um só resultado.","Mais geral que a função."],
+ ["Há algo em comum","A ∩ B ≠ ∅","interseção não vazia","f(x) ∩ g(s,x) ≠ ∅","Existe ao menos um elemento nos dois.",""],
+ ["Há algo em comum, mas não são iguais","A ∩ B ≠ ∅ e A ≠ B","interseção sem identidade","f(x) ∩ g(s,x) ≠ ∅ e f(x) ≠ g(s,x)","Compartilham algo sem coincidir.",""],
+ ["Juntar tudo o que está em dois grupos","A ∪ B","união","f(x) ∪ g(s,x)","Todos os elementos de A e de B.",""],
+ ["O que está em um e não no outro","A \\ B","diferença","f(x) \\ g(s,x)","Os elementos de A que não estão em B.",""],
+ ["Não há nenhum","A = ∅","conjunto vazio","f(x) ∩ g(s,x) = ∅","O conjunto não tem elementos.",""],
+ ["Vale para todos","∀","quantificador universal","∀ x ∈ L: f(x) ≠ ∅","A afirmação vale para cada elemento.",""],
+ ["Existe pelo menos um","∃","quantificador existencial","∃ v ∈ V: v ∈ f(x)","Há ao menos um elemento que satisfaz a condição.",""],
+ ["Se isso, então aquilo","⇒","implicação","A ⇒ B","Se A é verdadeiro, B também é.","Não confundir com a seta → das funções."],
+ ["Um vale exatamente quando o outro vale","⇔","equivalência","A ⇔ B","A e B são verdadeiros ou falsos juntos.",""],
+ ["Por definição","≔","definição","x ≔ ...","Introduz um nome para algo.",""],
+ ["Negar","¬, ∉, ≠","negação","x ∉ L; f(x) ≠ g(s,x)","Afirma que não pertence, não é igual, não vale.",""]];
+let formTab="notacao",symEdit=null,formQ="",formRes=null,formBusy=false,formErr="",fdraw=null;
+const aiKey=()=>{try{return localStorage.getItem("bm-ai-key")||""}catch(e){return ""}};
+const aiModel=()=>{try{return localStorage.getItem("bm-ai-model")||"claude-sonnet-5"}catch(e){return "claude-sonnet-5"}};
+function seedSymbols(){if(db.meta.symSeeded)return;NOTACAO_INICIAL.forEach(([sym,leitura,tipo,def,cuidado])=>db.symbols.push(touch({id:uid("y"),sym,leitura,tipo,def,cuidado,onde:"Formalização matemática: lugar, valor e atribuição (22/09/2026)",hist:[]})));db.meta.symSeeded=true;changed()}
+async function askAI(system,user){
+ const k=aiKey();if(!k)throw new Error("Configure a chave da IA primeiro.");
+ const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"x-api-key":k,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true","content-type":"application/json"},
+  body:JSON.stringify({model:aiModel(),max_tokens:1800,system,messages:[{role:"user",content:user}]})});
+ const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error((j.error&&j.error.message)||("Erro "+r.status));
+ return (j.content||[]).filter(b=>b.type==="text").map(b=>b.text).join("\n")}
+function promptForm(){
+ const nota=L("symbols").map(s=>`- ${s.sym}: ${s.leitura} (${s.tipo}). ${s.def}${s.cuidado?" Atenção: "+s.cuidado:""}`).join("\n");
+ const guia=GUIA.map(g=>`- "${g[0]}" → ${g[1]} (${g[2]}). Ex.: ${g[3]}. ${g[4]} ${g[5]}`).join("\n");
+ return `Você ajuda um pesquisador de psicanálise a formalizar ideias em linguagem matemática elementar (conjuntos, funções, relações, lógica). Ele é a única autoridade sobre as decisões; você propõe e explica, nunca decide.
+Siga o critério metodológico dele, nesta ordem: (1) identificar a relação conceitual que a ideia afirma; (2) escolher o objeto matemático adequado (elemento, conjunto, função, relação, produto cartesiano, condição lógica); (3) só então escrever a expressão.
+Regras:
+- Use a notação já estabelecida por ele sempre que servir. Nunca reutilize uma letra já definida com outro sentido; se precisar de símbolo novo, diga que é novo e sugira uma letra livre.
+- Use apenas símbolos da lista-guia abaixo ou da notação dele.
+- Não force a formalização: se a ideia ainda não estiver precisa o bastante, diga o que falta decidir e faça uma pergunta.
+- Para cada opção, diga também o que a expressão NÃO afirma, para que ela não diga mais do que a ideia.
+- Escreva em português, com clareza didática.
+Responda APENAS com um objeto JSON, sem texto antes ou depois, neste formato:
+{"relacao":"a relação conceitual identificada, em uma ou duas frases","opcoes":[{"expressao":"...","objeto":"tipo de objeto matemático","leitura":"como se lê","porque":"por que este objeto serve à ideia","limite":"o que a expressão não afirma"}],"novos_simbolos":["símbolo novo — sentido"],"cuidado":"alerta de ambiguidade ou conflito com a notação, ou vazio","pergunta":"o que ainda precisa ser decidido, ou vazio"}
+No máximo 3 opções.
+
+NOTAÇÃO DA PESQUISA (já definida por ele):
+${nota}
+
+LISTA-GUIA DE SÍMBOLOS:
+${guia}`}
+function parseAI(t){const m=t.match(/\{[\s\S]*\}/);if(!m)return null;try{return JSON.parse(m[0])}catch(e){return null}}
+/* desenhos dentro de um Word */
+async function desenhosDocx(ab){
+ const z=await JSZip.loadAsync(ab),P=new DOMParser(),tags=(d,n)=>[...d.getElementsByTagName("*")].filter(e=>e.localName===n);
+ const rels=P.parseFromString(await z.file("word/_rels/document.xml.rels").async("string"),"application/xml");
+ const alvo=Object.fromEntries(tags(rels,"Relationship").map(r=>[r.getAttribute("Id"),r.getAttribute("Target")]));
+ const doc=P.parseFromString(await z.file("word/document.xml").async("string"),"application/xml");
+ const ps=tags(doc,"p"),txt=p=>tags(p,"t").map(t=>t.textContent).join("").trim(),out=[],vistos=new Set();let pulados=0;
+ for(let i=0;i<ps.length;i++){for(const b of tags(ps[i],"blip")){
+  const rid=b.getAttribute("r:embed")||([...b.attributes].find(a=>a.localName==="embed")||{}).value,t=alvo[rid];if(!t||vistos.has(t))continue;vistos.add(t);
+  const path="word/"+t.replace(/^\.?\//,""),ext=(t.match(/\.(\w+)$/)||[])[1]||"";
+  if(!/^(png|jpe?g|gif|webp)$/i.test(ext)){pulados++;continue}
+  const f=z.file(path);if(!f)continue;
+  let cap="";for(const j of [i+1,i+2,i-1])if(ps[j]&&/^figura/i.test(txt(ps[j]))){cap=txt(ps[j]);break}
+  let expl="";if(cap){const k=ps.indexOf(ps[i+1]&&/^figura/i.test(txt(ps[i+1]))?ps[i+1]:ps[i+2]);if(k>0&&ps[k+1]&&!tags(ps[k+1],"blip").length)expl=txt(ps[k+1])}
+  const blob=new Blob([await f.async("arraybuffer")],{type:"image/"+(ext.toLowerCase()==="jpg"?"jpeg":ext.toLowerCase())});
+  out.push({url:URL.createObjectURL(blob),blob,ext,cap,expl,sel:true})}}
+ return {imgs:out,pulados}}
+function ideaImg(i){return i.image?imgTag({img:`https://drive.google.com/file/d/${i.image}/view`,n:"desenho"},0):""}
+function vForm(){
+ seedSymbols();
+ const seg=`<div class="seg">${[["notacao","Notação"],["guia","Guia"],["ia","Perguntar"],["desenhos","Desenhos"]].map(([k,t])=>`<button data-a="ftab" data-t="${k}" aria-pressed="${formTab===k}">${t}</button>`).join("")}</div>`;
+ const head=`<button class="back" data-a="nav" data-to="diss">‹ Dissertação</button><h1>Formalização</h1>${seg}`;
+ if(formTab==="notacao"){const l=L("symbols");
+  return head+`<p class="hint" style="margin:-4px 0 14px">A sua notação estabilizada. Quando você muda o sentido de um símbolo, a versão anterior fica guardada.</p>
+  ${l.map(s=>symEdit===s.id?symEditor(s):`<div class="doc f-sym"><p class="f-s">${esc(s.sym)}</p><p class="f-l">${esc(s.leitura)} <span class="state">${esc(s.tipo)}</span></p><p class="excerpt" style="margin-top:6px">${esc(s.def)}</p>
+   ${s.cuidado?`<p class="warn" style="margin:8px 0 0">${esc(s.cuidado)}</p>`:""}<p class="hint" style="margin:6px 0 0">${esc(s.onde||"")}</p>
+   ${s.hist&&s.hist.length?`<details style="margin-top:6px"><summary class="hint" style="cursor:pointer">Versões anteriores (${s.hist.length})</summary>${s.hist.slice().reverse().map(h=>`<p class="hint" style="margin:6px 0 0"><b>${esc(brDate(h.dt))}</b> ${esc(h.sym)}: ${esc(h.leitura)}. ${esc(h.def)}</p>`).join("")}</details>`:""}
+   <div class="row"><button class="link" data-a="symedit" data-id="${s.id}">Editar</button></div></div>`).join("")}
+  ${symEdit==="novo"?symEditor({id:"novo",sym:"",leitura:"",tipo:"",def:"",cuidado:"",onde:""}):`<button class="secondary" style="width:100%" data-a="symedit" data-id="novo">+ Símbolo</button>`}`}
+ if(formTab==="guia")return head+`<p class="hint" style="margin:-4px 0 14px">Comece pela relação que a ideia afirma. O objeto matemático e o símbolo vêm depois.</p>
+  ${GUIA.map(g=>`<details class="doc f-g"><summary><span>${esc(g[0])}</span><span class="f-gs">${esc(g[1])}</span></summary><p class="f-l" style="margin-top:10px">${esc(g[2])}</p><p class="excerpt">Exemplo: ${esc(g[3])}</p><p style="margin:8px 0 0;font-size:15px">${esc(g[4])}</p>${g[5]?`<p class="hint" style="margin:6px 0 0">Cuidado: ${esc(g[5])}</p>`:""}</details>`).join("")}`;
+ if(formTab==="ia"){const k=aiKey(),r=formRes;
+  return head+`${!k?`<div class="panel"><p style="margin:0 0 6px"><b>Configurar a IA</b></p><p class="hint" style="margin:0 0 10px">Cole aqui a sua chave da API da Anthropic. Ela fica guardada só neste aparelho e não vai para o Drive nem para o GitHub.</p>${aiCfg()}</div>`:""}
+  <label class="label" for="fq" style="margin-top:0">Descreva a ideia que quer formalizar</label>
+  <textarea id="fq" class="small" placeholder="Ex.: o lugar que alguém ocupa para o sujeito carrega valores que não vêm da pessoa atual">${esc(formQ)}</textarea>
+  <button class="primary" data-a="fask" ${formBusy||!k?"disabled":""}>${formBusy?"Pensando…":"Perguntar à IA"}</button>
+  <p class="hint">A IA segue o seu critério: primeiro a relação conceitual, depois o objeto matemático, só então a expressão. Ela usa a sua notação e a lista do Guia, e diz o que cada opção não afirma. A escolha é sua.</p>
+  ${formErr?`<p class="err">${esc(formErr)}</p>`:""}
+  ${r?(r.raw?`<div class="panel"><p class="excerpt">${esc(r.raw).replace(/\n/g,"<br>")}</p></div>`:`<div class="panel f-res"><p class="label" style="margin-top:0">Relação conceitual</p><p style="margin:0">${esc(r.relacao||"")}</p>
+   ${(r.opcoes||[]).map((o,i)=>`<div class="f-op"><p class="f-s">${esc(o.expressao)}</p><p class="f-l">${esc(o.objeto||"")}${o.leitura?" · "+esc(o.leitura):""}</p><p style="margin:8px 0 0"><b>Por quê:</b> ${esc(o.porque||"")}</p><p style="margin:6px 0 0"><b>O que não afirma:</b> ${esc(o.limite||"")}</p><div class="row"><button class="secondary" data-a="fsave" data-i="${i}">Guardar como ideia</button></div></div>`).join("")}
+   ${(r.novos_simbolos||[]).filter(Boolean).length?`<p class="label">Símbolos novos propostos</p>${r.novos_simbolos.map(s=>`<p style="margin:0 0 4px">${esc(s)}</p>`).join("")}`:""}
+   ${r.cuidado?`<p class="warn" style="margin-top:12px">${esc(r.cuidado)}</p>`:""}${r.pergunta?`<p class="label">Para decidir</p><p style="margin:0">${esc(r.pergunta)}</p>`:""}</div>`):""}
+  ${k?`<details style="margin-top:18px"><summary class="hint" style="cursor:pointer">Configuração da IA</summary><div class="panel" style="margin-top:8px">${aiCfg()}</div></details>`:""}`}
+ // desenhos
+ if(!hasToken())return head+connectBox();
+ const d=fdraw||{q:"",res:null};
+ if(!d.file)return head+`<p class="hint" style="margin:-4px 0 12px">Escolha um documento Word do Drive. O aplicativo mostra os desenhos que estão dentro dele, e cada um pode virar uma ideia com imagem. O documento não é alterado.</p>
+  <input type="text" id="fdq" value="${esc(d.q)}" placeholder="Parte do nome, ex.: Formalizacao"><div id="fdres">${fdResults()}</div>`;
+ if(!d.imgs)return head+`<p class="hint">Lendo ${esc(d.file.name)}…</p>`;
+ const n=d.imgs.filter(x=>x.sel).length;
+ return head+`<button class="back" data-a="fdback">‹ Outro documento</button><p class="fname" style="font-family:var(--serif);font-size:17px;margin:6px 0">${esc(d.file.name)}</p>
+  <p class="hint">${d.imgs.length} ${d.imgs.length===1?"desenho encontrado":"desenhos encontrados"}${d.pulados?`; ${d.pulados} em formato que não dá para mostrar (desenho feito com formas do Word ou imagem vetorial)`:""}. Cada um vira uma ideia com a legenda como texto e vai para Pendentes, onde você marca os conceitos.</p>
+  <div class="f-grid">${d.imgs.map((x,i)=>`<button class="f-img" data-a="fdtog" data-i="${i}" aria-pressed="${x.sel}"><img src="${x.url}" alt=""><span>${esc(x.cap||"Sem legenda")}</span><i>${x.sel?"✓":""}</i></button>`).join("")}</div>
+  ${err?`<p class="err">${esc(err)}</p>`:""}<button class="primary" data-a="fdcreate" ${n&&!d.busy?"":"disabled"}>${d.busy?"Salvando no Drive…":`Criar ${n} ${n===1?"ideia":"ideias"} com imagem`}</button>`}
+function aiCfg(){return `<label class="label" for="aik" style="margin-top:0">Chave da API</label><input type="password" id="aik" value="${esc(aiKey())}" placeholder="sk-ant-..." autocomplete="off">
+ <label class="label" for="aim">Modelo</label><input type="text" id="aim" value="${esc(aiModel())}"><div class="row"><button class="secondary" data-a="aisave">Salvar</button>${aiKey()?`<button class="link" data-a="aidel">Apagar a chave deste aparelho</button>`:""}</div>
+ <p class="hint">Crie a chave em console.anthropic.com. O uso da API é cobrado à parte da assinatura do Claude; defina lá um limite de gasto mensal.</p>`}
+function symEditor(s){return `<div class="panel"><label class="label" for="ys" style="margin-top:0">Símbolo ou expressão</label><input type="text" id="ys" value="${esc(s.sym)}">
+ <label class="label" for="yl">Leitura</label><input type="text" id="yl" value="${esc(s.leitura)}"><label class="label" for="yt">Tipo matemático</label><input type="text" id="yt" value="${esc(s.tipo)}" placeholder="conjunto, elemento, função, relação…">
+ <label class="label" for="yd">Definição</label><textarea id="yd" class="small">${esc(s.def)}</textarea><label class="label" for="yc">Cuidado</label><input type="text" id="yc" value="${esc(s.cuidado)}">
+ <label class="label" for="yo">Onde foi definido</label><input type="text" id="yo" value="${esc(s.onde)}">
+ <button class="primary" data-a="symsave" data-id="${s.id}">Salvar</button><div class="row"><button class="link" data-a="symcancel">Cancelar</button>${s.id!=="novo"?`<button class="link" data-a="symdel" data-id="${s.id}">Excluir</button>`:""}</div></div>`}
+function fdResults(){const d=fdraw;if(!d||!d.res)return `<p class="hint">Digite ao menos três letras.</p>`;if(d.loading)return `<p class="hint">Buscando…</p>`;
+ return d.res.length?d.res.map(f=>`<button class="res" data-a="fdpick" data-id="${f.id}"><p class="fname" style="margin:0">${esc(f.name)}</p></button>`).join(""):`<p class="hint">Nenhum documento com esse nome.</p>`}
+let fdTimer=null;
+function bindForm(){
+ on("#fq","input",e=>formQ=e.target.value);
+ on("#fdq","input",e=>{fdraw=fdraw||{};fdraw.q=e.target.value;clearTimeout(fdTimer);fdTimer=setTimeout(async()=>{const q=fdraw.q.trim();if(fold(q).length<3){fdraw.res=null;$("#fdres").innerHTML=fdResults();return}
+  fdraw.loading=true;fdraw.res=[];$("#fdres").innerHTML=fdResults();try{fdraw.res=await listFiles(`trashed=false and mimeType='${DOCX}' and name contains '${qesc(q)}'`,"files(id,name,mimeType,modifiedTime)")}catch(e){fdraw.res=[]}fdraw.loading=false;const el=$("#fdres");if(el)el.innerHTML=fdResults()},500)})}
+async function actForm(a,el){
+ const id=el&&el.dataset.id;
+ switch(a){
+ case "ftab":formTab=el.dataset.t;return render();
+ case "symedit":symEdit=id;return render();
+ case "symcancel":symEdit=null;return render();
+ case "symsave":{const v=k=>($("#"+k).value||"").trim(),n={sym:v("ys"),leitura:v("yl"),tipo:v("yt"),def:v("yd"),cuidado:v("yc"),onde:v("yo")};if(!n.sym)return toast("Escreva o símbolo.");
+  if(id==="novo")db.symbols.push(touch({id:uid("y"),...n,hist:[]}));else{const s=db.symbols.find(x=>x.id===id);if(s.sym!==n.sym||s.leitura!==n.leitura||s.def!==n.def||s.tipo!==n.tipo)(s.hist=s.hist||[]).push({dt:todayIso(),sym:s.sym,leitura:s.leitura,def:s.def});Object.assign(s,n);touch(s)}
+  symEdit=null;changed();render();return toast("Notação salva")}
+ case "symdel":{if(!confirm("Excluir este símbolo da notação?"))return;const s=db.symbols.find(x=>x.id===id);s.deleted=true;touch(s);symEdit=null;changed();return render()}
+ case "aisave":{try{localStorage.setItem("bm-ai-key",$("#aik").value.trim());localStorage.setItem("bm-ai-model",$("#aim").value.trim()||"claude-sonnet-5")}catch(e){}render();return toast("Configuração salva neste aparelho")}
+ case "aidel":{try{localStorage.removeItem("bm-ai-key")}catch(e){}render();return toast("Chave apagada deste aparelho")}
+ case "fask":{formQ=($("#fq").value||"").trim();if(!formQ)return toast("Descreva a ideia primeiro.");formBusy=true;formErr="";formRes=null;render();
+  try{const t=await askAI(promptForm(),formQ);formRes=parseAI(t)||{raw:t}}catch(e){formErr=e.message||"Não foi possível falar com a IA."}formBusy=false;return render()}
+ case "fsave":{const o=formRes.opcoes[+el.dataset.i];db.ideas.push(touch({id:uid("i"),text:`${formQ}\n\n${o.expressao}\n${o.porque||""}`,moment:"Formalização, com sugestão da IA",refId:"",concepts:[],ts:nowIso()}));changed();return toast("Guardada em Pendentes, para você marcar os conceitos")}
+ case "fdpick":{const f=fdraw.res.find(x=>x.id===id);fdraw.file=f;fdraw.imgs=null;err="";render();
+  try{if(!window.JSZip)throw new Error("Componente de Word ainda carregando.");const ab=await(await api(`drive/v3/files/${f.id}?alt=media`)).arrayBuffer();const r=await desenhosDocx(ab);fdraw.imgs=r.imgs;fdraw.pulados=r.pulados}
+  catch(e){fdraw.file=null;toast(e.message||"Não foi possível ler o documento.")}return render()}
+ case "fdback":fdraw.file=null;fdraw.imgs=null;return render();
+ case "fdtog":{const x=fdraw.imgs[+el.dataset.i];x.sel=!x.sel;return render()}
+ case "fdcreate":{const l=fdraw.imgs.filter(x=>x.sel);await getToken(true);fdraw.busy=true;render();let n=0;
+  try{const pasta=await subFolder("Imagens"),base=fdraw.file.name.replace(/\.docx?$/i,"");
+   for(const x of l){const nome=`${base} — ${(x.cap||"desenho").slice(0,80)}.${x.ext.toLowerCase()}`;const m=await upload({name:nome,parents:[pasta]},x.blob);
+    db.ideas.push(touch({id:uid("i"),text:[x.cap,x.expl].filter(Boolean).join("\n")||"Desenho",moment:"Desenho de "+base,refId:"",concepts:[],image:m.id,ts:nowIso()}));x.sel=false;n++;changed()}}
+  catch(e){toast("Parei no meio: "+n+" salvos. Verifique a internet e tente de novo.")}
+  fdraw.busy=false;render();return n&&toast(`${n} ${n===1?"ideia criada":"ideias criadas"} em Pendentes`)}
+ }
+ return actAcervo(a,el)}
+
 /* ---------- desenho geral ---------- */
 const NAV=[["capture","Capturar"],["concepts","Conceitos"],["timeline","Linha do tempo","Tempo"],["pending","Pendentes"],["diss","Dissertação"]];
 function renderNav(){
- const sub=["concept","batch","bib","auto","acervo","aficha"].includes(route.name),cur=sub?"concepts":route.name,np=pending().length;
+ const sub=["concept","batch","bib","auto","acervo","aficha"].includes(route.name),cur=sub?"concepts":route.name==="form"?"diss":route.name,np=pending().length;
  $("#tabs").classList.toggle("cinco",NAV.length>4);$("#tabs").innerHTML=NAV.map(([k,l,s])=>`<button data-a="nav" data-to="${k}" aria-current="${cur===k}">${s||l}${k==="pending"&&np?`<span class="badge-n">${np}</span>`:""}</button>`).join("");
  $("#side").innerHTML=`<div class="topb"><span class="mark">${KNOT}</span><span class="brand">Bloco Mágico</span></div><button class="syncbtn" data-a="sync"></button>
  <nav>${NAV.map(([k,l])=>`<button data-a="nav" data-to="${k}" aria-current="${cur===k&&!sub}">${l}${k==="pending"&&np?`<span class="badge-n">${np}</span>`:""}</button>`).join("")}
- <button data-a="nav" data-to="batch" aria-current="${route.name==="batch"}">Organizar pasta do Drive</button><button data-a="nav" data-to="bib" aria-current="${route.name==="bib"}">Bibliografia</button><button data-a="nav" data-to="acervo" aria-current="${route.name==="acervo"||route.name==="aficha"}">Acervo Freud e Lacan</button></nav>
+ <button data-a="nav" data-to="batch" aria-current="${route.name==="batch"}">Organizar pasta do Drive</button><button data-a="nav" data-to="bib" aria-current="${route.name==="bib"}">Bibliografia</button><button data-a="nav" data-to="acervo" aria-current="${route.name==="acervo"||route.name==="aficha"}">Acervo Freud e Lacan</button><button data-a="nav" data-to="form" aria-current="${route.name==="form"}">Formalização</button></nav>
  <p class="sub">Seus conceitos</p><div class="cl">${sortedConcepts().map(c=>`<button data-a="open" data-id="${c.id}" aria-current="${route.name==="concept"&&route.id===c.id}"><span style="width:9px;height:9px;border-radius:50%;background:${c.color};display:inline-block;flex:none"></span>${esc(c.name)}</button>`).join("")}</div>`;
  setSync()}
-function render(){renderNav();$("#main").innerHTML=({capture:vCapture,concepts:vConcepts,concept:vConcept,timeline:vTimeline,pending:vPending,batch:vBatch,bib:vBib,diss:vDiss,auto:vAuto,acervo:vAcervo,aficha:vAficha}[route.name]||vConcepts)();bind()}
+function render(){renderNav();$("#main").innerHTML=({capture:vCapture,concepts:vConcepts,concept:vConcept,timeline:vTimeline,pending:vPending,batch:vBatch,bib:vBib,diss:vDiss,auto:vAuto,acervo:vAcervo,aficha:vAficha,form:vForm}[route.name]||vConcepts)();bind()}
 function softRender(){const a=document.activeElement;if(a&&$("#main").contains(a)&&/INPUT|TEXTAREA|SELECT/.test(a.tagName)){renderNav()}else render()}
 function on(sel,ev,fn){const e=$(sel);if(e)e.addEventListener(ev,fn);return e}
 function bind(){
@@ -845,7 +1025,7 @@ function bind(){
  on("#de-s","change",e=>de.state=e.target.value);
  document.querySelectorAll(".cites").forEach(i=>i.addEventListener("input",e=>de.inc[e.target.dataset.ref]=Math.max(0,parseInt(e.target.value)||0)));
  on("#acvq","input",e=>{acvQ=e.target.value;const pos=e.target.selectionStart;render();const n=$("#acvq");if(n){n.focus();n.setSelectionRange(pos,pos)}});
- bindDiss()}
+ bindForm();bindDiss()}
 
 /* ---------- ações ---------- */
 function tog(arr,id){const i=arr.indexOf(id);i>=0?arr.splice(i,1):arr.push(id);return arr.includes(id)}
@@ -927,7 +1107,7 @@ async function act(a,el){
  case "mkbulk":{const type=$("#rbt").value,have=new Set(L("refs").map(r=>fold(r.label)));const lines=$("#rb").value.split("\n").map(s=>s.trim()).filter(s=>s&&!have.has(fold(s)));
   if(!lines.length)return toast("Nenhuma obra nova na lista.");lines.forEach(label=>db.refs.push(touch({id:uid("r"),type,label})));showBulk=false;changed();render();return toast(`${lines.length} ${lines.length===1?"obra cadastrada":"obras cadastradas"}`)}
  case "rdel":{const r=R(id);if(!confirm(`Excluir "${r.label}" da bibliografia?`))return;r.deleted=true;touch(r);changed();render();return toast("Obra excluída")}
- default:return actAcervo(a,el)
+ default:return actForm(a,el)
  }}catch(e){if(e.message==="auth"){toast("Conecte ao Drive tocando no aviso de sincronização.");render()}else toast(e.message||"Algo deu errado.")}}
 function scrollPanel(){const p=$(".panel");if(p)p.scrollIntoView({block:"start",behavior:"smooth"})}
 document.addEventListener("click",e=>{const el=e.target.closest("[data-a]");if(el&&!el.disabled){e.preventDefault();act(el.dataset.a,el)}});
