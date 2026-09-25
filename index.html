@@ -231,6 +231,15 @@ a.d-docl span:nth-child(2){text-decoration:underline;text-underline-offset:3px}
 .d-no .d-ck{background:none;border:2px solid var(--rule)}.d-no span:nth-child(2){color:var(--muted)}
 .d-esq{background:var(--ink);color:var(--surface)}
 .a-item{display:flex;align-items:center;gap:12px;margin-top:6px}.a-ck{width:22px;height:22px;flex:none;border-radius:6px;border:2px solid var(--ink);display:grid;place-items:center;font-size:13px;font-weight:600}.a-item[aria-pressed="true"] .a-ck{background:var(--ink);color:var(--surface)}
+.ct{margin-top:6px}.ct-busca{width:100%;margin:4px 0 8px}
+.ct-lista{max-height:65vh;overflow-y:auto}
+.ct-obra{margin:14px 0 6px;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--accent)}
+.ct-it{border-left:3px solid var(--rule);padding:4px 0 10px 10px;margin-bottom:8px}.ct-it.nota{border-left-color:var(--c-x)}
+.ct-q{margin:0;font-family:var(--serif);font-size:15px;line-height:1.5}
+.ct-al{margin:4px 0 0;font-size:12.5px;font-weight:600;color:var(--c-x)}.ct-ok{margin:4px 0 0;font-size:12.5px;font-weight:500;color:var(--c-d)}
+.ct-ex{margin-top:4px;font-size:13.5px;color:var(--muted)}.ct-ex summary{cursor:pointer;font-size:12.5px}.ct-ex p{margin:4px 0 0}
+.ct-lv{margin-top:8px;font-size:13px;padding:6px 11px}
+.ct-pick{margin-top:8px;padding:10px;border:1px solid var(--accent);border-radius:10px}
 .a-img{display:block;width:100%;max-height:420px;object-fit:contain;border-radius:10px;background:var(--surface);margin:0 0 14px}
 .a-img.big{max-height:520px}.a-ph{display:grid;place-items:center;height:220px;color:var(--muted);font-size:14px;border:1px dashed var(--rule)}
 .a-imgs{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
@@ -883,6 +892,7 @@ function colAutor(r,aut){
  ${r.f?`<p class="a-l"><b>Fontes</b>${esc(r.f)}</p>`:""}
  <p class="a-l"><b>Status</b>${r.s?esc(r.s):"em branco"}${r.d?" · "+esc(r.d):""}</p>
  ${r.o?`<p class="a-obs">${esc(r.o)}</p>`:""}
+ ${r.doc?citBloco(r,aut):""}
  ${r.doc&&acvLer[driveId(r.doc)]!==undefined?`<div class="a-texto">${acvLer[driveId(r.doc)]===null?"Lendo o documento…":esc(acvLer[driveId(r.doc)]||"Não foi possível ler este documento.").replace(/\n/g,"<br>")}</div>`:""}</div>`}
 const acvLer={};
 function vAficha(){
@@ -1267,7 +1277,7 @@ async function actPlano(a,el){const d=el?el.dataset:{},n=route.k;
  case "plimpok":{const ant=planRec(n),novo={...plImp.pl};novo.versoes=ant?[...(ant.versoes||[]),{dt:todayIso(),plano:JSON.parse(JSON.stringify({...ant,versoes:undefined}))}]:[];
   if(ant){Object.keys(ant).forEach(k=>{if(!["id","n","updatedAt"].includes(k))delete ant[k]});Object.assign(ant,novo);touch(ant)}else db.plans.push(touch({id:"plan-"+n+"-"+uid("x").slice(-4),n,...novo}));
   const s=L("subs").find(x=>x.n===n);if(s&&!s.title&&plImp.titulo){s.title=plImp.titulo;touch(s)}plImp=null;plOpen=new Set([0]);changed();render();return toast("Esquema importado")}
- }return actWa(a,el)}
+ }return actCits(a,el)}
 /* --- orientadora pelo WhatsApp --- */
 let ws=null; // {kind:"sub"|"idea", ref, sel:[], msg}
 const numWa=s=>{let d=String(s||"").replace(/\D/g,"");if(d.length===10||d.length===11)d="55"+d;return d};
@@ -1337,6 +1347,92 @@ function vRitmo(){const d=ritmoDias(),dias=Object.keys(d),hoje=new Date(todayIso
  <div class="panel"><p style="margin:0 0 4px;font-family:var(--serif);font-size:18px">Dias de escrita</p><p class="hint" style="margin:0 0 10px">Últimas 12 semanas. Quanto mais escuro, mais você escreveu. Dias de revisão, em que o texto diminuiu, também contam.</p><div class="rit-grade">${grade}</div></div>
  <p class="hint">Sem notas nem metas: só o ritmo.</p>`}
 
+/* ---------- leitor de citações (do protótipo) ---------- */
+const normT=s=>String(s||"").normalize("NFKD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9 ]+/g," ").replace(/\s+/g," ").trim();
+function citacoesDoDocx(bl){
+  const cits=[], refs=[]; let ano="", obra="", naRef=false, ult=null;
+  const reRef=/\(([A-ZÀ-Ý]{3,}),\s*([^,()]+?),\s*p\.\s*([^)]+)\)\.?\s*$/;
+  for(const b of bl){
+    if(b.tipo!=="p") continue;
+    const t=b.t;
+    if(/heading\s*1/i.test(b.est)){ naRef=/^refer[êe]ncias/i.test(t); ano=t; ult=null; continue; }
+    if(/heading\s*2/i.test(b.est)){ obra=t; ult=null; continue; }
+    if(naRef){ const m=t.match(/^[A-ZÀ-Ý]+,\s*[^.]+\.\s*(.+?)\s*\[/); if(m) refs.push({titulo:m[1],vol:(t.match(/volume\s+(\d+)/i)||[])[1]||"",ref:t}); continue; }
+    const m=t.match(reRef);
+    if(/^["“]/.test(t)&&m){
+      ult={obra, periodo:ano, texto:t.slice(0,m.index).trim().replace(/^["“]|["”]$/g,"").trim(), autor:m[1], ano:m[2].trim(), pag:m[3].trim(), expl:""};
+      cits.push(ult); continue;
+    }
+    if(ult&&!ult.expl&&obra){ ult.expl=t; continue; }
+  }
+  // volume de cada obra a partir das referências ABNT
+  const chaveObra=s=>normT(s.replace(/\([^)]*\)\s*$/,"").replace(/\(.*?\)/g,"")).slice(0,22);
+  cits.forEach(c=>{
+    const r=refs.find(r=>chaveObra(r.titulo)&&chaveObra(c.obra).startsWith(chaveObra(r.titulo).slice(0,16)))||refs.find(r=>normT(c.obra).includes(normT(r.titulo).slice(0,16)));
+    c.vol=r?r.vol:""; c.refABNT=r?r.ref:"";
+    c.nota=/n[ãa]o [ée] (uma )?frase d[eo]|n[ãa]o escrita por|nota editorial|nota [^.]{0,30}dos (tradutores|editores)/i.test(c.expl)||/^No original/i.test(c.texto);
+    c.semPag=/s\.?\s*p\.?$/i.test(c.pag);
+  });
+  return cits;
+}
+
+/* ---------- citações das compilações → planejamento ---------- */
+const citMem={};let citOpen=new Set(),citQ={},citLev=null;
+try{Object.assign(citMem,JSON.parse(localStorage.getItem("bm-cits")||"{}"))}catch(e){}
+function guardarCits(){try{const ks=Object.keys(citMem).sort((a,b)=>(citMem[b].at||"").localeCompare(citMem[a].at||"")).slice(0,25),o={};ks.forEach(k=>o[k]=citMem[k]);localStorage.setItem("bm-cits",JSON.stringify(o))}catch(e){}}
+async function carregarCits(fid){
+ citMem[fid]={loading:true};softRender();
+ try{if(!window.JSZip)throw new Error("Componente de Word ainda carregando.");
+  const m=await(await api(`drive/v3/files/${fid}?fields=id,name,mimeType,modifiedTime`)).json();
+  const ab=await(await api(m.mimeType===GDOC?`drive/v3/files/${fid}/export?mimeType=${encodeURIComponent(DOCX)}`:`drive/v3/files/${fid}?alt=media`)).arrayBuffer();
+  const z=await JSZip.loadAsync(ab),lista=citacoesDoDocx(blocosDocx(await z.file("word/document.xml").async("string")));
+  citMem[fid]={lista,nome:m.name,mod:m.modifiedTime,at:nowIso()};guardarCits();
+  if(!lista.length)citMem[fid].vazio=true}
+ catch(e){citMem[fid]={erro:e.message==="auth"?"Conecte ao Drive de novo.":(e.message||"Não foi possível ler o documento.")}}
+ softRender()}
+const paginaDe=c=>(c.vol?`Vol. ${c.vol}, `:"")+`p. ${c.pag}`;
+const numsP=s=>(String(s).replace(/vol\.?\s*\d+/i,"").match(/\d+/g)||[]).map(Number);
+function divergencias(c){const alvo=normT(c.texto),out=[];
+ L("plans").forEach(p=>p.demos.forEach(d=>d.passagens.forEach(ps=>{const frag=normT(ps.passagem).split(" ").slice(0,6).join(" ");if(frag.length<18||!alvo.includes(frag))return;
+  const a=numsP(ps.pagina),b=numsP(c.pag),bate=a.length&&b.length&&Math.max(...a)>=Math.min(...b)&&Math.min(...a)<=Math.max(...b);out.push({n:p.n,pagina:ps.pagina,bate})})));return out}
+function citBloco(r,aut){
+ const fid=driveId(r.doc);if(!fid)return "";const aberto=citOpen.has(fid),c=citMem[fid];
+ const botao=`<button class="link" data-a="citopen" data-id="${fid}" style="display:block;margin-top:8px">${aberto?"Fechar as citações":"Ver as citações"}</button>`;
+ if(!aberto)return botao;
+ if(!c||c.loading)return botao+`<p class="hint">Lendo as citações do documento…</p>`;
+ if(c.erro)return botao+`<p class="err">${esc(c.erro)}</p><button class="link" data-a="citreload" data-id="${fid}">Tentar de novo</button>`;
+ if(c.vazio)return botao+`<p class="hint">Não encontrei citações no formato “…” (AUTOR, ano, p. X) neste documento.</p>`;
+ const q=normT(citQ[fid]||""),lista=c.lista.map((x,i)=>({...x,i})).filter(x=>!q||normT(x.texto+" "+x.obra+" "+x.expl).includes(q));
+ const nN=c.lista.filter(x=>x.nota).length,nS=c.lista.filter(x=>x.semPag).length,nD=c.lista.filter(x=>divergencias(x).some(d=>!d.bate)).length;let ob="";
+ return botao+`<div class="ct"><p class="hint" style="margin:6px 0">${c.lista.length} citações${nN?` · ${nN} notas editoriais`:""}${nS?` · <span class="err">${nS} sem página</span>`:""}${nD?` · <span class="err">${nD} com página diferente do planejamento</span>`:""} · <button class="link" data-a="citreload" data-id="${fid}">ler de novo</button></p>
+ <input type="text" class="ct-busca" data-cq="${fid}" value="${esc(citQ[fid]||"")}" placeholder="Buscar nas citações">
+ <div class="ct-lista">${lista.map(x=>{const dv=divergencias(x),cab=x.obra!==ob?`<p class="ct-obra">${esc(x.obra)}</p>`:"";ob=x.obra;const lev=citLev&&citLev.fid===fid&&citLev.i===x.i;
+  return cab+`<div class="ct-it ${x.nota?"nota":""}"><p class="ct-q">“${esc(x.texto)}”</p><p class="hint" style="margin:4px 0 0">(${esc(x.autor)}, ${esc(x.ano)}, p. ${esc(x.pag)})${x.vol?" · Vol. "+esc(x.vol):""}</p>
+  ${x.nota?`<p class="ct-al">Nota editorial dos tradutores — não é afirmação de ${aut}.</p>`:""}${x.semPag?`<p class="ct-al">Sem página no documento.</p>`:""}
+  ${dv.map(d=>d.bate?`<p class="ct-ok">Já está no planejamento do ${esc(d.n)} (${esc(d.pagina)}).</p>`:`<p class="ct-al">No planejamento do ${esc(d.n)} está “${esc(d.pagina)}”; aqui, p. ${esc(x.pag)}. Confira no volume.</p>`).join("")}
+  ${x.expl?`<details class="ct-ex"><summary>Explicação da compilação</summary><p>${esc(x.expl)}</p></details>`:""}
+  ${lev?levarH(fid,x):`<button class="secondary ct-lv" data-a="citlev" data-id="${fid}" data-i="${x.i}">Levar para o planejamento</button>`}</div>`}).join("")||`<p class="hint">Nada encontrado.</p>`}</div></div>`}
+function levarH(fid,x){const subs=subsSorted();if(!subs.length)return `<p class="hint">Adicione subtítulos na aba Dissertação primeiro.</p>`;
+ const n=citLev.n||(subs.find(s=>planRec(s.n)&&planRec(s.n).demos.length)||subs[0]).n;citLev.n=n;const demos=(planRec(n)||{demos:[]}).demos;
+ return `<div class="ct-pick"><div class="chips" style="margin-bottom:8px">${subs.map(s=>`<button class="chip" data-a="citsub" data-n="${esc(s.n)}" aria-pressed="${s.n===n}">${esc(s.n)}</button>`).join("")}</div>
+ <p class="label" style="margin:4px 0 6px">Demonstração</p><div class="chips">${demos.map((d,k)=>`<button class="chip" data-a="citok" data-k="${k}">${k+1}. ${esc(d.nome||"sem nome")}</button>`).join("")}<button class="chip add" data-a="citok" data-k="nova">+ Nova demonstração</button></div>
+ <div class="row"><button class="link" data-a="citno">Cancelar</button></div></div>`}
+function bindCits(){document.querySelectorAll("[data-cq]").forEach(i=>i.addEventListener("input",e=>{citQ[i.dataset.cq]=e.target.value;const pos=e.target.selectionStart,k=i.dataset.cq;render();const n=document.querySelector(`[data-cq="${k}"]`);if(n){n.focus();n.setSelectionRange(pos,pos)}}))}
+async function actCits(a,el){const d=el?el.dataset:{};
+ switch(a){
+ case "citopen":{const f=d.id;if(citOpen.has(f)){citOpen.delete(f);return render()}citOpen.add(f);if(!citMem[f]||citMem[f].erro)return carregarCits(f);
+  api(`drive/v3/files/${f}?fields=modifiedTime`).then(x=>x.json()).then(m=>{if(citMem[f]&&m.modifiedTime&&m.modifiedTime!==citMem[f].mod)carregarCits(f)}).catch(()=>{});return render()}
+ case "citreload":return carregarCits(d.id);
+ case "citlev":citLev={fid:d.id,i:+d.i};return render();
+ case "citsub":citLev.n=d.n;return render();
+ case "citno":citLev=null;return render();
+ case "citok":{const c=citMem[citLev.fid].lista[citLev.i],p=planOf(citLev.n);let dm;
+  if(d.k==="nova"){dm={nome:"",insuf:"",pergunta:"",conceitos:"",resultado:"",descoberta:"",naoDemonstra:"",noinsu:"",logica:"",passagens:[],pars:[]};p.demos.push(dm)}else dm=p.demos[+d.k];
+  if(dm.passagens.some(x=>normT(x.passagem).slice(0,40)===normT(c.texto).slice(0,40)))return toast("Esta citação já está nessa demonstração.");
+  dm.passagens.push({texto:c.obra.replace(/\s*\([^)]*\)\s*$/,""),passagem:`‘${c.texto}’`,pagina:paginaDe(c),uso:c.nota?"Nota editorial dos tradutores — não usar como afirmação autoral.":"",conferida:false,origem:`(${c.autor}, ${c.ano}, p. ${c.pag})`});
+  touch(p);changed();const n=citLev.n;citLev=null;render();return toast(`Levada ao ${n}, ainda não conferida. O uso autorizado é você quem escreve.`)}
+ }return actWa(a,el)}
+
 /* ---------- desenho geral ---------- */
 const NAV=[["capture","Capturar"],["concepts","Conceitos"],["timeline","Linha do tempo","Tempo"],["pending","Pendentes"],["diss","Dissertação"]];
 function renderNav(){
@@ -1365,7 +1461,7 @@ function bind(){
  on("#de-s","change",e=>de.state=e.target.value);
  document.querySelectorAll(".cites").forEach(i=>i.addEventListener("input",e=>de.inc[e.target.dataset.ref]=Math.max(0,parseInt(e.target.value)||0)));
  on("#acvq","input",e=>{acvQ=e.target.value;const pos=e.target.selectionStart;render();const n=$("#acvq");if(n){n.focus();n.setSelectionRange(pos,pos)}});
- bindForm();bindPlano();bindWa();bindDiss()}
+ bindForm();bindPlano();bindWa();bindCits();bindDiss()}
 
 /* ---------- ações ---------- */
 function tog(arr,id){const i=arr.indexOf(id);i>=0?arr.splice(i,1):arr.push(id);return arr.includes(id)}
