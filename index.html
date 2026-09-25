@@ -6,11 +6,11 @@
 <title>Bloco Mágico</title>
 <script>/* Bloco Mágico mora em /index.html, para não englobar o Consultório (/consultorio/). */if(location.pathname==="/")location.replace("/index.html"+location.search+location.hash);</script>
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#ECEEEA">
+<meta name="theme-color" content="#EEF0F4">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,500;1,7..72,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
 <style>
 :root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
 --bg:#ECEEEA;--surface:#FFFFFF;--ink:#1D2330;--muted:#5C636E;--rule:#D3D7D0;--soft:#E2E6DF;--focus:#2F6FC0;
@@ -130,6 +130,73 @@ input.cites{width:90px;padding:6px 8px;border:1px solid var(--rule);border-radiu
 textarea.small{min-height:110px;font-size:16px}
 .primary[disabled]{opacity:.6}
 a{color:inherit}
+/* visual do protótipo, para o app inteiro */
+:root{--bg:#EEF0F4;--surface:#FFFFFF;--ink:#1C2330;--muted:#5E6675;--rule:#D7DBE3;--soft:#E4E7EE;--focus:#2B4C9B;--accent:#2B4C9B;--c-q:#C26A17;--c-d:#2E7D5B;--c-c:#6A4C93;--c-x:#C0392B;
+--sans:"Figtree",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--serif:"Source Serif 4",Georgia,"Times New Roman",serif}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#141821;--surface:#1D2330;--ink:#E7EAF0;--muted:#9AA3B2;--rule:#2E3646;--soft:#2C3342;--focus:#7F9FE6;--accent:#7F9FE6;--c-q:#E79A4E;--c-d:#5DBB8E;--c-c:#B39AD9;--c-x:#F06B5B}}
+:root[data-theme="dark"]{--bg:#141821;--surface:#1D2330;--ink:#E7EAF0;--muted:#9AA3B2;--rule:#2E3646;--soft:#2C3342;--focus:#7F9FE6;--accent:#7F9FE6;--c-q:#E79A4E;--c-d:#5DBB8E;--c-c:#B39AD9;--c-x:#F06B5B}
+h1{font-weight:600;color:var(--accent)}
+.brand{font-weight:600}
+.tabs button[aria-current="true"]{color:var(--accent)}
+.tabs button[aria-current="true"]::before{background:var(--accent);height:3px}
+.side button[aria-current="true"]{color:var(--accent)}
+.primary{background:var(--accent);color:#fff;border-radius:12px}
+.chip[aria-pressed="true"]{border-color:var(--accent);background:var(--accent);color:#fff}
+.badge-n{background:var(--accent);color:#fff}
+.idea,.doc,.panel{border:1px solid var(--rule);border-radius:14px}
+.cname{font-weight:600}
+.pl-sec{background:var(--surface);border:1px solid var(--rule);border-radius:14px;padding:16px;margin-bottom:14px}
+.pl-sec h3{margin:0 0 6px;font-family:var(--serif);font-size:19px;font-weight:600;color:var(--accent);display:flex;align-items:baseline;gap:8px}
+.pl-sec h3 small{font-family:var(--sans);font-size:13px;font-weight:500;color:var(--muted)}
+.pl-sec h4{margin:18px 0 8px;font-size:14px;font-weight:600}
+.pl-rot{display:block;font-size:12px;font-weight:600;color:var(--muted);margin:12px 0 4px;text-transform:uppercase;letter-spacing:.04em}
+.pl-rot.q{color:var(--c-q)}.pl-rot.d{color:var(--c-d)}.pl-rot.c{color:var(--c-c)}.pl-rot.x{color:var(--c-x)}
+textarea.pl-t{width:100%;min-height:42px;font-family:var(--sans);font-size:15px;line-height:1.5;padding:8px 10px;border-radius:9px;background:var(--bg);resize:none;overflow:hidden}
+.pl-t.q{border-left:3px solid var(--c-q)}.pl-t.d{border-left:3px solid var(--c-d)}.pl-t.c{border-left:3px solid var(--c-c)}.pl-t.x{border-left:3px solid var(--c-x)}
+.pl-add{font-size:14px;font-weight:500;margin-top:10px;padding:8px 13px;border-radius:9px;border:1px dashed var(--accent);background:none;color:var(--accent)}
+.pl-demo{border:1px solid var(--rule);border-radius:12px;margin-top:8px}
+.pl-demo-cab{width:100%;display:flex;align-items:center;gap:12px;padding:12px 14px;border:0;background:none;text-align:left}
+.pl-dn{flex:none;width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center;font-size:14px;font-weight:600}
+.pl-dt b{display:block;font-size:15px}.pl-dt small{font-size:12.5px;color:var(--muted)}
+.pl-demo-corpo{border-top:1px solid var(--rule);padding:4px 14px 14px}
+.pl-pas{border:1px solid var(--rule);border-left:3px solid var(--c-q);border-radius:10px;padding:4px 12px 10px;margin-bottom:8px}.pl-pas.ok{border-left-color:var(--c-d)}
+.pl-conf{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:500;margin-top:8px;border:0;background:none;padding:4px 0}
+.pl-cb{width:20px;height:20px;flex:none;border-radius:5px;border:2px solid var(--rule);display:inline-grid;place-items:center;font-size:12px;font-weight:600;background:var(--surface)}
+[aria-pressed="true"]>.pl-cb,.pl-cb[aria-pressed="true"]{background:var(--c-d);border-color:var(--c-d);color:#fff}
+.pl-pars{margin-top:14px;border-top:1px solid var(--rule);padding-top:10px}
+.pl-sum{cursor:pointer;font-weight:600;font-size:15px;padding:4px 0}
+.pl-par{border:1px solid var(--rule);border-radius:10px;padding:10px 12px;margin-top:8px}
+.pl-par-cab{display:flex;align-items:center;gap:10px}.pl-pn{font-family:var(--serif);font-weight:600;font-size:17px;color:var(--c-c);min-width:20px}
+.pl-ets{display:flex;flex-wrap:wrap;gap:4px}.pl-ets button{font-size:11.5px;font-weight:600;padding:3px 7px;border-radius:6px;border:1px solid var(--rule);background:var(--bg);color:var(--muted)}
+.pl-ets button[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--surface)}
+.pl-2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}@media (max-width:520px){.pl-2{grid-template-columns:1fr;gap:0}}
+.pl-elo{border:1px solid var(--rule);border-radius:12px;padding:12px;margin-bottom:10px}.pl-elo.ok{border-color:var(--c-d)}
+.pl-elo small{display:block;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px}
+.pl-elo-a{font-size:14.5px;border-left:3px solid var(--c-x);padding-left:10px}.pl-elo-a small{color:var(--c-x)}
+.pl-elo-b{font-size:14.5px;border-left:3px solid var(--c-q);padding-left:10px}.pl-elo-b small{color:var(--c-q)}
+.pl-seta{padding:2px 0 2px 6px;color:var(--muted)}
+.pl-eb[aria-pressed="true"]{background:var(--c-d);border-color:var(--c-d);color:#fff}
+.pl-seq{border-left:3px solid var(--rule);padding-left:12px}.pl-seq p{margin:0 0 6px;font-family:var(--serif);font-size:15.5px;line-height:1.5}
+.pl-q{color:var(--c-q)}.pl-d{color:var(--c-d)}.pl-x{color:var(--c-x);margin-top:8px!important}
+.pl-seq-d{display:flex;gap:10px;margin:10px 0}.pl-seq-d .pl-dn{width:22px;height:22px;font-size:12px}
+.pl-chk{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px dashed var(--rule);font-size:14.5px}.pl-chk span{flex:1}
+.pl-chk .pl-cb{cursor:pointer}
+.pl-x{font-size:18px;border:0;background:none;color:var(--muted);padding:0 4px}
+.pl-modl{font-size:14.5px;padding:7px 0;border-bottom:1px dashed var(--rule)}.pl-modl .et{display:inline-block;font-size:11.5px;font-weight:600;padding:2px 7px;border-radius:6px;background:var(--ink);color:var(--surface);margin-right:8px}
+.pl-imp ul{margin:0 0 10px;padding-left:18px;font-size:14.5px}
+.d-perg{margin:10px 0 4px;padding:10px 12px;border-left:3px solid var(--c-q);background:color-mix(in srgb,var(--c-q) 8%,transparent);border-radius:0 8px 8px 0;font-family:var(--serif);font-size:15.5px;line-height:1.45}
+.d-perg small{display:block;font-family:var(--sans);font-size:12px;font-weight:600;color:var(--c-q);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px}
+.d-acc{background:var(--accent);border-color:var(--accent);color:#fff}
+.d-wa{border-color:#1f8f4e;color:#1f8f4e}
+.ws{margin:10px 0;padding:12px 14px;border:1px solid #1f8f4e;border-radius:12px;background:var(--bg)}
+.ws-doc{display:flex;align-items:center;gap:10px;width:100%;border:0;border-bottom:1px dashed var(--rule);background:none;padding:9px 0;text-align:left;font-size:15px}
+.ws-doc small{margin-left:auto;color:var(--muted);font-size:12.5px}
+.ws-go{display:block;text-align:center;text-decoration:none;background:#1f8f4e!important;margin-top:8px}.ws-go.off{opacity:.45}
+.cand{border-left:3px solid var(--c-c);padding:6px 0 6px 11px;margin-bottom:10px}.cand.usada{border-left-color:var(--c-d);opacity:.8}
+.cand p{margin:0;font-family:var(--serif);font-size:15px;line-height:1.5}
+.rit-svg{display:block;width:100%;min-width:320px;height:auto}
+.rit-grade{display:grid;grid-template-columns:auto repeat(12,1fr);gap:3px;align-items:center}
+.rit-d{aspect-ratio:1;border-radius:3px}.rit-lab{font-size:11px;color:var(--muted);padding-right:6px}
 
 /* dissertação */
 :root{--t-ok:#2E7D5B;--t-folga:#2E7D5B;--t-sem2:#A67C00;--t-sem1:#C8611A;--t-red:#C0392B}
@@ -236,8 +303,8 @@ const fmtFull=ts=>new Date(ts).toLocaleDateString("pt-BR",{day:"numeric",month:"
 const brDate=iso=>iso?iso.slice(0,10).split("-").reverse().join("/"):"";
 
 /* ---------- dados ---------- */
-function seed(){return{version:1,concepts:SEED.map((n,i)=>({id:"seed-"+slug(n),name:n,color:PALETTE[i%PALETTE.length],updatedAt:"2026-01-01T00:00:00.000Z"})),refs:[],ideas:[],docs:[],subs:[],chapters:[],symbols:[],meta:{}}}
-function loadLocal(){try{const s=localStorage.getItem(KEY);if(s){const d=JSON.parse(s);for(const k of["concepts","refs","ideas","docs","subs","chapters","symbols"])d[k]=d[k]||[];d.meta=d.meta||{};return d}}catch(e){}return seed()}
+function seed(){return{version:1,concepts:SEED.map((n,i)=>({id:"seed-"+slug(n),name:n,color:PALETTE[i%PALETTE.length],updatedAt:"2026-01-01T00:00:00.000Z"})),refs:[],ideas:[],docs:[],subs:[],chapters:[],symbols:[],plans:[],sends:[],ritmo:[],meta:{}}}
+function loadLocal(){try{const s=localStorage.getItem(KEY);if(s){const d=JSON.parse(s);for(const k of["concepts","refs","ideas","docs","subs","chapters","symbols","plans","sends","ritmo"])d[k]=d[k]||[];d.meta=d.meta||{};return d}}catch(e){}return seed()}
 let db=loadLocal();
 function saveLocal(){try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){toast("Não foi possível salvar no aparelho.")}}
 const L=k=>db[k].filter(x=>!x.deleted);
@@ -252,7 +319,7 @@ function changed(){saveLocal();setDirty(true);scheduleSync()}
 function merge(a,b){
  const out={version:1,meta:{...(b.meta||{}),...(a.meta||{})}};
  if(((b.meta||{}).lastBackup||"")>((a.meta||{}).lastBackup||""))out.meta.lastBackup=b.meta.lastBackup;
- for(const k of["concepts","refs","ideas","docs","subs","chapters","symbols"]){const m=new Map();for(const x of(b[k]||[]))m.set(x.id,x);
+ for(const k of["concepts","refs","ideas","docs","subs","chapters","symbols","plans","sends","ritmo"]){const m=new Map();for(const x of(b[k]||[]))m.set(x.id,x);
   for(const x of(a[k]||[])){const y=m.get(x.id);if(!y||(x.updatedAt||"")>=(y.updatedAt||""))m.set(x.id,x)}out[k]=[...m.values()]}
  return out}
 function makeConcept(name){name=name.trim();if(!name){toast("Digite o nome do conceito.");return null}
@@ -378,7 +445,7 @@ function ideaCard(i,extra=""){
  ${i.moment?`<p class="moment">${esc(i.moment)}</p>`:""}
  ${r?`<p class="ref">Procedência${r.type==="com"?" (comentador)":""}: ${esc(r.label)}</p>`:""}
  ${cs.length?`<div class="tags">${cs.map(c=>`<span><i style="background:${c.color}"></i>${esc(c.name)}</span>`).join("")}</div>`:""}
- ${extra||`<div class="acts"><button class="link" data-a="iedit" data-id="${i.id}">Editar</button></div>`}</article>`}
+ ${extra||ideaActs(i)}</article>`}
 function ideaEditor(i){return `<div class="panel"><label class="label" for="ie-t" style="margin-top:0">Ideia</label><textarea id="ie-t" class="small">${esc(i.text)}</textarea>
  <label class="label" for="ie-m">Momento</label><input type="text" id="ie-m" value="${esc(i.moment)}">
  <label class="label" for="ie-r">Procedência</label>${refSelect("ie-r",i.refId)}
@@ -593,6 +660,7 @@ async function scanDiss(interactive){
   const {by}=dissFiles(),alvo=Object.values(by).flatMap(s=>DKINDS.map(([k])=>s[k]).filter(Boolean)).filter(f=>!dwords[f.id]||dwords[f.id].m!==f.modifiedTime);
   for(let i=0;i<alvo.length;i+=3){await Promise.all(alvo.slice(i,i+3).map(async f=>{try{const t=await fileText(f);dwords[f.id]={m:f.modifiedTime,w:countWords(t)}}catch(e){}}));
    try{localStorage.setItem("bm-diss-words",JSON.stringify(dwords))}catch(e){}if(route.name==="diss")softRender()}
+  registrarRitmo();
  }catch(e){dscanErr=e.message==="auth"?"Conecte ao Drive de novo.":"Não foi possível ler a pasta da dissertação."}
  dscanning=false;if(route.name==="diss")softRender()}
 const wordsOf=f=>f&&dwords[f.id]&&dwords[f.id].m===f.modifiedTime?dwords[f.id].w:null;
@@ -620,7 +688,7 @@ function vDiss(){
  const urg=subs.filter(s=>info[s.id].nv&&info[s.id].nv.r<=7).sort((a,b)=>info[a.id].nv.r-info[b.id].nv.r);
  const caps=[...new Set(subs.map(s=>capOf(s.n)))];
  return `<h1>Dissertação</h1>
- <div class="row" style="margin:-8px 0 12px"><button class="secondary" data-a="nav" data-to="form">Formalização</button></div>
+ <div class="row" style="margin:-8px 0 12px"><button class="secondary" data-a="nav" data-to="form">Formalização</button><button class="secondary" data-a="nav" data-to="ritmo">Ritmo de escrita</button></div>
  <p class="hint" style="margin:0 0 14px">Pasta ${esc(fo.name)} · ${dscanning?"lendo o Drive…":dscan&&dscan.folder===fo.id?"lida "+esc(fmtShort(dscan.at)):"ainda não lida"}</p>
  ${!hasToken()?connectBox("Para ler os documentos da dissertação, conecte o aplicativo ao Drive."):""}
  ${dscanErr?`<p class="warn">${esc(dscanErr)}</p>`:""}
@@ -643,12 +711,17 @@ function subCard(s,x){
  <button class="d-head" data-a="dtoggle" data-id="${s.id}" aria-expanded="${aberto}">
   <span class="d-num ${x.feitos===4?"ok":""}">${esc(s.n)}</span>
   <span class="d-tt"><span class="${s.title?"":"d-vazio"}">${esc(s.title||"Sem título")}</span>
-   <span class="d-meta">${x.feitos?`${x.palavras.toLocaleString("pt-BR")} palavras${x.contando?"…":""}`:"nenhum documento"}${x.fim?` · levou ${dayDiff(x.ini,x.fim)} dias`:""}${x.nv?` <span class="d-prazo d-${x.nv.c}">${esc(x.nv.t)}</span>`:""}</span></span>
+   <span class="d-meta">${x.feitos?`${x.palavras.toLocaleString("pt-BR")} palavras${x.contando?"…":""}`:"nenhum documento"}${x.fim?` · levou ${dayDiff(x.ini,x.fim)} dias`:""}${(()=>{const e=estadoPlano(s.n);return e?(e.arq?` · arquitetado, ${e.conf} de ${e.pas} passagens conferidas`:" · planejamento em andamento"):""})()}${(()=>{const c=L("ideas").filter(i=>(i.subs||[]).some(m=>m.n===s.n)).length;return c?` · ${c} ${c===1?"ideia":"ideias"}`:""})()}${x.nv?` <span class="d-prazo d-${x.nv.c}">${esc(x.nv.t)}</span>`:""}</span></span>
   <span class="d-pips" aria-label="${x.feitos} de 4 documentos">${x.docs.map(d=>`<i class="${d?"on":""}"></i>`).join("")}</span></button>
  ${aberto?`<div class="d-body">
+  ${(()=>{const p=planRec(s.n);return p&&cheio(p.ficha.pergunta)?`<div class="d-perg"><small>Pergunta organizadora</small>${esc(p.ficha.pergunta)}</div>`:""})()}
+  <div class="row" style="margin:10px 0 6px"><button class="secondary d-acc" data-a="plano" data-k="${esc(s.n)}">${estadoPlano(s.n)?"Abrir planejamento":"Planejar este subtítulo"}</button>${x.feitos||x.esq?`<button class="secondary d-wa" data-a="wsopen" data-kind="sub" data-ref="${esc(s.n)}">Enviar à orientadora</button>`:""}</div>
+  ${(()=>{const ls=lastSend("sub",s.n);return ls?`<p class="hint" style="margin:0 0 6px">Último envio à orientadora: ${esc(brDate(ls.dt))}</p>`:""})()}
+  ${ws&&ws.kind==="sub"&&ws.ref===s.n?wsPanel():""}
   ${DKINDS.map(([k,nome],i)=>{const d=x.docs[i],w=wordsOf(d);return d?`<a class="d-docl" href="${esc(d.webViewLink||"#")}" target="_blank" rel="noopener"><span class="d-ck">✓</span><span>${nome}</span><small>${w===null?"contando…":w.toLocaleString("pt-BR")+" palavras"}${d.versions>1?` · ${d.versions} versões na pasta, mostrando a mais recente`:""}</small></a>`:`<p class="d-docl d-no"><span class="d-ck"></span><span>${nome}</span><small>não encontrado</small></p>`}).join("")}
   ${x.esq?`<a class="d-docl" href="${esc(x.esq.webViewLink||"#")}" target="_blank" rel="noopener"><span class="d-ck d-esq">E</span><span>Esquema de Escrita</span><small>planejamento</small></a>`:""}
   <p class="hint" style="margin:10px 0 0">${x.feitos===4?`Completo em ${brDate(x.fim)}${s.prazo?(x.fim<=s.prazo?", dentro do prazo.":", depois do prazo."):"."}`:`Próximo: ${falta[1]}.`}</p>
+  ${candHTML(s.n)}
   <label class="label" for="dt-${s.id}">Título</label><div class="inline" style="margin-top:0"><input type="text" id="dt-${s.id}" value="${esc(s.title||"")}" placeholder="Título do ${esc(s.n)}"><button class="secondary" data-a="dtitle" data-id="${s.id}">Salvar</button></div>
   ${x.feitos<4?`<label class="label" for="dp-${s.id}">Prazo</label><div class="inline d-wrap" style="margin-top:0"><input type="date" id="dp-${s.id}" value="${esc(s.prazo||"")}"><button class="secondary" data-a="dprazo" data-id="${s.id}">Salvar</button>${s.prazo?`<button class="secondary" data-a="dprazox" data-id="${s.id}">Tirar</button>`:""}</div><p class="hint">Prazo só nos subtítulos em andamento. A ligação com a agenda do Google entra numa próxima etapa.</p>`:""}
   <div class="row"><button class="link" data-a="dsubdel" data-id="${s.id}">Tirar do painel</button></div></div>`:""}</div>`}
@@ -997,17 +1070,284 @@ async function actForm(a,el){
  }
  return actAcervo(a,el)}
 
+/* ---------- leitor de esquemas (do protótipo) ---------- */
+const ETAPAS=["CO","NE","PE","CI","LEI","DES","NOINSU"];
+const CHECK_PADRAO=[
+  "Conferir a transcrição integral e a paginação de todas as passagens selecionadas.",
+  "Confirmar que cada citação responde exatamente à pergunta do movimento em que foi colocada.",
+  "Verificar que a leitura da citação acompanha sua ordem interna antes de formular a descoberta.",
+  "Garantir que cada descoberta seja menor ou igual ao alcance documental de sua citação.",
+  "Manter visível a diferença entre conexão documental, reconstrução argumentativa e causalidade não demonstrada.",
+  "Confirmar que a conclusão do subtítulo produz, sem antecipá-la, a pergunta do subtítulo seguinte."
+];
+const MODELOS=[
+  ["CO","Se o movimento anterior permitiu compreender [...], ainda resta considerar [...]."],
+  ["NE","Essa conquista, entretanto, não permite explicar [...]."],
+  ["PE","Diante disso, como [...]?"],
+  ["CI","É no exame de [...] que a passagem oferece uma primeira resposta: ‘[...]’."],
+  ["LEI","A formulação começa por [...], passa a [...] e somente então [...]."],
+  ["DES","O que fica estabelecido é que [...], sem que isso autorize afirmar [...]."],
+  ["NOINSU","Permanece, porém, uma dificuldade: [...]."],
+  ["Transição","Se, nesse caso, [...], resta verificar se [...]."],
+  ["Delimitação","A comparação permite reconstruir essa progressão, mas não estabelecer uma causalidade expressamente afirmada por Freud."]
+];
+
+function blocosDocx(xml){
+  const W="http://schemas.openxmlformats.org/wordprocessingml/2006/main";
+  const doc=new DOMParser().parseFromString(xml,"application/xml"), body=doc.getElementsByTagNameNS(W,"body")[0];
+  const txt=el=>{ let t=""; const walk=n=>{ for(const c of n.childNodes){ if(c.namespaceURI!==W) continue;
+      if(c.localName==="t") t+=c.textContent; else if(c.localName==="tab") t+=" "; else if(c.localName==="br") t+="\n";
+      else if(c.localName==="p"){ if(t&&!t.endsWith("\n")) t+="\n"; walk(c); } else walk(c); } };
+    walk(el); return t.split("\n").map(x=>x.replace(/[ \t]+/g," ").trim()).filter(Boolean).join("\n"); };
+  const out=[];
+  for(const el of body.childNodes){
+    if(el.namespaceURI!==W) continue;
+    if(el.localName==="p"){ const st=el.getElementsByTagNameNS(W,"pStyle")[0]; const t=txt(el); if(t) out.push({tipo:"p",t,est:st?st.getAttributeNS(W,"val")||st.getAttribute("w:val")||"":""}); }
+    if(el.localName==="tbl"){
+      const rows=[...el.childNodes].filter(r=>r.localName==="tr").map(r=>[...r.childNodes].filter(c=>c.localName==="tc").map(txt));
+      if(rows.length===1&&rows[0].length===1) out.push({tipo:"p",t:rows[0][0],est:"caixa"});
+      else if(rows.length&&rows.every(r=>r.length===1)) rows.forEach(r=>r[0]&&out.push({tipo:"p",t:r[0],est:"caixa"}));
+      else out.push({tipo:"tab",rows});
+    }
+  }
+  return out;
+}
+function interpretarEsquema(bl){
+  const pl=planoVazio(); pl.checklist=[]; const sobra=[]; let titulo="", numero="";
+  const rot=(t,r)=>{ const m=t.match(new RegExp("^"+r+"\\s*:?\\s*","i")); return m?t.slice(m[0].length).trim():null; };
+  const eTitulo=b=>b.tipo==="p"&&(/heading|t[íi]tulo/i.test(b.est)||/^\d{1,2}\.\s+\S/.test(b.t))&&b.t.length<140;
+  let secao="", demo=null;
+  const demoN=k=>{ while(pl.demos.length<k) pl.demos.push({nome:"",insuf:"",pergunta:"",conceitos:"",descoberta:"",naoDemonstra:"",noinsu:"",passagens:[],pars:[]}); return pl.demos[k-1]; };
+  for(const b of bl){
+    if(b.tipo==="p"){
+      const t=b.t, mSub=t.match(/^Subt[íi]tulo\s+(\d+\.\d+)/i); if(mSub&&!numero){ numero=mSub[1]; continue; }
+      if(eTitulo(b)){
+        const md=t.match(/Demonstra[çc][ãa]o\s+(\d+)\s*[—–-]\s*(.+)$/i);
+        if(md){ secao="demo"; demo=demoN(+md[1]); if(!demo.nome) demo.nome=md[2].trim(); continue; }
+        if(!(/heading\s*1|t[íi]tulo\s*1/i.test(b.est)||/^\d{1,2}\.\s/.test(t))) continue; // subtítulo interno (ex.: Quadro dos parágrafos)
+        demo=null;
+        secao=/sequ[êe]ncia cont[íi]nua/i.test(t)?"seq":/regras espec/i.test(t)?"regras":/checklist/i.test(t)?"chk":/modelos/i.test(t)?"modelos":"outro"; continue;
+      }
+      let v;
+      if((v=rot(t,"T[íi]tulo provis[óo]rio"))!==null){ titulo=v.replace(/^\d+\.\d+\s*/,""); const m=v.match(/^(\d+\.\d+)/); if(m&&!numero) numero=m[1]; continue; }
+      if(!demo){
+        if((v=rot(t,"Pergunta organizadora"))!==null){ pl.ficha.pergunta=v; continue; }
+        if((v=rot(t,"Hip[óo]tese do subt[íi]tulo"))!==null){ pl.ficha.hipotese=v; continue; }
+        if((v=rot(t,"Fun[çc][ãa]o no cap[íi]tulo[^:]*"))!==null){ pl.ficha.funcao=v; continue; }
+        if((v=rot(t,"Conquista final"))!==null){ pl.ficha.conquista=v; continue; }
+        if((v=rot(t,"NOINSU final"))!==null){ pl.ficha.noinsu=v; continue; }
+      } else {
+        if((v=rot(t,"Pergunta"))!==null){ demo.pergunta=v; continue; }
+        if((v=rot(t,"Conceitos(\\/opera[çc][õo]es)?"))!==null){ demo.conceitos=v; continue; }
+        if((v=rot(t,"O que n[ãa]o demonstra"))!==null){ demo.naoDemonstra=v; continue; }
+        if((v=rot(t,"NOINSU"))!==null){ demo.noinsu=v; continue; }
+      }
+      if(demo&&(v=rot(t,"Resultado necess[áa]rio"))!==null){ demo.resultado=v; continue; }
+      if(demo&&(v=rot(t,"L[óo]gica geral"))!==null){ demo.logica=v; continue; }
+      if(/^(M[ée]todo aplicado|Resultado necess[áa]rio|L[óo]gica geral|Controle documental|Estado do planejamento|Uso correto)/i.test(t)){ if(secao!=="modelos") sobra.push(t); continue; }
+      if(secao==="seq"){ pl.sequencia+=(pl.sequencia?"\n":"")+t; continue; }
+      if(secao==="regras"){ pl.regras+=(pl.regras?"\n":"")+t; continue; }
+      if(secao==="chk"){ t.split("\n").filter(Boolean).forEach(x=>pl.checklist.push({t:x.trim(),ok:false})); continue; }
+      if(secao==="modelos") continue;
+      continue;
+    }
+    // tabelas
+    const h=b.rows[0].map(x=>x.toLowerCase()), corpo=b.rows.slice(1);
+    const col=nome=>h.findIndex(x=>x.includes(nome));
+    if(col("passagem")>=0&&col("uso")>=0){
+      corpo.forEach(r=>{ const k=parseInt(r[col("demonstra")>=0?col("demonstra"):0])||1; demoN(k).passagens.push({texto:r[col("texto")]||"",passagem:r[col("passagem")]||"",pagina:r[col("página")>=0?col("página"):col("pagina")]||"",uso:r[col("uso")]||"",conferida:false}); });
+    } else if(col("insufici")>=0&&col("descoberta")>=0){
+      corpo.forEach(r=>{ const m=(r[0]||"").match(/^(\d+)\s*[—–-]?\s*(.*)$/); if(!m) return; const d=demoN(+m[1]);
+        d.nome=d.nome||m[2].trim(); d.insuf=r[col("insufici")]||""; d.pergunta=r[col("pergunta")]||d.pergunta; d.descoberta=r[col("descoberta")]||""; const ni=h.findIndex(x=>x.includes("nova insufici")); if(ni>=0) d.noinsu=r[ni]||d.noinsu; });
+    } else if(col("etapa")>=0&&col("fun")>=0&&demo){
+      corpo.forEach(r=>{ demo.pars.push({etapas:(r[col("etapa")]||"").toUpperCase().split(/[^A-Z]+/).filter(e=>ETAPAS.includes(e)),funcao:r[col("fun")]||"",recebe:r[col("recebe")]||"",entrega:r[col("entrega")]||"",frase:r[col("frase")>=0?col("frase"):col("estrutura")]||""}); });
+    } else if(secao!=="modelos") sobra.push("Tabela não reconhecida: "+b.rows[0].join(" | "));
+  }
+  if(!pl.checklist.length) pl.checklist=CHECK_PADRAO.map(t=>({t,ok:false}));
+  return {pl,sobra,titulo,numero};
+}
+
+
+/* ---------- etapa: planejamento, orientadora, materiais candidatos, ritmo ---------- */
+const cheio=s=>!!(s&&String(s).trim());
+const planoVazio=()=>({ficha:{pergunta:"",hipotese:"",funcao:"",conquista:"",noinsu:""},demos:[],sequencia:"",regras:"",checklist:CHECK_PADRAO.map(t=>({t,ok:false})),elos:{},versoes:[]});
+const planRec=n=>L("plans").find(p=>p.n===n);
+function planOf(n){let p=planRec(n);if(!p){p={id:"plan-"+n+"-"+uid("x").slice(-4),n,...planoVazio()};db.plans.push(p)}return p}
+let saveT=null;const saveSoon=p=>{touch(p);clearTimeout(saveT);saveT=setTimeout(changed,700)};
+function estadoPlano(n){const p=planRec(n);if(!p)return null;
+ const fOk=["pergunta","hipotese","funcao","conquista","noinsu"].filter(k=>cheio(p.ficha[k])).length,dOk=p.demos.filter(d=>cheio(d.pergunta)&&cheio(d.descoberta)&&cheio(d.noinsu)).length;
+ const pas=p.demos.flatMap(d=>d.passagens);if(!fOk&&!p.demos.length)return null;
+ return{fOk,arq:fOk===5&&p.demos.length&&dOk===p.demos.length,pas:pas.length,conf:pas.filter(x=>x.conferida).length}}
+/* --- tela do planejamento --- */
+let plOpen=new Set([0]),plImp=null,plQ="",plRes=null;
+const pget=(o,c)=>c.split(".").reduce((a,k)=>a==null?a:a[k],o);
+function pset(o,c,v){const ks=c.split("."),u=ks.pop();ks.reduce((a,k)=>a[k],o)[u]=v}
+const pcampo=(p,cam,rot,cls="",ph="")=>`<label class="pl-rot ${cls}">${rot}</label><textarea class="pl-t ${cls}" data-k="${cam}" rows="1" placeholder="${ph}">${esc(pget(p,cam)||"")}</textarea>`;
+function vPlano(){
+ const n=route.k,s=L("subs").find(x=>x.n===n)||{n,title:""},p=planRec(n)||planoVazio(),todos=subsSorted(),prox=todos[todos.findIndex(x=>x.n===n)+1];
+ const {by}=dissFiles(),esq=(by[n]||{}).esq;
+ return `<button class="back" data-a="nav" data-to="diss">‹ Dissertação</button><h1 style="margin-bottom:4px">Planejamento do ${esc(n)}</h1><p class="hint" style="margin:0 0 16px">${esc(s.title||"Sem título")}</p>
+ ${plImp?impHTML(n):`<div class="panel pl-imp-bar">${esq?`<p style="margin:0 0 8px">Encontrei o esquema deste subtítulo no Drive: <b>${esc(esq.name)}</b></p><button class="secondary" data-a="plimp" data-id="${esq.id}">Importar este esquema</button>`:`<p style="margin:0 0 8px">Já tem o esquema escrito em Word?</p>`}
+  <details style="margin-top:10px"><summary class="hint" style="cursor:pointer">Escolher outro arquivo do Drive</summary><input type="text" id="plq" value="${esc(plQ)}" placeholder="Parte do nome, ex.: Esquema" style="margin-top:8px"><div id="plres">${plResHTML()}</div></details></div>`}
+ <section class="pl-sec"><h3>Ficha do subtítulo</h3>
+  ${pcampo(p,"ficha.pergunta","Pergunta organizadora","q","Que pergunta este subtítulo responde?")}${pcampo(p,"ficha.hipotese","Hipótese do subtítulo")}${pcampo(p,"ficha.funcao","Função no capítulo")}${pcampo(p,"ficha.conquista","Conquista final","d")}${pcampo(p,"ficha.noinsu","Nova insuficiência final","x")}</section>
+ <section class="pl-sec"><h3>Demonstrações <small>${p.demos.length}</small></h3>${p.demos.map((d,k)=>demoH(p,d,k)).join("")}<button class="pl-add" data-a="pladd" data-t="demo">+ Adicionar demonstração</button></section>
+ <section class="pl-sec">${fioH(n,p,prox)}</section>
+ <section class="pl-sec">${seqH(p)}</section>
+ <section class="pl-sec"><h3>Regras específicas do subtítulo</h3><textarea class="pl-t" data-k="regras" rows="2" placeholder="Uma regra por linha">${esc(p.regras)}</textarea></section>
+ <section class="pl-sec"><h3>Antes de redigir <small>${p.checklist.filter(c=>c.ok).length} de ${p.checklist.length}</small></h3>
+  ${p.checklist.map((c,k)=>`<div class="pl-chk"><button class="pl-cb" data-a="plchk" data-i="${k}" aria-pressed="${c.ok}">${c.ok?"✓":""}</button><span>${esc(c.t)}</span><button class="pl-x" data-a="plrmchk" data-i="${k}" aria-label="Remover item">×</button></div>`).join("")}
+  <div class="inline"><input type="text" id="plnovochk" placeholder="Novo item do checklist"><button class="secondary" data-a="pladd" data-t="chk">Adicionar</button></div></section>
+ <section class="pl-sec"><details><summary class="pl-sum">Modelos de frase</summary><p class="hint" style="margin:8px 0">Indicam funções e movimentos de ligação — não são frases prontas para repetir.</p>${MODELOS.map(([e,m])=>`<div class="pl-modl"><span class="et">${e}</span>${esc(m)}</div>`).join("")}</details></section>
+ ${p.versoes&&p.versoes.length?`<p class="hint">${p.versoes.length} ${p.versoes.length===1?"versão anterior guardada":"versões anteriores guardadas"} deste planejamento.</p>`:""}`}
+function demoH(p,d,k){const ab=plOpen.has(k),conf=d.passagens.filter(x=>x.conferida).length,b=`demos.${k}`;
+ return `<div class="pl-demo"><button class="pl-demo-cab" data-a="pltog" data-i="${k}" aria-expanded="${ab}"><span class="pl-dn">${k+1}</span><span class="pl-dt"><b>${esc(d.nome)||"Demonstração sem nome"}</b><small>${d.passagens.length} ${d.passagens.length===1?"passagem":"passagens"} · ${conf} conferida${conf===1?"":"s"} · ${d.pars.length} parágrafos</small></span></button>
+ ${ab?`<div class="pl-demo-corpo">${pcampo(p,b+".nome","Nome")}${pcampo(p,b+".insuf","Insuficiência que resolve","x")}${pcampo(p,b+".pergunta","Pergunta","q")}${pcampo(p,b+".conceitos","Conceitos e operações","c")}${pcampo(p,b+".resultado","Resultado necessário")}${pcampo(p,b+".descoberta","Descoberta","d")}${pcampo(p,b+".naoDemonstra","O que ainda não demonstra")}${pcampo(p,b+".noinsu","Nova insuficiência","x")}
+  <h4>Passagens do corpus</h4>${d.passagens.map((ps,j)=>`<div class="pl-pas ${ps.conferida?"ok":""}"><button class="pl-conf" data-a="plconf" data-i="${k}" data-j="${j}" aria-pressed="${!!ps.conferida}"><span class="pl-cb">${ps.conferida?"✓":""}</span> Conferida no volume</button>
+   ${pcampo(p,`${b}.passagens.${j}.texto`,"Texto")}${pcampo(p,`${b}.passagens.${j}.passagem`,"Passagem central")}${pcampo(p,`${b}.passagens.${j}.pagina`,"Página")}${pcampo(p,`${b}.passagens.${j}.uso`,"Uso autorizado")}<button class="link" data-a="plrm" data-t="pas" data-i="${k}" data-j="${j}">Remover passagem</button></div>`).join("")}
+  <button class="pl-add" data-a="pladd" data-t="pas" data-i="${k}">+ Passagem</button>
+  <details class="pl-pars"><summary class="pl-sum">Quadro dos parágrafos <span class="count">${d.pars.length}</span></summary>
+   ${d.pars.map((q,j)=>`<div class="pl-par"><div class="pl-par-cab"><span class="pl-pn">${j+1}</span><span class="pl-ets">${ETAPAS.map(e=>`<button data-a="plet" data-i="${k}" data-j="${j}" data-e="${e}" aria-pressed="${q.etapas.includes(e)}">${e}</button>`).join("")}</span></div>
+    ${pcampo(p,`${b}.pars.${j}.funcao`,"Função")}<div class="pl-2"><div>${pcampo(p,`${b}.pars.${j}.recebe`,"Recebe do anterior")}</div><div>${pcampo(p,`${b}.pars.${j}.entrega`,"Entrega ao seguinte")}</div></div>${pcampo(p,`${b}.pars.${j}.frase`,"Estrutura em uma frase")}<button class="link" data-a="plrm" data-t="par" data-i="${k}" data-j="${j}">Remover parágrafo</button></div>`).join("")}
+   <button class="pl-add" data-a="pladd" data-t="par" data-i="${k}">+ Parágrafo</button></details>
+  ${pcampo(p,b+".logica","Lógica geral da demonstração")}
+  <div class="row"><button class="secondary" data-a="plmov" data-i="${k}" data-d="-1">↑ Subir</button><button class="secondary" data-a="plmov" data-i="${k}" data-d="1">↓ Descer</button><button class="link" data-a="plrm" data-t="demo" data-i="${k}">Remover demonstração</button></div></div>`:""}</div>`}
+function fioH(n,p,prox){const pr=[];
+ for(let k=0;k<p.demos.length-1;k++)pr.push({c:`d${k}`,de:`Nova insuficiência da ${k+1}${p.demos[k].nome?" — "+p.demos[k].nome:""}`,a:p.demos[k].noinsu,para:`Pergunta da ${k+2}${p.demos[k+1].nome?" — "+p.demos[k+1].nome:""}`,b:p.demos[k+1].pergunta});
+ if(p.demos.length)pr.push({c:"fim",de:"Nova insuficiência da última demonstração",a:p.demos[p.demos.length-1].noinsu,para:"Nova insuficiência final do subtítulo",b:p.ficha.noinsu});
+ if(prox){const pp=planRec(prox.n);pr.push({c:"prox",de:`Nova insuficiência final do ${n}`,a:p.ficha.noinsu,para:`Pergunta organizadora do ${prox.n}`,b:pp&&pp.ficha.pergunta,abrir:prox.n})}
+ const oks=pr.filter(x=>p.elos&&p.elos[x.c]).length;
+ return `<h3>O fio das insuficiências <small>${oks} de ${pr.length} encadeados</small></h3><p class="hint" style="margin:0 0 12px">Cada pergunta deveria nascer da insuficiência anterior. O app só põe uma ao lado da outra; quem julga o elo é você.</p>
+ ${pr.length?pr.map(x=>`<div class="pl-elo ${p.elos&&p.elos[x.c]?"ok":""}"><div class="pl-elo-a"><small>${esc(x.de)}</small>${cheio(x.a)?esc(x.a):"<em>ainda não definida</em>"}</div><div class="pl-seta">↓</div><div class="pl-elo-b"><small>${esc(x.para)}</small>${cheio(x.b)?esc(x.b):"<em>ainda não definida</em>"}</div>
+  <div class="row">${cheio(x.a)&&cheio(x.b)?`<button class="secondary pl-eb" data-a="plelo" data-c="${x.c}" aria-pressed="${!!(p.elos&&p.elos[x.c])}">${p.elos&&p.elos[x.c]?"✓ Encadeado":"Marcar como encadeado"}</button>`:`<span class="hint" style="margin:0">Preencha os dois lados para avaliar o elo.</span>`}${x.abrir?`<button class="link" data-a="plgo" data-k="${x.abrir}">Abrir o ${x.abrir}</button>`:""}</div></div>`).join(""):`<p class="hint">Adicione demonstrações para ver o fio.</p>`}`}
+function seqH(p){const a=[cheio(p.ficha.pergunta)?`<p class="pl-q">${esc(p.ficha.pergunta)}</p>`:"",...p.demos.map((d,k)=>`<div class="pl-seq-d"><span class="pl-dn">${k+1}</span><div>${cheio(d.pergunta)?`<p class="pl-q">${esc(d.pergunta)}</p>`:""}${cheio(d.descoberta)?`<p class="pl-d">${esc(d.descoberta)}</p>`:""}</div></div>`),cheio(p.ficha.noinsu)?`<p class="pl-x">${esc(p.ficha.noinsu)}</p>`:""].join("");
+ return `<h3>Sequência contínua</h3><p class="hint" style="margin:0 0 10px">Montada a partir das suas perguntas e descobertas, para ler o argumento inteiro antes de redigir.</p><div class="pl-seq">${a||`<p class="hint">Preencha a ficha e as demonstrações para ver a sequência.</p>`}</div>
+ <label class="pl-rot" style="margin-top:16px">Sua sequência prevista para a redação</label><textarea class="pl-t" data-k="sequencia" rows="2">${esc(p.sequencia)}</textarea>`}
+function plResHTML(){if(!plRes)return `<p class="hint">Digite ao menos três letras.</p>`;return plRes.length?plRes.map(f=>`<button class="res" data-a="plimp" data-id="${f.id}"><p class="fname" style="margin:0">${esc(f.name)}</p></button>`).join(""):`<p class="hint">Nenhum Word com esse nome.</p>`}
+function impHTML(n){const r=plImp;if(r.loading)return `<div class="panel"><p style="margin:0">Lendo ${esc(r.nome)}…</p></div>`;const p=r.pl,f=["pergunta","hipotese","funcao","conquista","noinsu"].filter(k=>cheio(p.ficha[k])).length;
+ const pas=p.demos.reduce((a,d)=>a+d.passagens.length,0),pars=p.demos.reduce((a,d)=>a+d.pars.length,0),existe=!!estadoPlano(n);
+ return `<div class="panel pl-imp"><p class="label" style="margin-top:0">Conferir antes de importar</p><p class="hint" style="margin:0 0 10px">${esc(r.nome)}</p>
+ ${r.numero&&r.numero!==n?`<p class="warn">Este esquema é do subtítulo ${esc(r.numero)}, e você está no ${esc(n)}.</p>`:""}
+ <ul><li><b>${f} de 5</b> campos da ficha</li><li><b>${p.demos.length}</b> demonstrações${p.demos.length?": "+p.demos.map(d=>esc(d.nome||"sem nome")).join(", "):""}</li><li><b>${pas}</b> passagens · <b>${pars}</b> parágrafos</li><li><b>${p.sequencia?p.sequencia.split("\n").length:0}</b> linhas da sequência · <b>${p.regras?p.regras.split("\n").length:0}</b> regras · <b>${p.checklist.length}</b> itens do checklist</li></ul>
+ ${r.sobra.length?`<details><summary class="hint" style="cursor:pointer">${r.sobra.length} trecho${r.sobra.length>1?"s":""} sem campo correspondente (fica${r.sobra.length>1?"m":""} no Word)</summary>${r.sobra.map(x=>`<p class="hint">${esc(x)}</p>`).join("")}</details>`:""}
+ ${existe?`<p class="warn">Este subtítulo já tem planejamento. O atual fica guardado como versão anterior.</p>`:""}
+ <div class="row"><button class="primary" style="margin-top:8px" data-a="plimpok">${existe?"Substituir pelo esquema":"Importar"}</button></div><div class="row"><button class="link" data-a="plimpno">Cancelar</button></div></div>`}
+async function importarDoDrive(id){
+ const nome=(dissFiles().by&&Object.values(dissFiles().by).map(s=>s.esq).find(e=>e&&e.id===id)||(plRes||[]).find(f=>f.id===id)||{name:"esquema"}).name;
+ plImp={loading:true,nome};render();
+ try{if(!window.JSZip)throw new Error("Componente de Word ainda carregando.");const ab=await(await api(`drive/v3/files/${id}?alt=media`)).arrayBuffer();
+  const z=await JSZip.loadAsync(ab),xml=await z.file("word/document.xml").async("string"),r=interpretarEsquema(blocosDocx(xml));
+  if(!r.pl.demos.length&&!cheio(r.pl.ficha.pergunta))throw new Error("Não encontrei a estrutura de um Esquema de Escrita neste arquivo.");
+  plImp={...r,nome}}catch(e){plImp=null;toast(e.message||"Não foi possível ler o arquivo.")}render()}
+function bindPlano(){
+ document.querySelectorAll("textarea.pl-t").forEach(t=>{const g=()=>{t.style.height="auto";t.style.height=(t.scrollHeight+2)+"px"};g();
+  t.addEventListener("input",()=>{const p=planOf(route.k);pset(p,t.dataset.k,t.value);saveSoon(p);g()});
+  t.addEventListener("change",()=>setTimeout(()=>{const a=document.activeElement;if(!a||!/INPUT|TEXTAREA/.test(a.tagName))render()},0))});
+ on("#plq","input",e=>{plQ=e.target.value;clearTimeout(fdTimer);fdTimer=setTimeout(async()=>{const q=plQ.trim();if(fold(q).length<3){plRes=null}else{try{plRes=await listFiles(`trashed=false and mimeType='${DOCX}' and name contains '${qesc(q)}'`,"files(id,name)")}catch(e){plRes=[]}}const el=$("#plres");if(el)el.innerHTML=plResHTML()},500)});
+ on("#plnovochk","keydown",e=>{if(e.key==="Enter")act("pladd",{dataset:{t:"chk"}})})}
+async function actPlano(a,el){const d=el?el.dataset:{},n=route.k;
+ switch(a){
+ case "plano":plOpen=new Set([0]);plImp=null;return go({name:"plano",k:d.k});
+ case "plgo":plOpen=new Set([0]);plImp=null;return go({name:"plano",k:d.k});
+ case "pltog":{const k=+d.i;plOpen.has(k)?plOpen.delete(k):plOpen.add(k);return render()}
+ case "pladd":{const p=planOf(n);if(d.t==="demo"){p.demos.push({nome:"",insuf:"",pergunta:"",conceitos:"",resultado:"",descoberta:"",naoDemonstra:"",noinsu:"",logica:"",passagens:[],pars:[]});plOpen.add(p.demos.length-1)}
+  if(d.t==="pas")p.demos[+d.i].passagens.push({texto:"",passagem:"",pagina:"",uso:"",conferida:false});
+  if(d.t==="par")p.demos[+d.i].pars.push({etapas:[],funcao:"",recebe:"",entrega:"",frase:""});
+  if(d.t==="chk"){const v=($("#plnovochk").value||"").trim();if(!v)return;p.checklist.push({t:v,ok:false})}
+  touch(p);changed();return render()}
+ case "plrm":{const p=planOf(n);if(d.t==="demo"){if(!confirm("Remover esta demonstração e tudo o que há nela?"))return;p.demos.splice(+d.i,1)}if(d.t==="pas")p.demos[+d.i].passagens.splice(+d.j,1);if(d.t==="par")p.demos[+d.i].pars.splice(+d.j,1);touch(p);changed();return render()}
+ case "plmov":{const p=planOf(n),k=+d.i,j=k+ +d.d;if(j<0||j>=p.demos.length)return;[p.demos[k],p.demos[j]]=[p.demos[j],p.demos[k]];plOpen=new Set([j]);touch(p);changed();return render()}
+ case "plconf":{const p=planOf(n),ps=p.demos[+d.i].passagens[+d.j];ps.conferida=!ps.conferida;touch(p);changed();return render()}
+ case "plet":{const p=planOf(n),q=p.demos[+d.i].pars[+d.j];q.etapas=q.etapas.includes(d.e)?q.etapas.filter(x=>x!==d.e):[...q.etapas,d.e];touch(p);changed();return render()}
+ case "plchk":{const p=planOf(n);p.checklist[+d.i].ok=!p.checklist[+d.i].ok;touch(p);changed();return render()}
+ case "plrmchk":{const p=planOf(n);p.checklist.splice(+d.i,1);touch(p);changed();return render()}
+ case "plelo":{const p=planOf(n);p.elos=p.elos||{};p.elos[d.c]=!p.elos[d.c];touch(p);changed();return render()}
+ case "plimp":return importarDoDrive(d.id);
+ case "plimpno":plImp=null;return render();
+ case "plimpok":{const ant=planRec(n),novo={...plImp.pl};novo.versoes=ant?[...(ant.versoes||[]),{dt:todayIso(),plano:JSON.parse(JSON.stringify({...ant,versoes:undefined}))}]:[];
+  if(ant){Object.keys(ant).forEach(k=>{if(!["id","n","updatedAt"].includes(k))delete ant[k]});Object.assign(ant,novo);touch(ant)}else db.plans.push(touch({id:"plan-"+n+"-"+uid("x").slice(-4),n,...novo}));
+  const s=L("subs").find(x=>x.n===n);if(s&&!s.title&&plImp.titulo){s.title=plImp.titulo;touch(s)}plImp=null;plOpen=new Set([0]);changed();render();return toast("Esquema importado")}
+ }return actWa(a,el)}
+/* --- orientadora pelo WhatsApp --- */
+let ws=null; // {kind:"sub"|"idea", ref, sel:[], msg}
+const numWa=s=>{let d=String(s||"").replace(/\D/g,"");if(d.length===10||d.length===11)d="55"+d;return d};
+const ori=()=>db.meta.orient||{nome:"",num:""};
+const ola=()=>ori().nome?`Olá, ${ori().nome}! `:"Olá! ";
+function lastSend(kind,ref){const l=L("sends").filter(x=>x.kind===kind&&x.ref===ref).sort((a,b)=>b.dt.localeCompare(a.dt));return l[0]}
+function msgSub(n){const s=L("subs").find(x=>x.n===n)||{n},x=subInfo(s,dissFiles().by),nome=s.title?`${n} — ${s.title}`:`subtítulo ${n}`,docs=[...DKINDS.map(([k,t],i)=>x.docs[i]?{t,d:x.docs[i]}:null),x.esq?{t:"Esquema de Escrita",d:x.esq}:null].filter(Boolean).filter((o,i)=>ws.sel.includes(o.d.id));
+ const p=planRec(n),perg=p&&cheio(p.ficha.pergunta)?`Pergunta organizadora: ${p.ficha.pergunta}\n\n`:"";
+ if(!docs.length)return `${ola()}Sobre o ${nome}:\n\n\n\nRodrigo`;
+ return `${ola()}${docs.length===1?`Segue a ${docs[0].t} do ${nome}`:`Seguem ${docs.length} documentos do ${nome}`} para sua leitura.\n\n${perg}${docs.map(o=>`• ${o.t}: ${o.d.webViewLink||""}`).join("\n")}\n\nRodrigo`}
+function msgIdea(i){const cs=i.concepts.map(C).filter(Boolean).map(c=>c.name),r=i.refId&&R(i.refId),subs=(i.subs||[]).map(x=>x.n);
+ return `${ola()}Queria compartilhar uma ideia da dissertação.\n\n${cs.length?`*${cs.join(", ")}*\n\n`:""}${i.text}${r?`\n\n(Leitura: ${r.label})`:""}${subs.length?`\n\nPretendo usar no ${subs.join(" e no ")}.`:""}\n\nRodrigo`}
+function wsPanel(){const o=ori(),n=numWa(o.num),link=n.length>=12?`https://wa.me/${n}?text=${encodeURIComponent(ws.msg)}`:"";
+ let esc2="";if(ws.kind==="sub"){const s=L("subs").find(x=>x.n===ws.ref),x=subInfo(s,dissFiles().by),docs=[...DKINDS.map(([k,t],i)=>x.docs[i]?{t,d:x.docs[i]}:null),x.esq?{t:"Esquema de Escrita",d:x.esq}:null].filter(Boolean);
+  esc2=docs.length?`<p class="label" style="margin-top:6px">O que enviar — escolha antes de editar a mensagem</p>${docs.map(q=>`<button class="ws-doc" data-a="wstog" data-id="${q.d.id}" aria-pressed="${ws.sel.includes(q.d.id)}"><span class="pl-cb">${ws.sel.includes(q.d.id)?"✓":""}</span>${q.t}<small>${wordsOf(q.d)!=null?wordsOf(q.d).toLocaleString("pt-BR")+" palavras":""}</small></button>`).join("")}`:""}
+ return `<div class="ws">${!o.num?`<label class="label" style="margin-top:0" for="wsn">Nome da orientadora</label><input type="text" id="wsn" value="${esc(o.nome)}"><label class="label" for="wsw">WhatsApp da orientadora</label><input type="text" inputmode="tel" id="wsw" value="${esc(o.num)}" placeholder="(21) 99999-9999"><div class="row"><button class="secondary" data-a="wsori">Salvar contato</button></div>`:`<p class="hint" style="margin:0 0 6px">Para ${esc(o.nome||"a orientadora")} · ${esc(o.num)} <button class="link" data-a="wsorix">trocar</button></p>`}
+ ${esc2}<label class="label" for="wsm">Mensagem — você pode editar antes de enviar</label><textarea id="wsm" class="small">${esc(ws.msg)}</textarea>
+ ${ws.kind==="sub"?`<p class="hint">Os documentos vão como links do Drive. Confira se a orientadora tem acesso a eles.</p>`:""}
+ <div class="row"><a class="primary ws-go ${link?"":"off"}" id="wsgo" href="${link||"#"}" target="_blank" rel="noopener" data-a="wssend">Abrir no WhatsApp</a></div><div class="row"><button class="link" data-a="wsclose">Cancelar</button></div></div>`}
+function bindWa(){on("#wsm","input",e=>{ws.msg=e.target.value;const n=numWa(ori().num),g=$("#wsgo");if(g&&n.length>=12)g.href=`https://wa.me/${n}?text=${encodeURIComponent(ws.msg)}`})}
+async function actWa(a,el){const d=el?el.dataset:{};
+ switch(a){
+ case "wsopen":{if(d.kind==="sub"){const s=L("subs").find(x=>x.n===d.ref),x=subInfo(s,dissFiles().by);ws={kind:"sub",ref:d.ref,sel:x.docs[0]?[x.docs[0].id]:(x.docs.find(Boolean)?[x.docs.find(Boolean).id]:[])};ws.msg=msgSub(d.ref)}
+  else{const i=db.ideas.find(x=>x.id===d.ref);ws={kind:"idea",ref:d.ref,sel:[]};ws.msg=msgIdea(i)}return render()}
+ case "wstog":{const id=d.id;ws.sel=ws.sel.includes(id)?ws.sel.filter(x=>x!==id):[...ws.sel,id];ws.msg=msgSub(ws.ref);return render()}
+ case "wsori":{db.meta.orient={nome:($("#wsn").value||"").trim(),num:($("#wsw").value||"").trim()};if(numWa(db.meta.orient.num).length<12)return toast("Escreva o WhatsApp com DDD.");changed();ws.msg=ws.kind==="sub"?msgSub(ws.ref):msgIdea(db.ideas.find(x=>x.id===ws.ref));return render()}
+ case "wsorix":{db.meta.orient={...ori(),num:""};changed();return render()}
+ case "wsclose":ws=null;return render();
+ case "wssend":{if(numWa(ori().num).length<12){toast("Salve o WhatsApp da orientadora primeiro.");return}
+  window.open(`https://wa.me/${numWa(ori().num)}?text=${encodeURIComponent(ws.msg)}`,"_blank");
+  db.sends.push(touch({id:uid("e"),kind:ws.kind,ref:ws.ref,dt:todayIso(),docs:ws.sel}));changed();ws=null;setTimeout(()=>{render();toast("Registrado como enviado à orientadora")},400);return}
+ case "isub":isubOpen=isubOpen===d.id?null:d.id;return render();
+ case "isubtog":{const i=db.ideas.find(x=>x.id===d.id),n=d.n;i.subs=i.subs||[];i.subs=i.subs.some(x=>x.n===n)?i.subs.filter(x=>x.n!==n):[...i.subs,{n,usada:false}];touch(i);changed();render();return toast(i.subs.some(x=>x.n===n)?`Enviada ao ${n} como material candidato`:`Retirada do ${n}`)}
+ case "candusar":{const i=db.ideas.find(x=>x.id===d.id),m=(i.subs||[]).find(x=>x.n===d.n);if(m){m.usada=!m.usada;touch(i);changed()}return render()}
+ case "canddev":{const i=db.ideas.find(x=>x.id===d.id);i.subs=(i.subs||[]).filter(x=>x.n!==d.n);touch(i);changed();render();return toast("Devolvida às ideias")}
+ case "ritper":ritPer=d.p;return render();
+ }return actForm(a,el)}
+let isubOpen=null;
+function ideaActs(i){const subs=i.subs||[],ls=lastSend("idea",i.id);
+ return `${subs.length?`<p class="hint" style="margin:8px 0 0">Material candidato: ${subs.map(x=>esc(x.n)+(x.usada?" ✓":"")).join(", ")}</p>`:""}${ls?`<p class="hint" style="margin:4px 0 0">Enviada à orientadora em ${esc(brDate(ls.dt))}</p>`:""}
+ <div class="acts"><button class="link" data-a="iedit" data-id="${i.id}">Editar</button><button class="link" data-a="isub" data-id="${i.id}">Subtítulo</button><button class="link" data-a="wsopen" data-kind="idea" data-ref="${i.id}">Orientadora</button></div>
+ ${isubOpen===i.id?`<div class="chips" style="margin-top:10px">${subsSorted().map(s=>`<button class="chip" data-a="isubtog" data-id="${i.id}" data-n="${s.n}" aria-pressed="${subs.some(x=>x.n===s.n)}">${esc(s.n)}</button>`).join("")||`<span class="hint">Adicione subtítulos na aba Dissertação.</span>`}</div>`:""}
+ ${ws&&ws.kind==="idea"&&ws.ref===i.id?wsPanel():""}`}
+function candHTML(n){const l=L("ideas").filter(i=>(i.subs||[]).some(x=>x.n===n));
+ return `<p class="label">Materiais candidatos <span class="count">${l.length}</span></p>${l.length?l.map(i=>{const m=i.subs.find(x=>x.n===n);return `<div class="cand ${m.usada?"usada":""}">${ideaImg(i)}<p>${esc(i.text.length>260?i.text.slice(0,260)+"…":i.text)}</p><p class="hint" style="margin:2px 0 0">${i.concepts.map(C).filter(Boolean).map(c=>esc(c.name)).join(", ")}${m.usada?" · usada no texto":""}</p>
+  <div class="row"><button class="secondary" data-a="candusar" data-id="${i.id}" data-n="${n}">${m.usada?"Desfazer":"Usei no texto"}</button><button class="link" data-a="canddev" data-id="${i.id}" data-n="${n}">Devolver</button></div></div>`}).join(""):`<p class="hint" style="margin:0">Nenhuma ideia enviada a este subtítulo. Nas ideias, toque em “Subtítulo”.</p>`}`}
+/* --- ritmo de escrita --- */
+let ritPer="sem";
+function registrarRitmo(){const {by}=dissFiles();let tot=0,falta=false;Object.values(by).forEach(s=>DKINDS.forEach(([k])=>{const f=s[k];if(f){const w=wordsOf(f);if(w==null)falta=true;else tot+=w}}));
+ if(falta||!tot)return;const id=todayIso(),r=db.ritmo.find(x=>x.id===id);if(r){if(r.total!==tot){r.total=tot;touch(r);changed()}}else{db.ritmo.push(touch({id,total:tot}));changed()}}
+function ritmoDias(){const l=L("ritmo").sort((a,b)=>a.id.localeCompare(b.id)),out={};for(let i=0;i<l.length;i++){out[l[i].id]=i?l[i].total-l[i-1].total:0}return out}
+function vRitmo(){const d=ritmoDias(),dias=Object.keys(d),hoje=new Date(todayIso()+"T12:00"),seg=x=>{const t=new Date(x);t.setDate(t.getDate()-((t.getDay()+6)%7));return t};
+ const iso=t=>t.toISOString().slice(0,10),ini=seg(hoje),soma=(a,b)=>dias.filter(k=>k>=a&&k<b).reduce((s,k)=>s+d[k],0),ativos=(a,b)=>dias.filter(k=>k>=a&&k<b&&d[k]!==0).length;
+ const add=(t,n)=>{const x=new Date(t);x.setDate(x.getDate()+n);return x};
+ const g=[];if(ritPer==="sem"){for(let k=11;k>=0;k--){const a=add(ini,-7*k),b=add(a,7);g.push({lab:a.toLocaleDateString("pt-BR",{day:"numeric",month:"numeric"}),v:soma(iso(a),iso(b)),at:k===0})}}
+ else{for(let k=5;k>=0;k--){const a=new Date(hoje.getFullYear(),hoje.getMonth()-k,1),b=new Date(hoje.getFullYear(),hoje.getMonth()-k+1,1);g.push({lab:a.toLocaleDateString("pt-BR",{month:"short"}).replace(".",""),v:soma(iso(a),iso(b)),at:k===0})}}
+ const max=Math.max(1,...g.map(x=>x.v)),W=640,H=210,pad=36,base=H-24,bw=(W-pad)/g.length;
+ let svg=`<svg viewBox="0 0 ${W} ${H}" class="rit-svg" role="img" aria-label="Palavras escritas">`;[0,max/2,max].forEach(t=>{const y=base-(t/max)*(base-12);svg+=`<line x1="${pad}" x2="${W}" y1="${y}" y2="${y}" stroke="var(--rule)"/><text x="${pad-6}" y="${y+4}" font-size="11" text-anchor="end" fill="var(--muted)">${Math.round(t).toLocaleString("pt-BR")}</text>`});
+ g.forEach((x,k)=>{const h=Math.max(0,(x.v/max)*(base-12)),xx=pad+k*bw+bw*.18;svg+=`<rect x="${xx}" y="${base-h}" width="${bw*.64}" height="${h}" rx="3" fill="${x.at?"var(--t-ok)":"var(--accent)"}"><title>${x.lab}: ${x.v.toLocaleString("pt-BR")} palavras</title></rect><text x="${xx+bw*.32}" y="${H-6}" font-size="11" text-anchor="middle" fill="var(--muted)">${x.lab}</text>`});svg+="</svg>";
+ let grade="";const nomes=["seg","","qua","","sex","","dom"],inicio=add(ini,-77);
+ for(let w=0;w<7;w++){grade+=`<span class="rit-lab">${nomes[w]}</span>`;for(let s=0;s<12;s++){const t=add(inicio,s*7+w),k=iso(t),v=d[k];let c="var(--soft)";if(t>hoje)c="transparent";else if(v){const a=Math.abs(v);c=a<400?"color-mix(in srgb,var(--accent) 35%,var(--soft))":a<800?"color-mix(in srgb,var(--accent) 65%,var(--soft))":"var(--accent)"}grade+=`<span class="rit-d" style="background:${c}" title="${t.toLocaleDateString("pt-BR")}${v?": "+v.toLocaleString("pt-BR")+" palavras":""}"></span>`}}
+ const sem=soma(iso(ini),iso(add(ini,7))),at=ativos(iso(ini),iso(add(ini,7)));
+ return `<button class="back" data-a="nav" data-to="diss">‹ Dissertação</button><h1>Ritmo de escrita</h1>
+ ${dias.length<2?`<div class="empty">O ritmo começa a ser registrado agora. A cada vez que o painel lê os documentos no Drive, o aplicativo anota o total de palavras do dia; a diferença entre um dia e outro vira o registro. O histórico anterior a hoje não pode ser recuperado.</div>`:""}
+ <div class="panel d-stats" style="margin-top:0"><div><b>${sem.toLocaleString("pt-BR")}</b><span>palavras nesta semana</span></div><div><b>${at}</b><span>dias de escrita nesta semana</span></div><div><b>${L("ritmo").length}</b><span>dias registrados</span></div></div>
+ <div class="panel"><p style="margin:0 0 10px;font-family:var(--serif);font-size:18px">Palavras escritas</p><div class="chips" style="margin-bottom:10px"><button class="chip" data-a="ritper" data-p="sem" aria-pressed="${ritPer==="sem"}">Por semana</button><button class="chip" data-a="ritper" data-p="mes" aria-pressed="${ritPer==="mes"}">Por mês</button></div><div style="overflow-x:auto">${svg}</div></div>
+ <div class="panel"><p style="margin:0 0 4px;font-family:var(--serif);font-size:18px">Dias de escrita</p><p class="hint" style="margin:0 0 10px">Últimas 12 semanas. Quanto mais escuro, mais você escreveu. Dias de revisão, em que o texto diminuiu, também contam.</p><div class="rit-grade">${grade}</div></div>
+ <p class="hint">Sem notas nem metas: só o ritmo.</p>`}
+
 /* ---------- desenho geral ---------- */
 const NAV=[["capture","Capturar"],["concepts","Conceitos"],["timeline","Linha do tempo","Tempo"],["pending","Pendentes"],["diss","Dissertação"]];
 function renderNav(){
- const sub=["concept","batch","bib","auto","acervo","aficha"].includes(route.name),cur=sub?"concepts":route.name==="form"?"diss":route.name,np=pending().length;
+ const sub=["concept","batch","bib","auto","acervo","aficha"].includes(route.name),cur=sub?"concepts":["form","plano","ritmo"].includes(route.name)?"diss":route.name,np=pending().length;
  $("#tabs").classList.toggle("cinco",NAV.length>4);$("#tabs").innerHTML=NAV.map(([k,l,s])=>`<button data-a="nav" data-to="${k}" aria-current="${cur===k}">${s||l}${k==="pending"&&np?`<span class="badge-n">${np}</span>`:""}</button>`).join("");
  $("#side").innerHTML=`<div class="topb"><span class="mark">${KNOT}</span><span class="brand">Bloco Mágico</span></div><button class="syncbtn" data-a="sync"></button>
  <nav>${NAV.map(([k,l])=>`<button data-a="nav" data-to="${k}" aria-current="${cur===k&&!sub}">${l}${k==="pending"&&np?`<span class="badge-n">${np}</span>`:""}</button>`).join("")}
  <button data-a="nav" data-to="batch" aria-current="${route.name==="batch"}">Organizar pasta do Drive</button><button data-a="nav" data-to="bib" aria-current="${route.name==="bib"}">Bibliografia</button><button data-a="nav" data-to="acervo" aria-current="${route.name==="acervo"||route.name==="aficha"}">Acervo Freud e Lacan</button><button data-a="nav" data-to="form" aria-current="${route.name==="form"}">Formalização</button></nav>
  <p class="sub">Seus conceitos</p><div class="cl">${sortedConcepts().map(c=>`<button data-a="open" data-id="${c.id}" aria-current="${route.name==="concept"&&route.id===c.id}"><span style="width:9px;height:9px;border-radius:50%;background:${c.color};display:inline-block;flex:none"></span>${esc(c.name)}</button>`).join("")}</div>`;
  setSync()}
-function render(){renderNav();$("#main").innerHTML=({capture:vCapture,concepts:vConcepts,concept:vConcept,timeline:vTimeline,pending:vPending,batch:vBatch,bib:vBib,diss:vDiss,auto:vAuto,acervo:vAcervo,aficha:vAficha,form:vForm}[route.name]||vConcepts)();bind()}
+function render(){renderNav();$("#main").innerHTML=({capture:vCapture,concepts:vConcepts,concept:vConcept,timeline:vTimeline,pending:vPending,batch:vBatch,bib:vBib,diss:vDiss,auto:vAuto,acervo:vAcervo,aficha:vAficha,form:vForm,plano:vPlano,ritmo:vRitmo}[route.name]||vConcepts)();bind()}
 function softRender(){const a=document.activeElement;if(a&&$("#main").contains(a)&&/INPUT|TEXTAREA|SELECT/.test(a.tagName)){renderNav()}else render()}
 function on(sel,ev,fn){const e=$(sel);if(e)e.addEventListener(ev,fn);return e}
 function bind(){
@@ -1025,7 +1365,7 @@ function bind(){
  on("#de-s","change",e=>de.state=e.target.value);
  document.querySelectorAll(".cites").forEach(i=>i.addEventListener("input",e=>de.inc[e.target.dataset.ref]=Math.max(0,parseInt(e.target.value)||0)));
  on("#acvq","input",e=>{acvQ=e.target.value;const pos=e.target.selectionStart;render();const n=$("#acvq");if(n){n.focus();n.setSelectionRange(pos,pos)}});
- bindForm();bindDiss()}
+ bindForm();bindPlano();bindWa();bindDiss()}
 
 /* ---------- ações ---------- */
 function tog(arr,id){const i=arr.indexOf(id);i>=0?arr.splice(i,1):arr.push(id);return arr.includes(id)}
@@ -1107,7 +1447,7 @@ async function act(a,el){
  case "mkbulk":{const type=$("#rbt").value,have=new Set(L("refs").map(r=>fold(r.label)));const lines=$("#rb").value.split("\n").map(s=>s.trim()).filter(s=>s&&!have.has(fold(s)));
   if(!lines.length)return toast("Nenhuma obra nova na lista.");lines.forEach(label=>db.refs.push(touch({id:uid("r"),type,label})));showBulk=false;changed();render();return toast(`${lines.length} ${lines.length===1?"obra cadastrada":"obras cadastradas"}`)}
  case "rdel":{const r=R(id);if(!confirm(`Excluir "${r.label}" da bibliografia?`))return;r.deleted=true;touch(r);changed();render();return toast("Obra excluída")}
- default:return actForm(a,el)
+ default:return actPlano(a,el)
  }}catch(e){if(e.message==="auth"){toast("Conecte ao Drive tocando no aviso de sincronização.");render()}else toast(e.message||"Algo deu errado.")}}
 function scrollPanel(){const p=$(".panel");if(p)p.scrollIntoView({block:"start",behavior:"smooth"})}
 document.addEventListener("click",e=>{const el=e.target.closest("[data-a]");if(el&&!el.disabled){e.preventDefault();act(el.dataset.a,el)}});
