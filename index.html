@@ -130,6 +130,42 @@ input.cites{width:90px;padding:6px 8px;border:1px solid var(--rule);border-radiu
 textarea.small{min-height:110px;font-size:16px}
 .primary[disabled]{opacity:.6}
 a{color:inherit}
+
+/* dissertação */
+:root{--t-ok:#2E7D5B;--t-folga:#2E7D5B;--t-sem2:#A67C00;--t-sem1:#C8611A;--t-red:#C0392B}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--t-ok:#5DBB8E;--t-folga:#5DBB8E;--t-sem2:#E3C04A;--t-sem1:#EE9447;--t-red:#F06B5B}}
+:root[data-theme="dark"]{--t-ok:#5DBB8E;--t-folga:#5DBB8E;--t-sem2:#E3C04A;--t-sem1:#EE9447;--t-red:#F06B5B}
+.tabs.cinco button{font-size:12px;padding-left:2px;padding-right:2px}
+.d-bar{display:flex;height:8px;border-radius:4px;overflow:hidden;background:var(--soft)}
+.d-bar span{display:block;height:100%}.d-bar-ok{background:var(--t-ok)}.d-bar-and{background:var(--t-sem1)}
+.d-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
+.d-stats div{border-top:1px solid var(--rule);padding-top:8px}
+.d-stats b{display:block;font-family:var(--serif);font-size:21px;font-weight:500;line-height:1.2}
+.d-stats span{font-size:12.5px;color:var(--muted)}
+.d-alert{display:block;width:100%;text-align:left;border:0;border-radius:10px;padding:11px 14px;margin:0 0 8px;color:#fff;font-size:15px}
+.d-alert.d-sem1{background:var(--t-sem1)}.d-alert.d-red,.d-alert.d-venc{background:var(--t-red)}
+.d-sub{padding:0;border-left:5px solid var(--rule)}
+.d-sub.d-b-ok,.d-sub.d-b-folga{border-left-color:var(--t-ok)}.d-sub.d-b-sem2{border-left-color:var(--t-sem2)}.d-sub.d-b-sem1{border-left-color:var(--t-sem1)}.d-sub.d-b-red,.d-sub.d-b-venc{border-left-color:var(--t-red)}
+.d-head{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:0;background:none;padding:14px 14px 14px 12px}
+.d-num{font-family:var(--serif);font-size:20px;min-width:34px;color:var(--muted)}.d-num.ok{color:var(--t-ok)}
+.d-tt{flex:1;min-width:0}.d-tt>span:first-child{display:block;font-family:var(--serif);font-size:17px;line-height:1.3}
+.d-vazio{color:var(--muted);font-style:italic}
+.d-meta{display:block;font-size:13px;color:var(--muted);margin-top:2px}
+.d-prazo{display:inline-block;color:#fff;font-weight:600;font-size:12px;border-radius:6px;padding:1px 7px;margin-left:4px}
+.d-prazo.d-folga{background:var(--t-folga)}.d-prazo.d-sem2{background:var(--t-sem2)}.d-prazo.d-sem1{background:var(--t-sem1)}.d-prazo.d-red,.d-prazo.d-venc{background:var(--t-red)}
+@keyframes dpisca{50%{opacity:.35}}
+@media (prefers-reduced-motion:no-preference){.d-venc{animation:dpisca 1.1s ease-in-out infinite}}
+.d-pips{display:flex;gap:4px;flex:none}.d-pips i{width:11px;height:22px;border-radius:3px;background:var(--soft)}.d-pips i.on{background:var(--t-ok)}
+.d-body{border-top:1px solid var(--rule);padding:6px 16px 14px}
+.d-docl{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px dashed var(--rule);text-decoration:none;margin:0;font-size:15px}
+.d-docl small{margin-left:auto;font-size:12.5px;color:var(--muted);text-align:right}
+a.d-docl span:nth-child(2){text-decoration:underline;text-underline-offset:3px}
+.d-ck{width:20px;height:20px;border-radius:50%;flex:none;display:grid;place-items:center;font-size:12px;font-weight:600;background:var(--t-ok);color:#fff}
+.d-no .d-ck{background:none;border:2px solid var(--rule)}.d-no span:nth-child(2){color:var(--muted)}
+.d-esq{background:var(--ink);color:var(--surface)}
+.d-loose{margin:0;padding:6px 0;font-size:14px;border-bottom:1px dashed var(--rule)}
+.d-wrap{flex-wrap:wrap}.d-wrap input{flex:1 1 150px}
+input[type=date]{width:100%;background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:10px 12px}
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js" defer></script>
@@ -176,8 +212,8 @@ const fmtFull=ts=>new Date(ts).toLocaleDateString("pt-BR",{day:"numeric",month:"
 const brDate=iso=>iso?iso.slice(0,10).split("-").reverse().join("/"):"";
 
 /* ---------- dados ---------- */
-function seed(){return{version:1,concepts:SEED.map((n,i)=>({id:"seed-"+slug(n),name:n,color:PALETTE[i%PALETTE.length],updatedAt:"2026-01-01T00:00:00.000Z"})),refs:[],ideas:[],docs:[],meta:{}}}
-function loadLocal(){try{const s=localStorage.getItem(KEY);if(s){const d=JSON.parse(s);for(const k of["concepts","refs","ideas","docs"])d[k]=d[k]||[];d.meta=d.meta||{};return d}}catch(e){}return seed()}
+function seed(){return{version:1,concepts:SEED.map((n,i)=>({id:"seed-"+slug(n),name:n,color:PALETTE[i%PALETTE.length],updatedAt:"2026-01-01T00:00:00.000Z"})),refs:[],ideas:[],docs:[],subs:[],chapters:[],meta:{}}}
+function loadLocal(){try{const s=localStorage.getItem(KEY);if(s){const d=JSON.parse(s);for(const k of["concepts","refs","ideas","docs","subs","chapters"])d[k]=d[k]||[];d.meta=d.meta||{};return d}}catch(e){}return seed()}
 let db=loadLocal();
 function saveLocal(){try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){toast("Não foi possível salvar no aparelho.")}}
 const L=k=>db[k].filter(x=>!x.deleted);
@@ -192,7 +228,7 @@ function changed(){saveLocal();setDirty(true);scheduleSync()}
 function merge(a,b){
  const out={version:1,meta:{...(b.meta||{}),...(a.meta||{})}};
  if(((b.meta||{}).lastBackup||"")>((a.meta||{}).lastBackup||""))out.meta.lastBackup=b.meta.lastBackup;
- for(const k of["concepts","refs","ideas","docs"]){const m=new Map();for(const x of(b[k]||[]))m.set(x.id,x);
+ for(const k of["concepts","refs","ideas","docs","subs","chapters"]){const m=new Map();for(const x of(b[k]||[]))m.set(x.id,x);
   for(const x of(a[k]||[])){const y=m.get(x.id);if(!y||(x.updatedAt||"")>=(y.updatedAt||""))m.set(x.id,x)}out[k]=[...m.values()]}
  return out}
 function makeConcept(name){name=name.trim();if(!name){toast("Digite o nome do conceito.");return null}
@@ -293,7 +329,7 @@ async function sync(interactive){
  }catch(e){
   if(e.message!=="auth"){syncErr=true;if(interactive)toast("Não foi possível sincronizar. Tudo continua salvo no aparelho.")}
   else if(interactive)toast("Login não concluído. Toque de novo para conectar.");
- }finally{syncing=false;setSync();if(route.name==="batch"||link)softRender()}}
+ }finally{syncing=false;setSync();if(route.name==="batch"||link)softRender();if(route.name==="diss"&&hasToken()&&db.meta.dissFolder&&!dscan)scanDiss(false)}}
 
 /* ---------- estado da tela ---------- */
 const wide=()=>matchMedia("(min-width:768px)").matches;
@@ -302,7 +338,7 @@ let draft={text:"",moment:"",refId:"",concepts:new Set()};
 let psel={},err="",showNew=false,showNew2=false,showAll=false,showNewRef=false,showBulk=false;
 let editIdea=null,ieSel=[],editDoc=null,de=null,link=null,batch=null,searchTimer=null;
 const exportLinks={},checked=new Set();
-function go(r){route=r;err="";showNew=showNew2=showNewRef=showBulk=false;editIdea=null;editDoc=null;link=null;render();window.scrollTo(0,0);if(r.name==="concept")checkDocs(r.id)}
+function go(r){route=r;err="";showNew=showNew2=showNewRef=showBulk=false;editIdea=null;editDoc=null;link=null;render();window.scrollTo(0,0);if(r.name==="concept")checkDocs(r.id);if(r.name==="diss"&&db.meta.dissFolder&&(!dscan||dscan.folder!==db.meta.dissFolder.id||Date.now()-new Date(dscan.at)>6e5))scanDiss(false)}
 function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("on");clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove("on"),3200)}
 
 /* ---------- componentes ---------- */
@@ -494,17 +530,149 @@ async function checkDocs(cid){
   catch(e){if(e.status===404&&!d.missing){d.missing=true;ch=true}}}));
  if(ch){changed();if(route.name==="concept")softRender()}}
 
+/* ---------- dissertação: painel dos subtítulos ---------- */
+const DKINDS=[["red","Redação Consolidada"],["mapa","Mapa Demonstrativo"],["demo","Demonstração Documental"],["abnt","Versão ABNT"]];
+const DK=Object.fromEntries(DKINDS);
+let dscan=null,dscanning=false,dscanErr="",dopen=new Set(),dfold=null,dfq="",dnew=false,dcapEdit=null;
+try{dscan=JSON.parse(localStorage.getItem("bm-diss-scan")||"null")}catch(e){}
+let dwords={};try{dwords=JSON.parse(localStorage.getItem("bm-diss-words")||"{}")}catch(e){}
+const numKey=n=>String(n).split(".").map(x=>String(+x).padStart(3,"0")).join(".");
+const subsSorted=()=>L("subs").sort((a,b)=>numKey(a.n).localeCompare(numKey(b.n)));
+const capOf=n=>String(n).split(".")[0];
+const capTitle=k=>{const c=L("chapters").find(x=>x.n===k);return c?c.title:""};
+function parseDissName(name){
+ const t=fold(name).replace(/\.(docx?|pdf|odt)$/,"").replace(/_+/g," ");
+ const kind=/redacao consolidada/.test(t)?"red":/mapa demonstrativo/.test(t)?"mapa":/demonstracao documental/.test(t)?"demo":/abnt/.test(t)?"abnt":/esquema de escrita/.test(t)?"esq":null;
+ const m=t.match(/subtitulo\s*(\d{1,2})\s*[ .]\s*(\d{1,2})(?!\d)/)||t.match(/(?:^|[^\d.])(\d{1,2})[ .](\d{1,2})(?![\d.])/);
+ return {kind,n:m?`${+m[1]}.${+m[2]}`:null}}
+const countWords=t=>(String(t).match(/[\p{L}\p{N}][\p{L}\p{N}'’\-]*/gu)||[]).length;
+function dissFiles(){ // arquivos reconhecidos, agrupados por subtítulo e tipo (a versão mais recente de cada tipo)
+ const by={},loose=[];
+ (dscan&&dscan.files||[]).forEach(f=>{const p=parseDissName(f.name);if(!p.n||!p.kind){loose.push(f);return}
+  const s=by[p.n]||(by[p.n]={}),cur=s[p.kind];
+  if(!cur||(f.modifiedTime||"")>(cur.modifiedTime||""))s[p.kind]={...f,versions:(cur?cur.versions:0)+1};else cur.versions++});
+ return {by,loose}}
+async function scanDiss(interactive){
+ const fo=db.meta.dissFolder;if(!fo||dscanning)return;
+ if(!hasToken()){if(interactive)await getToken(true);else return}
+ dscanning=true;dscanErr="";if(route.name==="diss")softRender();
+ try{
+  const files=[];let queue=[fo.id],depth=0;
+  while(queue.length&&depth<4){const next=[];
+   for(const id of queue){const items=await listFiles(`'${id}' in parents and trashed=false`,"files(id,name,mimeType,modifiedTime,createdTime,webViewLink)");
+    items.forEach(f=>{if(f.mimeType==="application/vnd.google-apps.folder")next.push(f.id);else if(f.mimeType===DOCX||f.mimeType===GDOC||/\.docx?$/i.test(f.name))files.push(f)})}
+   queue=next;depth++}
+  dscan={at:nowIso(),folder:fo.id,files};try{localStorage.setItem("bm-diss-scan",JSON.stringify(dscan))}catch(e){}
+  if(route.name==="diss")softRender();
+  // contagem de palavras só dos documentos reconhecidos, e só quando o arquivo mudou
+  const {by}=dissFiles(),alvo=Object.values(by).flatMap(s=>DKINDS.map(([k])=>s[k]).filter(Boolean)).filter(f=>!dwords[f.id]||dwords[f.id].m!==f.modifiedTime);
+  for(let i=0;i<alvo.length;i+=3){await Promise.all(alvo.slice(i,i+3).map(async f=>{try{const t=await fileText(f);dwords[f.id]={m:f.modifiedTime,w:countWords(t)}}catch(e){}}));
+   try{localStorage.setItem("bm-diss-words",JSON.stringify(dwords))}catch(e){}if(route.name==="diss")softRender()}
+ }catch(e){dscanErr=e.message==="auth"?"Conecte ao Drive de novo.":"Não foi possível ler a pasta da dissertação."}
+ dscanning=false;if(route.name==="diss")softRender()}
+const wordsOf=f=>f&&dwords[f.id]&&dwords[f.id].m===f.modifiedTime?dwords[f.id].w:null;
+const dayDiff=(a,b)=>Math.round((new Date(b.slice(0,10)+"T12:00")-new Date(a.slice(0,10)+"T12:00"))/864e5);
+function prazoNivel(s,completo){
+ if(!s.prazo||completo)return null;const r=dayDiff(todayIso(),s.prazo),pl=(n,a,b)=>`${n} ${n===1?a:b}`;
+ if(r<0)return{c:"venc",t:`venceu há ${pl(-r,"dia","dias")}`,r};
+ if(r===0)return{c:"red",t:"vence hoje",r};
+ if(r<=2)return{c:"red",t:`faltam ${pl(r,"dia","dias")}`,r};
+ if(r<=7)return{c:"sem1",t:`faltam ${r} dias`,r};
+ if(r<=14)return{c:"sem2",t:`faltam ${r} dias`,r};
+ return{c:"folga",t:"até "+brDate(s.prazo),r}}
+function subInfo(s,by){
+ const f=by[s.n]||{},docs=DKINDS.map(([k])=>f[k]||null),feitos=docs.filter(Boolean).length;
+ const ws=docs.map(wordsOf),palavras=ws.reduce((a,w)=>a+(w||0),0),contando=docs.some((d,i)=>d&&ws[i]===null);
+ const cr=docs.filter(Boolean).map(d=>(d.createdTime||d.modifiedTime||"").slice(0,10)).sort();
+ return{docs,feitos,palavras,contando,esq:f.esq||null,ini:cr[0]||"",fim:feitos===4?cr[cr.length-1]:"",nv:prazoNivel(s,feitos===4)}}
+function vDiss(){
+ const fo=db.meta.dissFolder;
+ if(!fo||dfold)return vDissFolder();
+ const {by,loose}=dissFiles(),subs=subsSorted(),info=Object.fromEntries(subs.map(s=>[s.id,subInfo(s,by)]));
+ const conhecidos=new Set(subs.map(s=>s.n)),novos=Object.keys(by).filter(n=>!conhecidos.has(n)).sort((a,b)=>numKey(a).localeCompare(numKey(b)));
+ const comp=subs.filter(s=>info[s.id].feitos===4).length,and=subs.filter(s=>{const f=info[s.id].feitos;return f>0&&f<4}).length;
+ const total=subs.reduce((a,s)=>a+info[s.id].palavras,0),durs=subs.filter(s=>info[s.id].fim).map(s=>dayDiff(info[s.id].ini,info[s.id].fim));
+ const urg=subs.filter(s=>info[s.id].nv&&info[s.id].nv.r<=7).sort((a,b)=>info[a.id].nv.r-info[b.id].nv.r);
+ const caps=[...new Set(subs.map(s=>capOf(s.n)))];
+ return `<h1>Dissertação</h1>
+ <p class="hint" style="margin:-10px 0 14px">Pasta ${esc(fo.name)} · ${dscanning?"lendo o Drive…":dscan&&dscan.folder===fo.id?"lida "+esc(fmtShort(dscan.at)):"ainda não lida"}</p>
+ ${!hasToken()?connectBox("Para ler os documentos da dissertação, conecte o aplicativo ao Drive."):""}
+ ${dscanErr?`<p class="warn">${esc(dscanErr)}</p>`:""}
+ ${urg.map(s=>`<button class="d-alert d-${info[s.id].nv.c}" data-a="dtoggle" data-id="${s.id}"><b>${esc(s.n)}</b> ${esc(s.title||"")} — ${esc(info[s.id].nv.t)}</button>`).join("")}
+ ${subs.length?`<div class="panel"><p style="margin:0 0 10px"><b>${comp} de ${subs.length}</b> subtítulos com os quatro documentos. ${and} em andamento.</p>
+  <div class="d-bar"><span style="width:${comp/subs.length*100}%" class="d-bar-ok"></span><span style="width:${and/subs.length*100}%" class="d-bar-and"></span></div>
+  <div class="d-stats"><div><b>${total.toLocaleString("pt-BR")}</b><span>palavras nos documentos</span></div><div><b>${durs.length?Math.round(durs.reduce((a,b)=>a+b,0)/durs.length)+" dias":"—"}</b><span>por subtítulo, em média</span></div><div><b>${subs.filter(s=>info[s.id].nv).length}</b><span>com prazo</span></div></div></div>`:""}
+ ${novos.length?`<div class="panel"><p style="margin:0">Encontrei na pasta documentos de subtítulos que ainda não estão no painel: <b>${novos.map(esc).join(", ")}</b>.</p><div class="row"><button class="secondary" data-a="daddfound">Adicionar ao painel</button></div></div>`:""}
+ ${!subs.length&&!novos.length&&dscan?`<div class="empty">Nenhum documento de subtítulo reconhecido nesta pasta. Os nomes precisam trazer o número (por exemplo 1.5 ou 1_5) e o tipo: Redação Consolidada, Mapa Demonstrativo, Demonstração Documental ou Versão ABNT.</div>`:""}
+ ${caps.map(k=>{const l=subs.filter(s=>capOf(s.n)===k),t=capTitle(k);
+  return `<details class="block" open><summary>Capítulo ${esc(k)}${t?" — "+esc(t):""} <span class="count">${l.length}</span></summary>
+  ${dcapEdit===k?`<div class="inline" style="margin:-4px 0 12px"><input type="text" id="dcap" value="${esc(t)}" placeholder="Título do capítulo ${esc(k)}"><button class="secondary" data-a="dcapsave" data-k="${esc(k)}">Salvar</button></div>`:`<button class="link" style="margin:-4px 0 12px;display:block" data-a="dcapedit" data-k="${esc(k)}">${t?"Renomear capítulo":"Dar título ao capítulo"}</button>`}
+  ${l.map(s=>subCard(s,info[s.id])).join("")}</details>`}).join("")}
+ ${dnew?`<div class="panel"><label class="label" for="dnn" style="margin-top:0">Número</label><input type="text" id="dnn" inputmode="decimal" placeholder="Ex.: 2.3"><label class="label" for="dnt">Título</label><input type="text" id="dnt" placeholder="Pode ficar para depois"><button class="primary" data-a="dnewsave">Adicionar subtítulo</button><div class="row"><button class="link" data-a="dnew">Cancelar</button></div></div>`
+  :`<div class="row" style="margin-top:4px"><button class="secondary" data-a="dnew">+ Subtítulo</button><button class="secondary" data-a="dscan">Atualizar do Drive</button><button class="link" data-a="dpickfolder">Trocar pasta</button></div>`}
+ ${loose.length?`<details class="block" style="margin-top:22px"><summary>Documentos da pasta sem subtítulo reconhecido <span class="count">${loose.length}</span></summary><p class="hint" style="margin:-4px 0 10px">Ficam fora do painel porque o nome não traz o número do subtítulo e o tipo de documento. Nada foi alterado neles.</p>${loose.slice(0,80).map(f=>`<p class="d-loose"><a href="${esc(f.webViewLink||"#")}" target="_blank" rel="noopener">${esc(f.name)}</a></p>`).join("")}</details>`:""}`}
+function subCard(s,x){
+ const aberto=dopen.has(s.id),falta=DKINDS.find((k,i)=>!x.docs[i]);
+ return `<div class="doc d-sub ${x.nv?"d-b-"+x.nv.c:x.feitos===4?"d-b-ok":""}">
+ <button class="d-head" data-a="dtoggle" data-id="${s.id}" aria-expanded="${aberto}">
+  <span class="d-num ${x.feitos===4?"ok":""}">${esc(s.n)}</span>
+  <span class="d-tt"><span class="${s.title?"":"d-vazio"}">${esc(s.title||"Sem título")}</span>
+   <span class="d-meta">${x.feitos?`${x.palavras.toLocaleString("pt-BR")} palavras${x.contando?"…":""}`:"nenhum documento"}${x.fim?` · levou ${dayDiff(x.ini,x.fim)} dias`:""}${x.nv?` <span class="d-prazo d-${x.nv.c}">${esc(x.nv.t)}</span>`:""}</span></span>
+  <span class="d-pips" aria-label="${x.feitos} de 4 documentos">${x.docs.map(d=>`<i class="${d?"on":""}"></i>`).join("")}</span></button>
+ ${aberto?`<div class="d-body">
+  ${DKINDS.map(([k,nome],i)=>{const d=x.docs[i],w=wordsOf(d);return d?`<a class="d-docl" href="${esc(d.webViewLink||"#")}" target="_blank" rel="noopener"><span class="d-ck">✓</span><span>${nome}</span><small>${w===null?"contando…":w.toLocaleString("pt-BR")+" palavras"}${d.versions>1?` · ${d.versions} versões na pasta, mostrando a mais recente`:""}</small></a>`:`<p class="d-docl d-no"><span class="d-ck"></span><span>${nome}</span><small>não encontrado</small></p>`}).join("")}
+  ${x.esq?`<a class="d-docl" href="${esc(x.esq.webViewLink||"#")}" target="_blank" rel="noopener"><span class="d-ck d-esq">E</span><span>Esquema de Escrita</span><small>planejamento</small></a>`:""}
+  <p class="hint" style="margin:10px 0 0">${x.feitos===4?`Completo em ${brDate(x.fim)}${s.prazo?(x.fim<=s.prazo?", dentro do prazo.":", depois do prazo."):"."}`:`Próximo: ${falta[1]}.`}</p>
+  <label class="label" for="dt-${s.id}">Título</label><div class="inline" style="margin-top:0"><input type="text" id="dt-${s.id}" value="${esc(s.title||"")}" placeholder="Título do ${esc(s.n)}"><button class="secondary" data-a="dtitle" data-id="${s.id}">Salvar</button></div>
+  ${x.feitos<4?`<label class="label" for="dp-${s.id}">Prazo</label><div class="inline d-wrap" style="margin-top:0"><input type="date" id="dp-${s.id}" value="${esc(s.prazo||"")}"><button class="secondary" data-a="dprazo" data-id="${s.id}">Salvar</button>${s.prazo?`<button class="secondary" data-a="dprazox" data-id="${s.id}">Tirar</button>`:""}</div><p class="hint">Prazo só nos subtítulos em andamento. A ligação com a agenda do Google entra numa próxima etapa.</p>`:""}
+  <div class="row"><button class="link" data-a="dsubdel" data-id="${s.id}">Tirar do painel</button></div></div>`:""}</div>`}
+function vDissFolder(){
+ const fo=db.meta.dissFolder,back=fo?`<button class="back" data-a="dpickcancel">‹ Dissertação</button>`:"";
+ if(!hasToken())return back+`<h1>Dissertação</h1><p class="hint" style="margin-top:-8px">O painel lê os documentos de cada subtítulo direto da pasta da dissertação no Drive.</p>${connectBox()}`;
+ if(!dfold){dfold={folders:null};}
+ if(!dfold.folders){if(!dfold.loading){dfold.loading=true;listFiles("mimeType='application/vnd.google-apps.folder' and trashed=false","files(id,name)",{orderBy:"name"}).then(l=>{dfold.folders=l.filter(x=>x.name!==FOLDER_NAME)}).catch(()=>{dfold.folders=[];toast("Não foi possível listar as pastas.")}).finally(()=>{dfold.loading=false;if(route.name==="diss")render()})}
+  return back+`<h1>Pasta da dissertação</h1><p class="hint">Carregando as suas pastas do Drive…</p>`}
+ const q=fold(dfq.trim()),l=dfold.folders.filter(x=>!q||fold(x.name).includes(q));
+ return back+`<h1>Pasta da dissertação</h1><p class="hint" style="margin-top:-6px">Escolha a pasta onde ficam os documentos dos subtítulos. Subpastas também são lidas. O aplicativo só lê: não move nem renomeia nada.</p>
+ <input type="text" id="dfq" value="${esc(dfq)}" placeholder="Filtrar pastas pelo nome" style="margin-top:12px"><div id="dfl">${dFolderList(l)}</div>`}
+function dFolderList(l){return l.length?l.slice(0,150).map(x=>`<button class="res" data-a="dfolder" data-id="${x.id}"><p class="fname" style="font-family:var(--serif);margin:0">Pasta ${esc(x.name)}</p></button>`).join("")+(l.length>150?`<p class="hint">Mostrando 150 de ${l.length}. Use o filtro.</p>`:""):`<p class="hint">Nenhuma pasta com esse nome.</p>`}
+function bindDiss(){
+ on("#dfq","input",e=>{dfq=e.target.value;const q=fold(dfq.trim());$("#dfl").innerHTML=dFolderList(dfold.folders.filter(x=>!q||fold(x.name).includes(q)))});
+ const dc=on("#dcap","keydown",e=>{if(e.key==="Enter")act("dcapsave",{dataset:{k:dcapEdit}})});if(dc)dc.focus();
+ const dn=$("#dnn");if(dn&&dnew&&!dn.value)dn.focus()}
+async function actDiss(a,el){
+ const id=el&&el.dataset.id,S=()=>db.subs.find(x=>x.id===id);
+ switch(a){
+ case "dtoggle":dopen.has(id)?dopen.delete(id):dopen.add(id);render();{const e=document.querySelector(`[data-a="dtoggle"][data-id="${id}"].d-head`);if(e&&el.classList.contains("d-alert"))e.scrollIntoView({block:"center",behavior:"smooth"})}return;
+ case "dpickfolder":dfold={folders:null};dfq="";return render();
+ case "dpickcancel":dfold=null;return render();
+ case "dfolder":{const f=dfold.folders.find(x=>x.id===id);db.meta.dissFolder={id:f.id,name:f.name};dfold=null;dscan=null;changed();render();return scanDiss(true)}
+ case "dscan":return scanDiss(true);
+ case "daddfound":{const {by}=dissFiles(),have=new Set(L("subs").map(s=>s.n));let n=0;Object.keys(by).filter(k=>!have.has(k)).forEach(k=>{db.subs.push(touch({id:uid("s"),n:k,title:"",prazo:""}));n++});changed();render();return toast(`${n} ${n===1?"subtítulo adicionado":"subtítulos adicionados"}. Dê os títulos quando quiser.`)}
+ case "dnew":dnew=!dnew;return render();
+ case "dnewsave":{const n=($("#dnn").value||"").trim().replace(",",".").replace(/\s+/g,""),t=($("#dnt").value||"").trim();
+  if(!/^\d{1,2}\.\d{1,2}$/.test(n))return toast("Escreva o número no formato capítulo.subtítulo, por exemplo 2.3.");
+  if(L("subs").some(s=>s.n===`${+n.split(".")[0]}.${+n.split(".")[1]}`))return toast("Esse subtítulo já está no painel.");
+  db.subs.push(touch({id:uid("s"),n:`${+n.split(".")[0]}.${+n.split(".")[1]}`,title:t,prazo:""}));dnew=false;changed();render();return toast("Subtítulo adicionado")}
+ case "dtitle":{const s=S();s.title=$("#dt-"+id).value.trim();touch(s);changed();render();return toast("Título salvo")}
+ case "dprazo":{const v=$("#dp-"+id).value;if(!v)return toast("Escolha uma data.");const s=S();s.prazo=v;touch(s);changed();render();return toast("Prazo salvo")}
+ case "dprazox":{const s=S();s.prazo="";touch(s);changed();render();return toast("Prazo removido")}
+ case "dsubdel":{const s=S();if(!confirm(`Tirar o ${s.n} do painel? Os documentos no Drive não são tocados.`))return;s.deleted=true;touch(s);dopen.delete(id);changed();render();return toast("Tirado do painel")}
+ case "dcapedit":dcapEdit=el.dataset.k;return render();
+ case "dcapsave":{const k=el.dataset.k,v=($("#dcap").value||"").trim();let c=db.chapters.find(x=>x.n===k&&!x.deleted);if(!c){c={id:"cap-"+k,n:k};db.chapters.push(c)}c.title=v;touch(c);dcapEdit=null;changed();return render()}
+ }}
+
 /* ---------- desenho geral ---------- */
-const NAV=[["capture","Capturar"],["concepts","Conceitos"],["timeline","Linha do tempo","Tempo"],["pending","Pendentes"]];
+const NAV=[["capture","Capturar"],["concepts","Conceitos"],["timeline","Linha do tempo","Tempo"],["pending","Pendentes"],["diss","Dissertação"]];
 function renderNav(){
  const sub=["concept","batch","bib"].includes(route.name),cur=sub?"concepts":route.name,np=pending().length;
- $("#tabs").innerHTML=NAV.map(([k,l,s])=>`<button data-a="nav" data-to="${k}" aria-current="${cur===k}">${s||l}${k==="pending"&&np?`<span class="badge-n">${np}</span>`:""}</button>`).join("");
+ $("#tabs").classList.toggle("cinco",NAV.length>4);$("#tabs").innerHTML=NAV.map(([k,l,s])=>`<button data-a="nav" data-to="${k}" aria-current="${cur===k}">${s||l}${k==="pending"&&np?`<span class="badge-n">${np}</span>`:""}</button>`).join("");
  $("#side").innerHTML=`<div class="topb"><span class="mark">${KNOT}</span><span class="brand">Bloco Mágico</span></div><button class="syncbtn" data-a="sync"></button>
  <nav>${NAV.map(([k,l])=>`<button data-a="nav" data-to="${k}" aria-current="${cur===k&&!sub}">${l}${k==="pending"&&np?`<span class="badge-n">${np}</span>`:""}</button>`).join("")}
  <button data-a="nav" data-to="batch" aria-current="${route.name==="batch"}">Organizar pasta do Drive</button><button data-a="nav" data-to="bib" aria-current="${route.name==="bib"}">Bibliografia</button></nav>
  <p class="sub">Seus conceitos</p><div class="cl">${sortedConcepts().map(c=>`<button data-a="open" data-id="${c.id}" aria-current="${route.name==="concept"&&route.id===c.id}"><span style="width:9px;height:9px;border-radius:50%;background:${c.color};display:inline-block;flex:none"></span>${esc(c.name)}</button>`).join("")}</div>`;
  setSync()}
-function render(){renderNav();$("#main").innerHTML=({capture:vCapture,concepts:vConcepts,concept:vConcept,timeline:vTimeline,pending:vPending,batch:vBatch,bib:vBib}[route.name]||vConcepts)();bind()}
+function render(){renderNav();$("#main").innerHTML=({capture:vCapture,concepts:vConcepts,concept:vConcept,timeline:vTimeline,pending:vPending,batch:vBatch,bib:vBib,diss:vDiss}[route.name]||vConcepts)();bind()}
 function softRender(){const a=document.activeElement;if(a&&$("#main").contains(a)&&/INPUT|TEXTAREA|SELECT/.test(a.tagName)){renderNav()}else render()}
 function on(sel,ev,fn){const e=$(sel);if(e)e.addEventListener(ev,fn);return e}
 function bind(){
@@ -520,7 +688,8 @@ function bind(){
  on("#bt","input",e=>{batch.title=e.target.value;const n=$("#nn");if(n)n.textContent=bName()});on("#bs","change",e=>batch.state=e.target.value);
  on("#bfq","input",e=>{batch.filter=e.target.value;$("#bfl").innerHTML=folderList()});
  on("#de-s","change",e=>de.state=e.target.value);
- document.querySelectorAll(".cites").forEach(i=>i.addEventListener("input",e=>de.inc[e.target.dataset.ref]=Math.max(0,parseInt(e.target.value)||0)));}
+ document.querySelectorAll(".cites").forEach(i=>i.addEventListener("input",e=>de.inc[e.target.dataset.ref]=Math.max(0,parseInt(e.target.value)||0)));
+ bindDiss()}
 
 /* ---------- ações ---------- */
 function tog(arr,id){const i=arr.indexOf(id);i>=0?arr.splice(i,1):arr.push(id);return arr.includes(id)}
@@ -602,6 +771,7 @@ async function act(a,el){
  case "mkbulk":{const type=$("#rbt").value,have=new Set(L("refs").map(r=>fold(r.label)));const lines=$("#rb").value.split("\n").map(s=>s.trim()).filter(s=>s&&!have.has(fold(s)));
   if(!lines.length)return toast("Nenhuma obra nova na lista.");lines.forEach(label=>db.refs.push(touch({id:uid("r"),type,label})));showBulk=false;changed();render();return toast(`${lines.length} ${lines.length===1?"obra cadastrada":"obras cadastradas"}`)}
  case "rdel":{const r=R(id);if(!confirm(`Excluir "${r.label}" da bibliografia?`))return;r.deleted=true;touch(r);changed();render();return toast("Obra excluída")}
+ default:return actDiss(a,el)
  }}catch(e){if(e.message==="auth"){toast("Conecte ao Drive tocando no aviso de sincronização.");render()}else toast(e.message||"Algo deu errado.")}}
 function scrollPanel(){const p=$(".panel");if(p)p.scrollIntoView({block:"start",behavior:"smooth"})}
 document.addEventListener("click",e=>{const el=e.target.closest("[data-a]");if(el&&!el.disabled){e.preventDefault();act(el.dataset.a,el)}});
