@@ -263,6 +263,9 @@ a.d-docl span:nth-child(2){text-decoration:underline;text-underline-offset:3px}
 .f-img i{position:absolute;top:6px;right:6px;width:22px;height:22px;border-radius:50%;background:var(--ink);color:var(--surface);display:grid;place-items:center;font-style:normal;font-size:12px}
 .f-img[aria-pressed="false"] i{background:var(--surface);border:2px solid var(--rule)}
 .idea .a-img{max-height:360px;margin:4px 0 10px}
+.d-nd{flex:none;font-size:12px;font-weight:600;padding:3px 8px;border-radius:6px;background:var(--soft);color:var(--ink)}
+.d-outro a{text-decoration:underline;text-underline-offset:3px}.d-outro{flex-wrap:wrap}
+.d-link{margin:10px 0;padding:10px;border:1px solid var(--accent);border-radius:10px}
 .d-loose{margin:0;padding:6px 0;font-size:14px;border-bottom:1px dashed var(--rule)}
 .d-wrap{flex-wrap:wrap}.d-wrap input{flex:1 1 150px}
 input[type=date]{width:100%;background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:10px 12px}
@@ -634,7 +637,7 @@ async function checkDocs(cid){
 /* ---------- dissertação: painel dos subtítulos ---------- */
 const DKINDS=[["red","Redação Consolidada"],["mapa","Mapa Demonstrativo"],["demo","Demonstração Documental"],["abnt","Versão ABNT"]];
 const DK=Object.fromEntries(DKINDS);
-let dscan=null,dscanning=false,dscanErr="",dopen=new Set(),dfold=null,dfq="",dnew=false,dcapEdit=null;
+let dlink=null,dlTimer=null;let dscan=null,dscanning=false,dscanErr="",dopen=new Set(),dfold=null,dfq="",dnew=false,dcapEdit=null;
 try{dscan=JSON.parse(localStorage.getItem("bm-diss-scan")||"null")}catch(e){}
 let dwords={};try{dwords=JSON.parse(localStorage.getItem("bm-diss-words")||"{}")}catch(e){}
 const numKey=n=>String(n).split(".").map(x=>String(+x).padStart(3,"0")).join(".");
@@ -642,17 +645,23 @@ const subsSorted=()=>L("subs").sort((a,b)=>numKey(a.n).localeCompare(numKey(b.n)
 const capOf=n=>String(n).split(".")[0];
 const capTitle=k=>{const c=L("chapters").find(x=>x.n===k);return c?c.title:""};
 function parseDissName(name){
- const t=fold(name).replace(/\.(docx?|pdf|odt)$/,"").replace(/_+/g," ");
+ const base=name.replace(/\.(docx?|pdf|odt)$/i,""),t=fold(base).replace(/_+/g," ");
  const kind=/redacao consolidada/.test(t)?"red":/mapa demonstrativo/.test(t)?"mapa":/demonstracao documental/.test(t)?"demo":/abnt/.test(t)?"abnt":/esquema de escrita/.test(t)?"esq":null;
- const m=t.match(/subtitulo\s*(\d{1,2})\s*[ .]\s*(\d{1,2})(?!\d)/)||t.match(/(?:^|[^\d.])(\d{1,2})[ .](\d{1,2})(?![\d.])/);
- return {kind,n:m?`${+m[1]}.${+m[2]}`:null}}
+ let ns=[];const rg=t.match(/(\d{1,2})[ .](\d{1,2})\s+(?:a|ate|-|–)\s+(\d{1,2})[ .](\d{1,2})(?![\d.])/);
+ if(rg&&rg[1]===rg[3]&&+rg[2]<=+rg[4]&&+rg[4]-+rg[2]<15){for(let k=+rg[2];k<=+rg[4];k++)ns.push(`${+rg[1]}.${k}`)}
+ else{const m=t.match(/subtitulo\s*(\d{1,2})\s*[ .]\s*(\d{1,2})(?!\d)/)||t.match(/secao\s*(\d{1,2})\s*[ .]\s*(\d{1,2})(?!\d)/)||t.match(/(?:^|[^\d.])(\d{1,2})[ .](\d{1,2})(?![\d.])/);if(m)ns=[`${+m[1]}.${+m[2]}`]}
+ const label=base.replace(/_+/g," ").replace(/\b\d{1,2}[ .]\d{1,2}\s+(?:a|até|ate|-|–)\s+\d{1,2}[ .]\d{1,2}\b/i,"").replace(/(^|[^\d.])\d{1,2}[.]\d{1,2}(?![\d.])/g,"$1").replace(/\s+[—–-]\s*$|^\s*[—–-]\s+/g,"").replace(/\s{2,}/g," ").trim();
+ return {kind,n:ns[0]||null,ns,label:label||base,range:ns.length>1?`${ns[0]} a ${ns[ns.length-1]}`:""}}
 const countWords=t=>(String(t).match(/[\p{L}\p{N}][\p{L}\p{N}'’\-]*/gu)||[]).length;
-function dissFiles(){ // arquivos reconhecidos, agrupados por subtítulo e tipo (a versão mais recente de cada tipo)
+function dissFiles(){ // documentos por subtítulo: os quatro tipos, o esquema e os demais documentos com número
  const by={},loose=[];
- (dscan&&dscan.files||[]).forEach(f=>{const p=parseDissName(f.name);if(!p.n||!p.kind){loose.push(f);return}
-  const s=by[p.n]||(by[p.n]={}),cur=s[p.kind];
-  if(!cur||(f.modifiedTime||"")>(cur.modifiedTime||""))s[p.kind]={...f,versions:(cur?cur.versions:0)+1};else cur.versions++});
+ (dscan&&dscan.files||[]).forEach(f=>{const p=parseDissName(f.name);if(!p.ns.length){loose.push(f);return}
+  p.ns.forEach(n=>{const s=by[n]||(by[n]={outros:[]}),g={...f,label:p.label,range:p.range};
+   if(p.kind){const cur=s[p.kind];if(!cur||(f.modifiedTime||"")>(cur.modifiedTime||""))s[p.kind]={...g,versions:(cur?cur.versions:0)+1};else cur.versions++}
+   else s.outros.push(g)})});
+ L("subs").forEach(s=>(s.links||[]).forEach(l=>{const f=dscan&&dscan.links&&dscan.links[l.id];const b=by[s.n]||(by[s.n]={outros:[]});if(!b.outros.some(x=>x.id===l.id))b.outros.push({...(f||{id:l.id,name:l.name,webViewLink:l.link}),label:(f&&f.name||l.name).replace(/\.(docx?|odt)$/i,""),manual:true})}));
  return {by,loose}}
+function docsUnicos(by){const m=new Map();Object.values(by).forEach(s=>{DKINDS.forEach(([k])=>{if(s[k])m.set(s[k].id,s[k])});(s.outros||[]).forEach(f=>m.set(f.id,f))});return [...m.values()]}
 async function scanDiss(interactive){
  const fo=db.meta.dissFolder;if(!fo||dscanning)return;
  if(!hasToken()){if(interactive)await getToken(true);else return}
@@ -663,10 +672,11 @@ async function scanDiss(interactive){
    for(const id of queue){const items=await listFiles(`'${id}' in parents and trashed=false`,"files(id,name,mimeType,modifiedTime,createdTime,webViewLink)");
     items.forEach(f=>{if(f.mimeType==="application/vnd.google-apps.folder")next.push(f.id);else if(f.mimeType===DOCX||f.mimeType===GDOC||/\.docx?$/i.test(f.name))files.push(f)})}
    queue=next;depth++}
-  dscan={at:nowIso(),folder:fo.id,files};try{localStorage.setItem("bm-diss-scan",JSON.stringify(dscan))}catch(e){}
+  const links={};for(const s of L("subs"))for(const l of (s.links||[])){try{links[l.id]=await(await api(`drive/v3/files/${l.id}?fields=id,name,mimeType,modifiedTime,createdTime,webViewLink`)).json()}catch(e){}}
+  dscan={at:nowIso(),folder:fo.id,files,links};try{localStorage.setItem("bm-diss-scan",JSON.stringify(dscan))}catch(e){}
   if(route.name==="diss")softRender();
   // contagem de palavras só dos documentos reconhecidos, e só quando o arquivo mudou
-  const {by}=dissFiles(),alvo=Object.values(by).flatMap(s=>DKINDS.map(([k])=>s[k]).filter(Boolean)).filter(f=>!dwords[f.id]||dwords[f.id].m!==f.modifiedTime);
+  const {by}=dissFiles(),alvo=docsUnicos(by).filter(f=>f.modifiedTime&&(!dwords[f.id]||dwords[f.id].m!==f.modifiedTime));
   for(let i=0;i<alvo.length;i+=3){await Promise.all(alvo.slice(i,i+3).map(async f=>{try{const t=await fileText(f);dwords[f.id]={m:f.modifiedTime,w:countWords(t)}}catch(e){}}));
    try{localStorage.setItem("bm-diss-words",JSON.stringify(dwords))}catch(e){}if(route.name==="diss")softRender()}
   registrarRitmo();
@@ -683,17 +693,17 @@ function prazoNivel(s,completo){
  if(r<=14)return{c:"sem2",t:`faltam ${r} dias`,r};
  return{c:"folga",t:"até "+brDate(s.prazo),r}}
 function subInfo(s,by){
- const f=by[s.n]||{},docs=DKINDS.map(([k])=>f[k]||null),feitos=docs.filter(Boolean).length;
- const ws=docs.map(wordsOf),palavras=ws.reduce((a,w)=>a+(w||0),0),contando=docs.some((d,i)=>d&&ws[i]===null);
+ const f=by[s.n]||{outros:[]},docs=DKINDS.map(([k])=>f[k]||null),feitos=docs.filter(Boolean).length,outros=f.outros||[];
+ const todos=[...docs.filter(Boolean),...outros],ws=todos.map(wordsOf),palavras=ws.reduce((a,w)=>a+(w||0),0),contando=todos.some((d,i)=>d.modifiedTime&&ws[i]===null);
  const cr=docs.filter(Boolean).map(d=>(d.createdTime||d.modifiedTime||"").slice(0,10)).sort();
- return{docs,feitos,palavras,contando,esq:f.esq||null,ini:cr[0]||"",fim:feitos===4?cr[cr.length-1]:"",nv:prazoNivel(s,feitos===4)}}
+ return{docs,feitos,outros,palavras,contando,esq:f.esq||null,ini:cr[0]||"",fim:feitos===4?cr[cr.length-1]:"",nv:prazoNivel(s,feitos===4)}}
 function vDiss(){
  const fo=db.meta.dissFolder;
  if(!fo||dfold)return vDissFolder();
  const {by,loose}=dissFiles(),subs=subsSorted(),info=Object.fromEntries(subs.map(s=>[s.id,subInfo(s,by)]));
  const conhecidos=new Set(subs.map(s=>s.n)),novos=Object.keys(by).filter(n=>!conhecidos.has(n)).sort((a,b)=>numKey(a).localeCompare(numKey(b)));
  const comp=subs.filter(s=>info[s.id].feitos===4).length,and=subs.filter(s=>{const f=info[s.id].feitos;return f>0&&f<4}).length;
- const total=subs.reduce((a,s)=>a+info[s.id].palavras,0),durs=subs.filter(s=>info[s.id].fim).map(s=>dayDiff(info[s.id].ini,info[s.id].fim));
+ const total=docsUnicos(by).reduce((a,f)=>a+(wordsOf(f)||0),0),durs=subs.filter(s=>info[s.id].fim).map(s=>dayDiff(info[s.id].ini,info[s.id].fim));
  const urg=subs.filter(s=>info[s.id].nv&&info[s.id].nv.r<=7).sort((a,b)=>info[a.id].nv.r-info[b.id].nv.r);
  const caps=[...new Set(subs.map(s=>capOf(s.n)))];
  return `<h1>Dissertação</h1>
@@ -720,16 +730,19 @@ function subCard(s,x){
  <button class="d-head" data-a="dtoggle" data-id="${s.id}" aria-expanded="${aberto}">
   <span class="d-num ${x.feitos===4?"ok":""}">${esc(s.n)}</span>
   <span class="d-tt"><span class="${s.title?"":"d-vazio"}">${esc(s.title||"Sem título")}</span>
-   <span class="d-meta">${x.feitos?`${x.palavras.toLocaleString("pt-BR")} palavras${x.contando?"…":""}`:"nenhum documento"}${x.fim?` · levou ${dayDiff(x.ini,x.fim)} dias`:""}${(()=>{const e=estadoPlano(s.n);return e?(e.arq?` · arquitetado, ${e.conf} de ${e.pas} passagens conferidas`:" · planejamento em andamento"):""})()}${(()=>{const c=L("ideas").filter(i=>(i.subs||[]).some(m=>m.n===s.n)).length;return c?` · ${c} ${c===1?"ideia":"ideias"}`:""})()}${x.nv?` <span class="d-prazo d-${x.nv.c}">${esc(x.nv.t)}</span>`:""}</span></span>
-  <span class="d-pips" aria-label="${x.feitos} de 4 documentos">${x.docs.map(d=>`<i class="${d?"on":""}"></i>`).join("")}</span></button>
+   <span class="d-meta">${x.feitos||x.outros.length?`${x.palavras.toLocaleString("pt-BR")} palavras${x.contando?"…":""}`:"nenhum documento"}${x.outros.length?` · ${x.outros.length} ${x.outros.length===1?"outro documento":"outros documentos"}`:""}${x.fim?` · levou ${dayDiff(x.ini,x.fim)} dias`:""}${(()=>{const e=estadoPlano(s.n);return e?(e.arq?` · arquitetado, ${e.conf} de ${e.pas} passagens conferidas`:" · planejamento em andamento"):""})()}${(()=>{const c=L("ideas").filter(i=>(i.subs||[]).some(m=>m.n===s.n)).length;return c?` · ${c} ${c===1?"ideia":"ideias"}`:""})()}${x.nv?` <span class="d-prazo d-${x.nv.c}">${esc(x.nv.t)}</span>`:""}</span></span>
+  ${!x.feitos&&x.outros.length?`<span class="d-nd">${x.outros.length} doc.</span>`:`<span class="d-pips" aria-label="${x.feitos} de 4 documentos">${x.docs.map(d=>`<i class="${d?"on":""}"></i>`).join("")}</span>`}</button>
  ${aberto?`<div class="d-body">
   ${(()=>{const p=planRec(s.n);return p&&cheio(p.ficha.pergunta)?`<div class="d-perg"><small>Pergunta organizadora</small>${esc(p.ficha.pergunta)}</div>`:""})()}
-  <div class="row" style="margin:10px 0 6px"><button class="secondary d-acc" data-a="plano" data-k="${esc(s.n)}">${estadoPlano(s.n)?"Abrir planejamento":"Planejar este subtítulo"}</button>${x.feitos||x.esq?`<button class="secondary d-wa" data-a="wsopen" data-kind="sub" data-ref="${esc(s.n)}">Enviar à orientadora</button>`:""}</div>
+  <div class="row" style="margin:10px 0 6px"><button class="secondary d-acc" data-a="plano" data-k="${esc(s.n)}">${estadoPlano(s.n)?"Abrir planejamento":"Planejar este subtítulo"}</button>${x.feitos||x.esq||x.outros.length?`<button class="secondary d-wa" data-a="wsopen" data-kind="sub" data-ref="${esc(s.n)}">Enviar à orientadora</button>`:""}</div>
   ${(()=>{const ls=lastSend("sub",s.n);return ls?`<p class="hint" style="margin:0 0 6px">Último envio à orientadora: ${esc(brDate(ls.dt))}</p>`:""})()}
   ${ws&&ws.kind==="sub"&&ws.ref===s.n?wsPanel():""}
-  ${DKINDS.map(([k,nome],i)=>{const d=x.docs[i],w=wordsOf(d);return d?`<a class="d-docl" href="${esc(d.webViewLink||"#")}" target="_blank" rel="noopener"><span class="d-ck">✓</span><span>${nome}</span><small>${w===null?"contando…":w.toLocaleString("pt-BR")+" palavras"}${d.versions>1?` · ${d.versions} versões na pasta, mostrando a mais recente`:""}</small></a>`:`<p class="d-docl d-no"><span class="d-ck"></span><span>${nome}</span><small>não encontrado</small></p>`}).join("")}
+  ${!x.feitos&&x.outros.length?`<p class="hint" style="margin:8px 0 4px">Nenhum dos quatro documentos do padrão (Redação Consolidada, Mapa, Demonstração, ABNT). Os documentos deste subtítulo:</p>`:""}
+  ${(!x.feitos&&x.outros.length?[]:DKINDS).map(([k,nome],i)=>{const d=x.docs[i],w=wordsOf(d);return d?`<a class="d-docl" href="${esc(d.webViewLink||"#")}" target="_blank" rel="noopener"><span class="d-ck">✓</span><span>${nome}</span><small>${w===null?"contando…":w.toLocaleString("pt-BR")+" palavras"}${d.versions>1?` · ${d.versions} versões na pasta, mostrando a mais recente`:""}</small></a>`:`<p class="d-docl d-no"><span class="d-ck"></span><span>${nome}</span><small>não encontrado</small></p>`}).join("")}
   ${x.esq?`<a class="d-docl" href="${esc(x.esq.webViewLink||"#")}" target="_blank" rel="noopener"><span class="d-ck d-esq">E</span><span>Esquema de Escrita</span><small>planejamento</small></a>`:""}
-  <p class="hint" style="margin:10px 0 0">${x.feitos===4?`Completo em ${brDate(x.fim)}${s.prazo?(x.fim<=s.prazo?", dentro do prazo.":", depois do prazo."):"."}`:`Próximo: ${falta[1]}.`}</p>
+  ${x.outros.map(o=>{const w=wordsOf(o);return `<div class="d-docl d-outro"><span class="d-ck d-esq">·</span><a href="${esc(o.webViewLink||"#")}" target="_blank" rel="noopener">${esc(o.label||o.name)}</a><small>${o.modifiedTime?(w===null?"contando…":w.toLocaleString("pt-BR")+" palavras"):""}${o.range?` · reúne ${esc(o.range)}`:""}${o.manual?` · ligado à mão <button class="link" data-a="dunlink" data-id="${s.id}" data-f="${o.id}">desligar</button>`:""}</small></div>`}).join("")}
+  ${dlink&&dlink.sid===s.id?`<div class="d-link"><input type="text" id="dlq" value="${esc(dlink.q)}" placeholder="Parte do nome do documento no Drive"><div id="dlres">${dlResHTML()}</div><div class="row"><button class="link" data-a="dlinkx">Cancelar</button></div></div>`:`<div class="row"><button class="link" data-a="dlink" data-id="${s.id}">+ Ligar um documento do Drive a este subtítulo</button></div>`}
+  ${x.feitos?`<p class="hint" style="margin:10px 0 0">${x.feitos===4?`Completo em ${brDate(x.fim)}${s.prazo?(x.fim<=s.prazo?", dentro do prazo.":", depois do prazo."):"."}`:`Próximo: ${falta[1]}.`}</p>`:""}
   ${candHTML(s.n)}
   <label class="label" for="dt-${s.id}">Título</label><div class="inline" style="margin-top:0"><input type="text" id="dt-${s.id}" value="${esc(s.title||"")}" placeholder="Título do ${esc(s.n)}"><button class="secondary" data-a="dtitle" data-id="${s.id}">Salvar</button></div>
   ${x.feitos<4?`<label class="label" for="dp-${s.id}">Prazo</label><div class="inline d-wrap" style="margin-top:0"><input type="date" id="dp-${s.id}" value="${esc(s.prazo||"")}"><button class="secondary" data-a="dprazo" data-id="${s.id}">Salvar</button>${s.prazo?`<button class="secondary" data-a="dprazox" data-id="${s.id}">Tirar</button>`:""}</div><p class="hint">Prazo só nos subtítulos em andamento. A ligação com a agenda do Google entra numa próxima etapa.</p>`:""}
@@ -744,7 +757,10 @@ function vDissFolder(){
  return back+`<h1>Pasta da dissertação</h1><p class="hint" style="margin-top:-6px">Escolha a pasta onde ficam os documentos dos subtítulos. Subpastas também são lidas. O aplicativo só lê: não move nem renomeia nada.</p>
  <input type="text" id="dfq" value="${esc(dfq)}" placeholder="Filtrar pastas pelo nome" style="margin-top:12px"><div id="dfl">${dFolderList(l)}</div>`}
 function dFolderList(l){return l.length?l.slice(0,150).map(x=>`<button class="res" data-a="dfolder" data-id="${x.id}"><p class="fname" style="font-family:var(--serif);margin:0">Pasta ${esc(x.name)}</p></button>`).join("")+(l.length>150?`<p class="hint">Mostrando 150 de ${l.length}. Use o filtro.</p>`:""):`<p class="hint">Nenhuma pasta com esse nome.</p>`}
+function dlResHTML(){const d=dlink;if(!d||!d.res)return `<p class="hint">Digite ao menos três letras.</p>`;return d.res.length?d.res.map(f=>`<button class="res" data-a="dlinkpick" data-id="${f.id}"><p class="fname" style="margin:0">${esc(f.name)}</p></button>`).join(""):`<p class="hint">Nenhum documento com esse nome.</p>`}
 function bindDiss(){
+ on("#dlq","input",e=>{dlink.q=e.target.value;clearTimeout(dlTimer);dlTimer=setTimeout(async()=>{const q=dlink.q.trim();if(fold(q).length<3)dlink.res=null;else{try{dlink.res=await listFiles(`trashed=false and ${DOCQ} and name contains '${qesc(q)}'`,"files(id,name,mimeType,modifiedTime,createdTime,webViewLink)")}catch(e){dlink.res=[]}}const el=$("#dlres");if(el)el.innerHTML=dlResHTML()},500)});
+ if(dlink&&$("#dlq")&&!dlink.q)$("#dlq").focus();
  on("#dfq","input",e=>{dfq=e.target.value;const q=fold(dfq.trim());$("#dfl").innerHTML=dFolderList(dfold.folders.filter(x=>!q||fold(x.name).includes(q)))});
  const dc=on("#dcap","keydown",e=>{if(e.key==="Enter")act("dcapsave",{dataset:{k:dcapEdit}})});if(dc)dc.focus();
  const dn=$("#dnn");if(dn&&dnew&&!dn.value)dn.focus()}
@@ -762,6 +778,11 @@ async function actDiss(a,el){
   if(!/^\d{1,2}\.\d{1,2}$/.test(n))return toast("Escreva o número no formato capítulo.subtítulo, por exemplo 2.3.");
   if(L("subs").some(s=>s.n===`${+n.split(".")[0]}.${+n.split(".")[1]}`))return toast("Esse subtítulo já está no painel.");
   db.subs.push(touch({id:uid("s"),n:`${+n.split(".")[0]}.${+n.split(".")[1]}`,title:t,prazo:""}));dnew=false;changed();render();return toast("Subtítulo adicionado")}
+ case "dlink":dlink={sid:id,q:"",res:null};return render();
+ case "dlinkx":dlink=null;return render();
+ case "dlinkpick":{const s=db.subs.find(x=>x.id===dlink.sid),f=dlink.res.find(x=>x.id===id);s.links=s.links||[];if(!s.links.some(l=>l.id===f.id))s.links.push({id:f.id,name:f.name,link:f.webViewLink});touch(s);
+  dscan=dscan||{at:nowIso(),folder:db.meta.dissFolder.id,files:[]};dscan.links=dscan.links||{};dscan.links[f.id]=f;dlink=null;changed();render();toast("Documento ligado ao "+s.n+", sem renomear");return scanDiss(false)}
+ case "dunlink":{const s=db.subs.find(x=>x.id===id);s.links=(s.links||[]).filter(l=>l.id!==el.dataset.f);touch(s);changed();render();return toast("Documento desligado. Nada foi alterado no Drive.")}
  case "dtitle":{const s=S();s.title=$("#dt-"+id).value.trim();touch(s);changed();render();return toast("Título salvo")}
  case "dprazo":{const v=$("#dp-"+id).value;if(!v)return toast("Escolha uma data.");const s=S();s.prazo=v;touch(s);changed();render();return toast("Prazo salvo")}
  case "dprazox":{const s=S();s.prazo="";touch(s);changed();render();return toast("Prazo removido")}
@@ -1284,14 +1305,14 @@ const numWa=s=>{let d=String(s||"").replace(/\D/g,"");if(d.length===10||d.length
 const ori=()=>db.meta.orient||{nome:"",num:""};
 const ola=()=>ori().nome?`Olá, ${ori().nome}! `:"Olá! ";
 function lastSend(kind,ref){const l=L("sends").filter(x=>x.kind===kind&&x.ref===ref).sort((a,b)=>b.dt.localeCompare(a.dt));return l[0]}
-function msgSub(n){const s=L("subs").find(x=>x.n===n)||{n},x=subInfo(s,dissFiles().by),nome=s.title?`${n} — ${s.title}`:`subtítulo ${n}`,docs=[...DKINDS.map(([k,t],i)=>x.docs[i]?{t,d:x.docs[i]}:null),x.esq?{t:"Esquema de Escrita",d:x.esq}:null].filter(Boolean).filter((o,i)=>ws.sel.includes(o.d.id));
+function msgSub(n){const s=L("subs").find(x=>x.n===n)||{n},x=subInfo(s,dissFiles().by),nome=s.title?`${n} — ${s.title}`:`subtítulo ${n}`,docs=[...DKINDS.map(([k,t],i)=>x.docs[i]?{t,d:x.docs[i]}:null),x.esq?{t:"Esquema de Escrita",d:x.esq}:null,...x.outros.map(o=>({t:o.label||o.name,d:o}))].filter(Boolean).filter((o,i)=>ws.sel.includes(o.d.id));
  const p=planRec(n),perg=p&&cheio(p.ficha.pergunta)?`Pergunta organizadora: ${p.ficha.pergunta}\n\n`:"";
  if(!docs.length)return `${ola()}Sobre o ${nome}:\n\n\n\nRodrigo`;
  return `${ola()}${docs.length===1?`Segue a ${docs[0].t} do ${nome}`:`Seguem ${docs.length} documentos do ${nome}`} para sua leitura.\n\n${perg}${docs.map(o=>`• ${o.t}: ${o.d.webViewLink||""}`).join("\n")}\n\nRodrigo`}
 function msgIdea(i){const cs=i.concepts.map(C).filter(Boolean).map(c=>c.name),r=i.refId&&R(i.refId),subs=(i.subs||[]).map(x=>x.n);
  return `${ola()}Queria compartilhar uma ideia da dissertação.\n\n${cs.length?`*${cs.join(", ")}*\n\n`:""}${i.text}${r?`\n\n(Leitura: ${r.label})`:""}${subs.length?`\n\nPretendo usar no ${subs.join(" e no ")}.`:""}\n\nRodrigo`}
 function wsPanel(){const o=ori(),n=numWa(o.num),link=n.length>=12?`https://wa.me/${n}?text=${encodeURIComponent(ws.msg)}`:"";
- let esc2="";if(ws.kind==="sub"){const s=L("subs").find(x=>x.n===ws.ref),x=subInfo(s,dissFiles().by),docs=[...DKINDS.map(([k,t],i)=>x.docs[i]?{t,d:x.docs[i]}:null),x.esq?{t:"Esquema de Escrita",d:x.esq}:null].filter(Boolean);
+ let esc2="";if(ws.kind==="sub"){const s=L("subs").find(x=>x.n===ws.ref),x=subInfo(s,dissFiles().by),docs=[...DKINDS.map(([k,t],i)=>x.docs[i]?{t,d:x.docs[i]}:null),x.esq?{t:"Esquema de Escrita",d:x.esq}:null,...x.outros.map(o=>({t:o.label||o.name,d:o}))].filter(Boolean);
   esc2=docs.length?`<p class="label" style="margin-top:6px">O que enviar — escolha antes de editar a mensagem</p>${docs.map(q=>`<button class="ws-doc" data-a="wstog" data-id="${q.d.id}" aria-pressed="${ws.sel.includes(q.d.id)}"><span class="pl-cb">${ws.sel.includes(q.d.id)?"✓":""}</span>${q.t}<small>${wordsOf(q.d)!=null?wordsOf(q.d).toLocaleString("pt-BR")+" palavras":""}</small></button>`).join("")}`:""}
  return `<div class="ws">${!o.num?`<label class="label" style="margin-top:0" for="wsn">Nome da orientadora</label><input type="text" id="wsn" value="${esc(o.nome)}"><label class="label" for="wsw">WhatsApp da orientadora</label><input type="text" inputmode="tel" id="wsw" value="${esc(o.num)}" placeholder="(21) 99999-9999"><div class="row"><button class="secondary" data-a="wsori">Salvar contato</button></div>`:`<p class="hint" style="margin:0 0 6px">Para ${esc(o.nome||"a orientadora")} · ${esc(o.num)} <button class="link" data-a="wsorix">trocar</button></p>`}
  ${esc2}<label class="label" for="wsm">Mensagem — você pode editar antes de enviar</label><textarea id="wsm" class="small">${esc(ws.msg)}</textarea>
@@ -1300,7 +1321,7 @@ function wsPanel(){const o=ori(),n=numWa(o.num),link=n.length>=12?`https://wa.me
 function bindWa(){on("#wsm","input",e=>{ws.msg=e.target.value;const n=numWa(ori().num),g=$("#wsgo");if(g&&n.length>=12)g.href=`https://wa.me/${n}?text=${encodeURIComponent(ws.msg)}`})}
 async function actWa(a,el){const d=el?el.dataset:{};
  switch(a){
- case "wsopen":{if(d.kind==="sub"){const s=L("subs").find(x=>x.n===d.ref),x=subInfo(s,dissFiles().by);ws={kind:"sub",ref:d.ref,sel:x.docs[0]?[x.docs[0].id]:(x.docs.find(Boolean)?[x.docs.find(Boolean).id]:[])};ws.msg=msgSub(d.ref)}
+ case "wsopen":{if(d.kind==="sub"){const s=L("subs").find(x=>x.n===d.ref),x=subInfo(s,dissFiles().by);ws={kind:"sub",ref:d.ref,sel:x.docs[0]?[x.docs[0].id]:(x.docs.find(Boolean)?[x.docs.find(Boolean).id]:(x.outros[0]?[x.outros[0].id]:[]))};ws.msg=msgSub(d.ref)}
   else{const i=db.ideas.find(x=>x.id===d.ref);ws={kind:"idea",ref:d.ref,sel:[]};ws.msg=msgIdea(i)}return render()}
  case "wstog":{const id=d.id;ws.sel=ws.sel.includes(id)?ws.sel.filter(x=>x!==id):[...ws.sel,id];ws.msg=msgSub(ws.ref);return render()}
  case "wsori":{db.meta.orient={nome:($("#wsn").value||"").trim(),num:($("#wsw").value||"").trim()};if(numWa(db.meta.orient.num).length<12)return toast("Escreva o WhatsApp com DDD.");changed();ws.msg=ws.kind==="sub"?msgSub(ws.ref):msgIdea(db.ideas.find(x=>x.id===ws.ref));return render()}
@@ -1326,7 +1347,7 @@ function candHTML(n){const l=L("ideas").filter(i=>(i.subs||[]).some(x=>x.n===n))
   <div class="row"><button class="secondary" data-a="candusar" data-id="${i.id}" data-n="${n}">${m.usada?"Desfazer":"Usei no texto"}</button><button class="link" data-a="canddev" data-id="${i.id}" data-n="${n}">Devolver</button></div></div>`}).join(""):`<p class="hint" style="margin:0">Nenhuma ideia enviada a este subtítulo. Nas ideias, toque em “Subtítulo”.</p>`}`}
 /* --- ritmo de escrita --- */
 let ritPer="sem";
-function registrarRitmo(){const {by}=dissFiles();let tot=0,falta=false;Object.values(by).forEach(s=>DKINDS.forEach(([k])=>{const f=s[k];if(f){const w=wordsOf(f);if(w==null)falta=true;else tot+=w}}));
+function registrarRitmo(){const {by}=dissFiles();let tot=0,falta=false;docsUnicos(by).forEach(f=>{if(!f.modifiedTime)return;const w=wordsOf(f);if(w==null)falta=true;else tot+=w});
  if(falta||!tot)return;const id=todayIso(),r=db.ritmo.find(x=>x.id===id);if(r){if(r.total!==tot){r.total=tot;touch(r);changed()}}else{db.ritmo.push(touch({id,total:tot}));changed()}}
 function ritmoDias(){const l=L("ritmo").sort((a,b)=>a.id.localeCompare(b.id)),out={};for(let i=0;i<l.length;i++){out[l[i].id]=i?l[i].total-l[i-1].total:0}return out}
 function vRitmo(){const d=ritmoDias(),dias=Object.keys(d),hoje=new Date(todayIso()+"T12:00"),seg=x=>{const t=new Date(x);t.setDate(t.getDate()-((t.getDay()+6)%7));return t};
