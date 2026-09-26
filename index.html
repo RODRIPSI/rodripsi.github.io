@@ -1543,7 +1543,7 @@ async function actDef(a,el){const d=el?el.dataset:{},c=d.id&&C(d.id);
 const PDFJS="https://cdn.jsdelivr.net/npm/pdfjs-dist@5.6.205/legacy/build/"; // versão "legacy": funciona também em navegadores de tablet menos atualizados
 let pdfLib=null;
 async function carregarPdfjs(){if(pdfLib)return pdfLib;const m=await import(PDFJS+"pdf.min.mjs");m.GlobalWorkerOptions.workerSrc=PDFJS+"pdf.worker.min.mjs";return pdfLib=m}
-let rd={bookId:null,doc:null,loading:false,err:"",node:null,key:"",sel:null,zoom:1},lvQ="",lvRes=null,lvTimer=null,lsave=null;
+let lvDepois=new Set();let rd={bookId:null,doc:null,loading:false,err:"",node:null,key:"",sel:null,zoom:1},lvQ="",lvRes=null,lvTimer=null,lsave=null;
 const book=id=>L("books").find(b=>b.id===id);
 const impressa=(b,p)=>b&&b.off!=null?String(p+b.off):"";
 function vLivros(){const l=L("books").sort((a,b)=>(b.updatedAt||"").localeCompare(a.updatedAt||""));
@@ -1555,8 +1555,9 @@ function lvResHTML(){if(!lvRes)return `<p class="hint">Digite ao menos três let
 function vLeitor(){const b=book(route.k);if(!b)return vLivros();
  const tot=rd.doc&&rd.bookId===b.id?rd.doc.numPages:0,p=b.lastPage||1,imp=impressa(b,p),ms=L("marks").filter(m=>m.bookId===b.id).sort((a,c)=>a.page-c.page);
  return `<button class="back" data-a="nav" data-to="livros">‹ Livros</button><h1 style="font-size:24px;margin-bottom:6px">${esc(b.name.replace(/\.pdf$/i,""))}</h1>
- <div class="row" style="margin:0 0 10px;align-items:center"><span class="hint" style="margin:0">Obra:</span>${refSelect("lvref",b.refId||"").replace("Ideia minha, sem leitura por trás","Escolher na Bibliografia")}</div>
- ${b.off==null&&tot?`<div class="warn lv-pag">Qual é o número <b>impresso</b> nesta página? <span class="hint">(é a página ${p} do PDF)</span><div class="inline" style="margin-top:8px"><input type="text" inputmode="numeric" id="lvimp" placeholder="ex.: 44"><button class="secondary" data-a="lvoff">Salvar</button></div><p class="hint" style="margin:6px 0 0">Informe uma vez; o app calcula as outras páginas. Se a numeração mudar no meio do livro, é só corrigir de novo.</p></div>`:""}
+ <div class="row" style="margin:0 0 10px;align-items:center"><span class="hint" style="margin:0">Obra:</span>${refSelect("lvref",b.refId||"").replace("Ideia minha, sem leitura por trás","Escolher na Bibliografia").replace("</select>",`<option value="__nova">+ Nova obra na Bibliografia…</option></select>`)}</div>
+ ${b.off==null&&tot&&!lvDepois.has(b.id)?`<div class="warn lv-pag"><b>Número das páginas.</b> Avance até uma página que tenha número impresso (a capa e o sumário costumam não ter) e escreva aqui esse número. <span class="hint">Você está na página ${p} do PDF.</span><div class="inline" style="margin-top:8px"><input type="text" inputmode="numeric" id="lvimp" placeholder="número impresso"><button class="secondary" data-a="lvoff">Salvar</button></div><p class="hint" style="margin:6px 0 0">Basta uma vez; o app calcula as outras. <button class="link" data-a="lvdepois">Fazer isso depois</button></p></div>`:""}
+ ${b.off==null&&tot&&lvDepois.has(b.id)?`<p class="hint" style="margin:0 0 8px">Páginas impressas ainda não informadas. <button class="link" data-a="lvagora">Informar agora</button></p>`:""}
  ${lsave?saveHTML(b):""}
  <div class="lv-bar"><button class="secondary" data-a="lvpg" data-d="-1" aria-label="Página anterior">‹</button><span class="lv-pn">${tot?`PDF ${p} de ${tot}${imp?` · <b>p. ${esc(imp)}</b>`:""}`:"…"}</span><button class="secondary" data-a="lvpg" data-d="1" aria-label="Próxima página">›</button>
   <input type="text" inputmode="numeric" id="lvir" placeholder="ir para" aria-label="Ir para a página do PDF"><button class="secondary" data-a="lvz" data-d="-1" aria-label="Diminuir">−</button><button class="secondary" data-a="lvz" data-d="1" aria-label="Aumentar">+</button></div>
@@ -1606,7 +1607,9 @@ document.addEventListener("selectionchange",()=>{if(route.name==="leitor")lerSel
 function bindLeitor(){
  on("#lvq","input",e=>{lvQ=e.target.value;clearTimeout(lvTimer);lvTimer=setTimeout(async()=>{const q=lvQ.trim();if(fold(q).length<3)lvRes=null;else{try{lvRes=await listFiles(`trashed=false and mimeType='application/pdf' and name contains '${qesc(q)}'`,"files(id,name)")}catch(e){lvRes=[]}}const el=$("#lvres");if(el)el.innerHTML=lvResHTML()},500)});
  if(route.name!=="leitor")return;const b=book(route.k);if(!b)return;
- on("#lvref","change",e=>{b.refId=e.target.value;touch(b);changed()});
+ on("#lvref","change",e=>{let v=e.target.value;if(v==="__nova"){const nome=(prompt("Referência da obra (como vai aparecer na citação):",b.name.replace(/\.pdf$/i,""))||"").trim();if(!nome){e.target.value=b.refId||"";return}
+  const tipo=confirm("É fonte primária (Freud, Lacan)? Toque em Cancelar se for comentador.")?"prim":"com";const r=touch({id:uid("r"),type:tipo,label:nome});db.refs.push(r);v=r.id;toast("Obra acrescentada à Bibliografia")}
+ b.refId=v;touch(b);changed();render()});
  on("#lvir","keydown",e=>{if(e.key==="Enter"){const n=parseInt(e.target.value,10);if(n>0)irPara(n)}});
  on("#lvtxt","input",e=>{lsave.text=e.target.value});on("#lvpimp","input",e=>{lsave.printed=e.target.value.trim()});
  if(!rd.doc||rd.bookId!==b.id){if(!rd.loading&&!(rd.err&&rd.bookId===b.id))abrirLivro(b)}else desenharPagina()}
@@ -1619,6 +1622,8 @@ async function actLeitor(a,el){const d=el?el.dataset:{};
  case "lvjump":return irPara(+d.p);
  case "lvz":rd.zoom=Math.min(3,Math.max(1,rd.zoom+(+d.d)*.25));rd.key="";return render();
  case "lvoff":{const b=book(route.k),v=parseInt(($("#lvimp").value||"").trim(),10);if(!(v>0))return toast("Escreva o número impresso na página.");b.off=v-(b.lastPage||1);touch(b);changed();render();return toast("Páginas ajustadas")}
+ case "lvdepois":lvDepois.add(route.k);return render();
+ case "lvagora":lvDepois.delete(route.k);return render();
  case "lvoffx":{const b=book(route.k);b.off=null;touch(b);changed();return render()}
  case "lvleva":{const b=book(route.k);if(!rd.sel)return;lsave={...rd.sel,page:b.lastPage||1,printed:impressa(b,b.lastPage||1),dest:"frag",cs:[],n:"",k:""};const s=document.getSelection();if(s)s.removeAllRanges();render();return window.scrollTo(0,0)}
  case "lvx":lsave=null;return render();
