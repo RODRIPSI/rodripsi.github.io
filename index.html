@@ -247,6 +247,19 @@ a.d-docl span:nth-child(2){text-decoration:underline;text-underline-offset:3px}
 .def-txt{margin:10px 0 0;font-family:var(--serif);font-size:17px;line-height:1.6}
 .def-v{font-size:14px;color:var(--muted);border-left:3px solid var(--rule);padding:4px 0 4px 10px;margin-top:8px}.def-v b{display:block;font-size:12.5px;color:var(--ink)}
 .d-ok{background:var(--c-d);border-color:var(--c-d);color:#fff}
+.lv-bar{position:sticky;top:0;z-index:5;display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:8px 0;background:var(--bg)}
+.lv-bar .secondary{padding:6px 12px;min-width:40px}.lv-bar input{width:74px;padding:6px 8px}.lv-pn{font-size:14px;padding:0 4px}
+#lvwrap{width:100%;overflow-x:auto;margin:6px 0 14px}.lv-load{padding:40px 0;text-align:center;color:var(--muted)}
+.lv-page{position:relative;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.15);margin:0 auto}.lv-page canvas{display:block}
+.lv-marks{position:absolute;inset:0;pointer-events:none;z-index:1}.lv-hl{position:absolute;background:rgba(242,196,0,.38);border-radius:2px;mix-blend-mode:multiply}.lv-hl.plan{background:rgba(43,76,155,.25)}
+.lv-sel{position:fixed;left:0;right:0;bottom:calc(76px + env(safe-area-inset-bottom,0px));display:flex;justify-content:center;z-index:30;pointer-events:none}.lv-sel[hidden]{display:none}.lv-sel .primary{pointer-events:auto;box-shadow:0 4px 14px rgba(0,0,0,.25);width:auto;padding:12px 22px}
+.lv-save{border:1px solid var(--accent)}.lv-m{border-left:3px solid #e2b400;padding:4px 0 4px 10px;margin:10px 0}.lv-pag .inline input{max-width:120px}
+.textLayer{position:absolute;text-align:initial;inset:0;overflow:clip;opacity:1;line-height:1;-webkit-text-size-adjust:none;text-size-adjust:none;forced-color-adjust:none;transform-origin:0 0;caret-color:CanvasText;z-index:2}
+.textLayer :is(span,br){color:transparent;position:absolute;white-space:pre;cursor:text;transform-origin:0% 0%}
+.textLayer{--min-font-size:1;--text-scale-factor:calc(var(--total-scale-factor) * var(--min-font-size));--min-font-size-inv:calc(1 / var(--min-font-size))}
+.textLayer > :not(.markedContent),.textLayer .markedContent span:not(.markedContent){z-index:1;--font-height:0;font-size:calc(var(--text-scale-factor) * var(--font-height));--scale-x:1;--rotate:0deg;transform:rotate(var(--rotate)) scaleX(var(--scale-x)) scale(var(--min-font-size-inv))}
+.textLayer .markedContent{display:contents}.textLayer ::selection{background:rgba(0,0,255,.25)}.textLayer br::selection{background:transparent}
+.textLayer .endOfContent{display:block;position:absolute;inset:100% 0 0;z-index:0;cursor:default;user-select:none}.textLayer.selecting .endOfContent{top:0}
 .a-img{display:block;width:100%;max-height:420px;object-fit:contain;border-radius:10px;background:var(--surface);margin:0 0 14px}
 .a-img.big{max-height:520px}.a-ph{display:grid;place-items:center;text-align:center;padding:12px;height:220px;color:var(--muted);font-size:14px;border:1px dashed var(--rule)}
 .a-imgs{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
@@ -322,8 +335,8 @@ const fmtFull=ts=>new Date(ts).toLocaleDateString("pt-BR",{day:"numeric",month:"
 const brDate=iso=>iso?iso.slice(0,10).split("-").reverse().join("/"):"";
 
 /* ---------- dados ---------- */
-function seed(){return{version:1,concepts:SEED.map((n,i)=>({id:"seed-"+slug(n),name:n,color:PALETTE[i%PALETTE.length],updatedAt:"2026-01-01T00:00:00.000Z"})),refs:[],ideas:[],docs:[],subs:[],chapters:[],symbols:[],plans:[],sends:[],ritmo:[],meta:{}}}
-function loadLocal(){try{const s=localStorage.getItem(KEY);if(s){const d=JSON.parse(s);for(const k of["concepts","refs","ideas","docs","subs","chapters","symbols","plans","sends","ritmo"])d[k]=d[k]||[];d.meta=d.meta||{};return d}}catch(e){}return seed()}
+function seed(){return{version:1,concepts:SEED.map((n,i)=>({id:"seed-"+slug(n),name:n,color:PALETTE[i%PALETTE.length],updatedAt:"2026-01-01T00:00:00.000Z"})),refs:[],ideas:[],docs:[],subs:[],chapters:[],symbols:[],plans:[],sends:[],ritmo:[],books:[],marks:[],meta:{}}}
+function loadLocal(){try{const s=localStorage.getItem(KEY);if(s){const d=JSON.parse(s);for(const k of["concepts","refs","ideas","docs","subs","chapters","symbols","plans","sends","ritmo","books","marks"])d[k]=d[k]||[];d.meta=d.meta||{};return d}}catch(e){}return seed()}
 let db=loadLocal();
 function saveLocal(){try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){toast("Não foi possível salvar no aparelho.")}}
 const L=k=>db[k].filter(x=>!x.deleted);
@@ -338,7 +351,7 @@ function changed(){saveLocal();setDirty(true);scheduleSync()}
 function merge(a,b){
  const out={version:1,meta:{...(b.meta||{}),...(a.meta||{})}};
  if(((b.meta||{}).lastBackup||"")>((a.meta||{}).lastBackup||""))out.meta.lastBackup=b.meta.lastBackup;
- for(const k of["concepts","refs","ideas","docs","subs","chapters","symbols","plans","sends","ritmo"]){const m=new Map();for(const x of(b[k]||[]))m.set(x.id,x);
+ for(const k of["concepts","refs","ideas","docs","subs","chapters","symbols","plans","sends","ritmo","books","marks"]){const m=new Map();for(const x of(b[k]||[]))m.set(x.id,x);
   for(const x of(a[k]||[])){const y=m.get(x.id);if(!y||(x.updatedAt||"")>=(y.updatedAt||""))m.set(x.id,x)}out[k]=[...m.values()]}
  return out}
 function makeConcept(name){name=name.trim();if(!name){toast("Digite o nome do conceito.");return null}
@@ -520,7 +533,7 @@ function vCapture(){
  <label class="label" for="r">Procedência</label>${refSelect("r",draft.refId)}
  <button class="primary" data-a="save">Salvar ideia</button><p class="hint">Data e hora são registradas sozinhas. Sem conceito marcado, a ideia vai para Pendentes.</p>`}
 function vConcepts(){
- return `<h1>Conceitos</h1><div class="row" style="margin:-6px 0 18px"><button class="secondary" data-a="nav" data-to="acervo">Acervo Freud e Lacan</button><button class="secondary" data-a="nav" data-to="auto">Trazer textos já nomeados</button><button class="secondary" data-a="nav" data-to="batch">Organizar pasta do Drive</button><button class="secondary" data-a="nav" data-to="bib">Bibliografia</button><button class="secondary" data-a="newc2">+ Novo conceito</button></div>
+ return `<h1>Conceitos</h1><div class="row" style="margin:-6px 0 18px"><button class="secondary" data-a="nav" data-to="acervo">Acervo Freud e Lacan</button><button class="secondary" data-a="nav" data-to="livros">Ler um PDF</button><button class="secondary" data-a="nav" data-to="auto">Trazer textos já nomeados</button><button class="secondary" data-a="nav" data-to="batch">Organizar pasta do Drive</button><button class="secondary" data-a="nav" data-to="bib">Bibliografia</button><button class="secondary" data-a="newc2">+ Novo conceito</button></div>
  ${showNew2?`<div class="inline" style="margin:-6px 0 18px"><input type="text" id="nc2" placeholder="Nome do conceito" aria-label="Nome do novo conceito"><button class="secondary" data-a="mkc2">Criar</button></div>`:""}
  <ul class="clist">${sortedConcepts().map(c=>{const n=usage(c.id),d=docsOf(c.id).length;
   return `<li><button data-a="open" data-id="${c.id}"><span class="cbar" style="background:${c.color}"></span><span><span class="cname">${esc(c.name)}</span><span class="cmeta">${n} ${n===1?"fragmento":"fragmentos"}, ${d} ${d===1?"texto":"textos"}${c.defEstab?" · definição estabilizada":cheio(c.def)?" · definição em elaboração":""}</span></span></button></li>`}).join("")}</ul>`}
@@ -1526,17 +1539,116 @@ async function actDef(a,el){const d=el?el.dataset:{},c=d.id&&C(d.id);
  case "defestab":{c.defEstab=!c.defEstab;touch(c);changed();render();return toast(c.defEstab?"Definição marcada como estabilizada":"Definição reaberta para revisão")}
  }return actWa(a,el)}
 
+/* ---------- leitura de PDF com sublinhado → citação ---------- */
+const PDFJS="https://cdn.jsdelivr.net/npm/pdfjs-dist@5.6.205/legacy/build/"; // versão "legacy": funciona também em navegadores de tablet menos atualizados
+let pdfLib=null;
+async function carregarPdfjs(){if(pdfLib)return pdfLib;const m=await import(PDFJS+"pdf.min.mjs");m.GlobalWorkerOptions.workerSrc=PDFJS+"pdf.worker.min.mjs";return pdfLib=m}
+let rd={bookId:null,doc:null,loading:false,err:"",node:null,key:"",sel:null,zoom:1},lvQ="",lvRes=null,lvTimer=null,lsave=null;
+const book=id=>L("books").find(b=>b.id===id);
+const impressa=(b,p)=>b&&b.off!=null?String(p+b.off):"";
+function vLivros(){const l=L("books").sort((a,b)=>(b.updatedAt||"").localeCompare(a.updatedAt||""));
+ return `<button class="back" data-a="nav" data-to="concepts">‹ Conceitos</button><h1>Ler um PDF</h1>
+ <p class="hint" style="margin:-6px 0 16px">Abra um livro do Drive, sublinhe um trecho e leve como citação, com a página impressa.</p>
+ <label class="label" for="lvq" style="margin-top:0">Procurar um PDF no Drive</label><input type="text" id="lvq" value="${esc(lvQ)}" placeholder="Parte do nome, ex.: Obras Completas volume 12"><div id="lvres">${lvResHTML()}</div>
+ ${l.length?`<p class="label">Livros já abertos</p>${l.map(b=>{const n=L("marks").filter(m=>m.bookId===b.id).length;return `<button class="res" data-a="lvgo" data-id="${b.id}"><p class="fname" style="margin:0">${esc(b.name)}</p><p class="hint" style="margin:2px 0 0">${b.lastPage?`parou na página ${b.lastPage} do PDF`:""}${n?` · ${n} ${n===1?"sublinhado":"sublinhados"}`:""}${b.refId&&R(b.refId)?` · ${esc(R(b.refId).label)}`:""}</p></button>`}).join("")}`:""}`}
+function lvResHTML(){if(!lvRes)return `<p class="hint">Digite ao menos três letras.</p>`;return lvRes.length?lvRes.map(f=>`<button class="res" data-a="lvopen" data-id="${f.id}" data-n="${esc(f.name)}"><p class="fname" style="margin:0">${esc(f.name)}</p></button>`).join(""):`<p class="hint">Nenhum PDF com esse nome.</p>`}
+function vLeitor(){const b=book(route.k);if(!b)return vLivros();
+ const tot=rd.doc&&rd.bookId===b.id?rd.doc.numPages:0,p=b.lastPage||1,imp=impressa(b,p),ms=L("marks").filter(m=>m.bookId===b.id).sort((a,c)=>a.page-c.page);
+ return `<button class="back" data-a="nav" data-to="livros">‹ Livros</button><h1 style="font-size:24px;margin-bottom:6px">${esc(b.name.replace(/\.pdf$/i,""))}</h1>
+ <div class="row" style="margin:0 0 10px;align-items:center"><span class="hint" style="margin:0">Obra:</span>${refSelect("lvref",b.refId||"").replace("Ideia minha, sem leitura por trás","Escolher na Bibliografia")}</div>
+ ${b.off==null&&tot?`<div class="warn lv-pag">Qual é o número <b>impresso</b> nesta página? <span class="hint">(é a página ${p} do PDF)</span><div class="inline" style="margin-top:8px"><input type="text" inputmode="numeric" id="lvimp" placeholder="ex.: 44"><button class="secondary" data-a="lvoff">Salvar</button></div><p class="hint" style="margin:6px 0 0">Informe uma vez; o app calcula as outras páginas. Se a numeração mudar no meio do livro, é só corrigir de novo.</p></div>`:""}
+ ${lsave?saveHTML(b):""}
+ <div class="lv-bar"><button class="secondary" data-a="lvpg" data-d="-1" aria-label="Página anterior">‹</button><span class="lv-pn">${tot?`PDF ${p} de ${tot}${imp?` · <b>p. ${esc(imp)}</b>`:""}`:"…"}</span><button class="secondary" data-a="lvpg" data-d="1" aria-label="Próxima página">›</button>
+  <input type="text" inputmode="numeric" id="lvir" placeholder="ir para" aria-label="Ir para a página do PDF"><button class="secondary" data-a="lvz" data-d="-1" aria-label="Diminuir">−</button><button class="secondary" data-a="lvz" data-d="1" aria-label="Aumentar">+</button></div>
+ ${rd.err&&rd.bookId===b.id?`<p class="err">${esc(rd.err)}</p>`:""}
+ <div id="lvwrap"><div class="lv-load">${rd.loading?"Abrindo o livro…":""}</div></div>
+ ${b.off!=null?`<p class="hint">Página impressa = página do PDF ${b.off>=0?"+ "+b.off:"− "+(-b.off)}. <button class="link" data-a="lvoffx">corrigir</button></p>`:""}
+ <details class="block" ${ms.length?"":""}><summary>Sublinhados deste livro <span class="count">${ms.length}</span></summary>${ms.length?ms.map(m=>`<div class="lv-m"><p class="ct-q">“${esc(m.text.length>240?m.text.slice(0,240)+"…":m.text)}”</p><p class="hint" style="margin:3px 0 0">${m.printed?`p. ${esc(m.printed)} · `:""}PDF ${m.page} · ${m.dest==="plan"?`planejamento do ${esc(m.n||"")}`:"fragmento"}</p><div class="row"><button class="link" data-a="lvjump" data-p="${m.page}">Ir à página</button><button class="link" data-a="lvmdel" data-id="${m.id}">Apagar o sublinhado</button></div></div>`).join(""):`<p class="hint">Selecione um trecho no texto e toque em “Levar como citação”.</p>`}</details>
+ <div id="lvsel" class="lv-sel" hidden><button class="primary" data-a="lvleva">Levar como citação</button></div>`}
+function saveHTML(b){const s=lsave,subs=subsSorted(),demos=s.n?(planRec(s.n)||{demos:[]}).demos:[];
+ return `<div class="panel lv-save"><p class="label" style="margin-top:0">Citação</p><textarea id="lvtxt" class="small">${esc(s.text)}</textarea>
+ <div class="inline" style="margin-top:8px;align-items:center"><label class="hint" for="lvpimp" style="margin:0;white-space:nowrap">Página impressa</label><input type="text" id="lvpimp" value="${esc(s.printed)}" placeholder="ex.: 44" style="max-width:120px"><span class="hint" style="margin:0">PDF ${s.page}</span></div>
+ ${!s.printed?`<p class="warn" style="margin-top:8px">Sem a página impressa, a citação não pode ser conferida no volume.</p>`:""}
+ <p class="label">Levar como</p><div class="chips"><button class="chip" data-a="lvdest" data-d="frag" aria-pressed="${s.dest==="frag"}">Fragmento de um conceito</button><button class="chip" data-a="lvdest" data-d="plan" aria-pressed="${s.dest==="plan"}">Passagem do planejamento</button></div>
+ ${s.dest==="frag"?`<p class="label">Conceitos</p><div class="chips">${sortedConcepts().map(c=>`<button class="chip" data-a="lvc" data-id="${c.id}" aria-pressed="${s.cs.includes(c.id)}">${esc(c.name)}</button>`).join("")}</div>`
+ :`<p class="label">Subtítulo</p><div class="chips">${subs.map(x=>`<button class="chip" data-a="lvsub" data-n="${esc(x.n)}" aria-pressed="${s.n===x.n}">${esc(x.n)}</button>`).join("")||`<span class="hint">Adicione subtítulos na aba Dissertação.</span>`}</div>
+  ${s.n?`<p class="label">Demonstração</p><div class="chips">${demos.map((d,k)=>`<button class="chip" data-a="lvdemo" data-k="${k}" aria-pressed="${s.k===String(k)}">${k+1}. ${esc(d.nome||"sem nome")}</button>`).join("")}<button class="chip" data-a="lvdemo" data-k="nova" aria-pressed="${s.k==="nova"}">+ Nova</button></div>`:""}`}
+ <div class="row"><button class="primary" style="margin-top:12px" data-a="lvsalva">Salvar a citação</button></div><div class="row"><button class="link" data-a="lvx">Cancelar</button></div></div>`}
+async function abrirLivro(b){
+ if(rd.bookId===b.id&&rd.doc)return;
+ rd={...rd,bookId:b.id,doc:null,loading:true,err:"",node:null,key:""};render();
+ try{const lib=await carregarPdfjs(),data=await(await api(`drive/v3/files/${b.fileId}?alt=media`)).arrayBuffer();
+  rd.doc=await lib.getDocument({data}).promise;rd.loading=false;if(!b.lastPage||b.lastPage>rd.doc.numPages)b.lastPage=1}
+ catch(e){rd.loading=false;rd.err=e.message==="auth"?"Conecte ao Drive para abrir o livro.":/import|fetch|module/i.test(e.message)?"Não consegui carregar o leitor de PDF. Confira a internet e tente de novo.":"Não consegui abrir este PDF: "+e.message}
+ render()}
+async function desenharPagina(){
+ const b=book(route.k),w=$("#lvwrap");if(!b||!w||!rd.doc||rd.bookId!==b.id)return;
+ const p=Math.min(Math.max(1,b.lastPage||1),rd.doc.numPages),larg=Math.max(280,w.clientWidth),key=`${b.id}|${p}|${larg}|${rd.zoom}`;
+ if(rd.node&&rd.key===key){w.innerHTML="";w.appendChild(rd.node);pintarMarcas();return}
+ const pg=await rd.doc.getPage(p),v1=pg.getViewport({scale:1}),sc=larg/v1.width*rd.zoom,vp=pg.getViewport({scale:sc}),dpr=Math.min(window.devicePixelRatio||1,2);
+ const node=document.createElement("div");node.className="lv-page";node.style.cssText=`width:${Math.floor(vp.width)}px;height:${Math.floor(vp.height)}px;--scale-factor:${sc};--user-unit:1;--total-scale-factor:${sc};--scale-round-x:1px;--scale-round-y:1px`;
+ const cv=document.createElement("canvas");cv.width=Math.floor(vp.width*dpr);cv.height=Math.floor(vp.height*dpr);cv.style.cssText=`width:${Math.floor(vp.width)}px;height:${Math.floor(vp.height)}px`;
+ const marks=document.createElement("div");marks.className="lv-marks";const tl=document.createElement("div");tl.className="textLayer";
+ node.append(cv,marks,tl);w.innerHTML="";w.appendChild(node);rd.node=node;rd.key=key;
+ await pg.render({canvasContext:cv.getContext("2d"),viewport:vp,transform:dpr!==1?[dpr,0,0,dpr,0,0]:null}).promise;
+ try{const tc=await pg.getTextContent();await new pdfLib.TextLayer({textContentSource:tc,container:tl,viewport:vp}).render();if(!tc.items.length)tl.dataset.vazio="1"}catch(e){}
+ if(rd.key!==key)return;const temTexto=!tl.dataset.vazio;if(!temTexto){const av=document.createElement("p");av.className="warn";av.style.margin="8px 0 0";av.textContent="Esta página não tem texto selecionável (parece ser uma imagem escaneada).";node.after(av)}
+ pintarMarcas()}
+function pintarMarcas(){const b=book(route.k),node=rd.node;if(!b||!node)return;const box=node.querySelector(".lv-marks");box.innerHTML="";
+ L("marks").filter(m=>m.bookId===b.id&&m.page===(b.lastPage||1)).forEach(m=>(m.rects||[]).forEach(([x,y,w,h])=>{const d=document.createElement("div");d.className="lv-hl"+(m.dest==="plan"?" plan":"");d.style.cssText=`left:${x*100}%;top:${y*100}%;width:${w*100}%;height:${h*100}%`;box.appendChild(d)}))}
+function limparTexto(t){return t.replace(/-\s*\n\s*/g,"").replace(/\s*\n\s*/g," ").replace(/\s{2,}/g," ").trim()}
+function lerSelecao(){const bar=$("#lvsel");if(!bar)return;const s=document.getSelection(),node=rd.node;
+ if(!s||s.isCollapsed||!node||!s.rangeCount||!node.contains(s.anchorNode)){if(!lsave)bar.hidden=true;return}
+ const t=limparTexto(s.toString());if(t.length<3){bar.hidden=true;return}
+ const nb=node.getBoundingClientRect(),rs=[];for(const r of s.getRangeAt(0).getClientRects()){if(r.width<2||r.height<2)continue;rs.push([(r.left-nb.left)/nb.width,(r.top-nb.top)/nb.height,r.width/nb.width,r.height/nb.height].map(v=>Math.round(v*10000)/10000))}
+ rd.sel={text:t,rects:rs.slice(0,80)};bar.hidden=false}
+document.addEventListener("selectionchange",()=>{if(route.name==="leitor")lerSelecao()});
+function bindLeitor(){
+ on("#lvq","input",e=>{lvQ=e.target.value;clearTimeout(lvTimer);lvTimer=setTimeout(async()=>{const q=lvQ.trim();if(fold(q).length<3)lvRes=null;else{try{lvRes=await listFiles(`trashed=false and mimeType='application/pdf' and name contains '${qesc(q)}'`,"files(id,name)")}catch(e){lvRes=[]}}const el=$("#lvres");if(el)el.innerHTML=lvResHTML()},500)});
+ if(route.name!=="leitor")return;const b=book(route.k);if(!b)return;
+ on("#lvref","change",e=>{b.refId=e.target.value;touch(b);changed()});
+ on("#lvir","keydown",e=>{if(e.key==="Enter"){const n=parseInt(e.target.value,10);if(n>0)irPara(n)}});
+ on("#lvtxt","input",e=>{lsave.text=e.target.value});on("#lvpimp","input",e=>{lsave.printed=e.target.value.trim()});
+ if(!rd.doc||rd.bookId!==b.id){if(!rd.loading&&!(rd.err&&rd.bookId===b.id))abrirLivro(b)}else desenharPagina()}
+function irPara(n){const b=book(route.k);if(!rd.doc)return;b.lastPage=Math.min(Math.max(1,n),rd.doc.numPages);touch(b);clearTimeout(saveT);saveT=setTimeout(changed,1500);rd.sel=null;render();window.scrollTo(0,0)}
+async function actLeitor(a,el){const d=el?el.dataset:{};
+ switch(a){
+ case "lvopen":{let b=L("books").find(x=>x.fileId===d.id);if(!b){b=touch({id:uid("b"),fileId:d.id,name:d.n,off:null,refId:"",lastPage:1});db.books.push(b);changed()}lsave=null;return go({name:"leitor",k:b.id})}
+ case "lvgo":lsave=null;return go({name:"leitor",k:d.id});
+ case "lvpg":{const b=book(route.k);return irPara((b.lastPage||1)+ +d.d)}
+ case "lvjump":return irPara(+d.p);
+ case "lvz":rd.zoom=Math.min(3,Math.max(1,rd.zoom+(+d.d)*.25));rd.key="";return render();
+ case "lvoff":{const b=book(route.k),v=parseInt(($("#lvimp").value||"").trim(),10);if(!(v>0))return toast("Escreva o número impresso na página.");b.off=v-(b.lastPage||1);touch(b);changed();render();return toast("Páginas ajustadas")}
+ case "lvoffx":{const b=book(route.k);b.off=null;touch(b);changed();return render()}
+ case "lvleva":{const b=book(route.k);if(!rd.sel)return;lsave={...rd.sel,page:b.lastPage||1,printed:impressa(b,b.lastPage||1),dest:"frag",cs:[],n:"",k:""};const s=document.getSelection();if(s)s.removeAllRanges();render();return window.scrollTo(0,0)}
+ case "lvx":lsave=null;return render();
+ case "lvdest":lsave.dest=d.d;return render();
+ case "lvc":{const i=lsave.cs.indexOf(d.id);i<0?lsave.cs.push(d.id):lsave.cs.splice(i,1);return render()}
+ case "lvsub":lsave.n=d.n;lsave.k="";return render();
+ case "lvdemo":lsave.k=d.k;return render();
+ case "lvsalva":{const b=book(route.k),s=lsave,t=(s.text||"").trim();if(!t)return toast("A citação está vazia.");
+  const r=b.refId&&R(b.refId),pg=s.printed?`p. ${s.printed}`:`PDF ${s.page}`;
+  const mark={id:uid("m"),bookId:b.id,page:s.page,rects:s.rects,text:t,printed:s.printed,dest:s.dest};
+  if(s.dest==="frag"){const i=touch({id:uid("i"),text:`“${t}” (${pg})`,moment:`Leitura: ${b.name.replace(/\.pdf$/i,"")}, ${pg}${s.printed?` (PDF ${s.page})`:""}`,refId:b.refId||"",concepts:[...s.cs],ts:nowIso()});db.ideas.push(i);mark.ideaId=i.id}
+  else{if(!s.n||s.k==="")return toast("Escolha o subtítulo e a demonstração.");const p=planOf(s.n);let dm;
+   if(s.k==="nova"){dm={nome:"",insuf:"",pergunta:"",conceitos:"",resultado:"",descoberta:"",naoDemonstra:"",noinsu:"",logica:"",passagens:[],pars:[]};p.demos.push(dm)}else dm=p.demos[+s.k];
+   dm.passagens.push({texto:r?r.label:b.name.replace(/\.pdf$/i,""),passagem:`‘${t}’`,pagina:s.printed?`p. ${s.printed} (PDF ${s.page})`:`PDF ${s.page} — página impressa a conferir`,uso:"",conferida:false});touch(p);mark.n=s.n}
+  db.marks.push(touch(mark));const dest=s.dest,cs=s.cs.length;lsave=null;rd.sel=null;changed();render();
+  return toast(dest==="frag"?(cs?"Citação salva como fragmento":"Citação salva em Pendentes, sem conceito"):`Levada ao ${mark.n}, ainda não conferida`)}
+ case "lvmdel":{const m=db.marks.find(x=>x.id===d.id);if(!m||!confirm("Apagar este sublinhado? O fragmento ou a passagem que você criou com ele continuam onde estão."))return;m.deleted=true;touch(m);changed();return render()}
+ }return actPlano(a,el)}
+
 /* ---------- desenho geral ---------- */
 const NAV=[["capture","Capturar"],["concepts","Conceitos"],["timeline","Linha do tempo","Tempo"],["pending","Pendentes"],["diss","Dissertação"]];
 function renderNav(){
- const sub=["concept","batch","bib","auto","acervo","aficha"].includes(route.name),cur=sub?"concepts":["form","plano","ritmo"].includes(route.name)?"diss":route.name,np=pending().length;
+ const sub=["concept","batch","bib","auto","acervo","aficha","livros","leitor"].includes(route.name),cur=sub?"concepts":["form","plano","ritmo"].includes(route.name)?"diss":route.name,np=pending().length;
  $("#tabs").classList.toggle("cinco",NAV.length>4);$("#tabs").innerHTML=NAV.map(([k,l,s])=>`<button data-a="nav" data-to="${k}" aria-current="${cur===k}">${s||l}${k==="pending"&&np?`<span class="badge-n">${np}</span>`:""}</button>`).join("");
  $("#side").innerHTML=`<div class="topb"><span class="mark">${KNOT}</span><span class="brand">Bloco Mágico</span></div><button class="syncbtn" data-a="sync"></button>
  <nav>${NAV.map(([k,l])=>`<button data-a="nav" data-to="${k}" aria-current="${cur===k&&!sub}">${l}${k==="pending"&&np?`<span class="badge-n">${np}</span>`:""}</button>`).join("")}
  <button data-a="nav" data-to="batch" aria-current="${route.name==="batch"}">Organizar pasta do Drive</button><button data-a="nav" data-to="bib" aria-current="${route.name==="bib"}">Bibliografia</button><button data-a="nav" data-to="acervo" aria-current="${route.name==="acervo"||route.name==="aficha"}">Acervo Freud e Lacan</button><button data-a="nav" data-to="form" aria-current="${route.name==="form"}">Formalização</button></nav>
  <p class="sub">Seus conceitos</p><div class="cl">${sortedConcepts().map(c=>`<button data-a="open" data-id="${c.id}" aria-current="${route.name==="concept"&&route.id===c.id}"><span style="width:9px;height:9px;border-radius:50%;background:${c.color};display:inline-block;flex:none"></span>${esc(c.name)}</button>`).join("")}</div>`;
  setSync()}
-function render(){renderNav();$("#main").innerHTML=({capture:vCapture,concepts:vConcepts,concept:vConcept,timeline:vTimeline,pending:vPending,batch:vBatch,bib:vBib,diss:vDiss,auto:vAuto,acervo:vAcervo,aficha:vAficha,form:vForm,plano:vPlano,ritmo:vRitmo}[route.name]||vConcepts)();bind()}
+function render(){renderNav();$("#main").innerHTML=({capture:vCapture,concepts:vConcepts,concept:vConcept,timeline:vTimeline,pending:vPending,batch:vBatch,bib:vBib,diss:vDiss,auto:vAuto,acervo:vAcervo,aficha:vAficha,form:vForm,plano:vPlano,ritmo:vRitmo,livros:vLivros,leitor:vLeitor}[route.name]||vConcepts)();bind()}
 function softRender(){const a=document.activeElement;if(a&&$("#main").contains(a)&&/INPUT|TEXTAREA|SELECT/.test(a.tagName)){renderNav()}else render()}
 function on(sel,ev,fn){const e=$(sel);if(e)e.addEventListener(ev,fn);return e}
 function bind(){
@@ -1554,7 +1666,7 @@ function bind(){
  on("#de-s","change",e=>de.state=e.target.value);
  document.querySelectorAll(".cites").forEach(i=>i.addEventListener("input",e=>de.inc[e.target.dataset.ref]=Math.max(0,parseInt(e.target.value)||0)));
  on("#acvq","input",e=>{acvQ=e.target.value;const pos=e.target.selectionStart;render();const n=$("#acvq");if(n){n.focus();n.setSelectionRange(pos,pos)}});
- bindForm();bindPlano();bindWa();bindCits();bindDiss()}
+ bindForm();bindPlano();bindWa();bindCits();bindLeitor();bindDiss()}
 
 /* ---------- ações ---------- */
 function tog(arr,id){const i=arr.indexOf(id);i>=0?arr.splice(i,1):arr.push(id);return arr.includes(id)}
@@ -1636,7 +1748,7 @@ async function act(a,el){
  case "mkbulk":{const type=$("#rbt").value,have=new Set(L("refs").map(r=>fold(r.label)));const lines=$("#rb").value.split("\n").map(s=>s.trim()).filter(s=>s&&!have.has(fold(s)));
   if(!lines.length)return toast("Nenhuma obra nova na lista.");lines.forEach(label=>db.refs.push(touch({id:uid("r"),type,label})));showBulk=false;changed();render();return toast(`${lines.length} ${lines.length===1?"obra cadastrada":"obras cadastradas"}`)}
  case "rdel":{const r=R(id);if(!confirm(`Excluir "${r.label}" da bibliografia?`))return;r.deleted=true;touch(r);changed();render();return toast("Obra excluída")}
- default:return actPlano(a,el)
+ default:return actLeitor(a,el)
  }}catch(e){if(e.message==="auth"){toast("Conecte ao Drive tocando no aviso de sincronização.");render()}else toast(e.message||"Algo deu errado.")}}
 function scrollPanel(){const p=$(".panel");if(p)p.scrollIntoView({block:"start",behavior:"smooth"})}
 document.addEventListener("click",e=>{const el=e.target.closest("[data-a]");if(el&&!el.disabled){e.preventDefault();act(el.dataset.a,el)}});
