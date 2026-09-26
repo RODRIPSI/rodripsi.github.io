@@ -1,6 +1,6 @@
 /* Bloco Mágico: guarda os próprios arquivos para funcionar sem internet.
    Não mexe em nada do Consultório (rodripsi.github.io/consultorio/): nem nos arquivos, nem nas cópias guardadas dele. */
-const CACHE="bloco-magico-v16";
+const CACHE="bloco-magico-v17";
 const ASSETS=["./","./index.html","./manifest.json","./icon-192.png","./icon-512.png"];
 const ehDoConsultorio=u=>u.origin===location.origin&&u.pathname.startsWith("/consultorio");
 self.addEventListener("install",e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS.map(a=>new Request(a,{cache:"reload"})))).then(()=>self.skipWaiting()))});

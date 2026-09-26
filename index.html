@@ -261,6 +261,10 @@ a.d-docl span:nth-child(2){text-decoration:underline;text-underline-offset:3px}
 .textLayer > :not(.markedContent),.textLayer .markedContent span:not(.markedContent){z-index:1;--font-height:0;font-size:calc(var(--text-scale-factor) * var(--font-height));--scale-x:1;--rotate:0deg;transform:rotate(var(--rotate)) scaleX(var(--scale-x)) scale(var(--min-font-size-inv))}
 .textLayer .markedContent{display:contents}.textLayer ::selection{background:rgba(0,0,255,.25)}.textLayer br::selection{background:transparent}
 .textLayer .endOfContent{display:block;position:absolute;inset:100% 0 0;z-index:0;cursor:default;user-select:none}.textLayer.selecting .endOfContent{top:0}
+.ab-ref{margin:8px 0 0;font-family:var(--serif);font-size:15px;line-height:1.5;padding-left:1.2em;text-indent:-1.2em}
+.ab-cham{margin:6px 0 0;font-size:13.5px;font-weight:600;color:var(--c-c)}
+.ab-ed .chips .chip{white-space:normal;text-align:left}.ab-prev{margin-top:14px;background:var(--bg)}.ab-prev p{font-family:var(--serif);font-size:15px;line-height:1.5;margin:0}
+.warn-t{color:var(--c-x);font-family:var(--sans);font-size:13px}
 .a-img{display:block;width:100%;max-height:420px;object-fit:contain;border-radius:10px;background:var(--surface);margin:0 0 14px}
 .a-img.big{max-height:520px}.a-ph{display:grid;place-items:center;text-align:center;padding:12px;height:220px;color:var(--muted);font-size:14px;border:1px dashed var(--rule)}
 .a-imgs{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
@@ -573,10 +577,11 @@ function vBib(){
  const block=k=>{const l=L("refs").filter(r=>r.type===k).sort((a,b)=>a.label.localeCompare(b.label,"pt"));
   return `<details class="block" open><summary>${TYPES[k]} <span class="count">${l.length}</span></summary>${l.map(r=>{
    const ni=L("ideas").filter(i=>i.refId===r.id).length,nd=L("docs").filter(d=>d.incorporated.some(x=>x.ref===r.id)).length,np=L("docs").filter(d=>d.intended.includes(r.id)).length;
-   return `<div class="doc"><p class="fname">${esc(r.label)}</p><p class="hint" style="margin:0">${ni} ${ni===1?"ideia nascida da leitura":"ideias nascidas da leitura"}, citado em ${nd} ${nd===1?"texto":"textos"}${np?`, a buscar em ${np}`:""}</p><div class="row"><button class="link" data-a="rdel" data-id="${r.id}">Excluir</button></div></div>`}).join("")||`<div class="empty">Nenhuma obra cadastrada ainda.</div>`}</details>`};
+   return `<div class="doc"><p class="fname">${esc(r.label)}</p><p class="hint" style="margin:0">${ni} ${ni===1?"ideia nascida da leitura":"ideias nascidas da leitura"}, citado em ${nd} ${nd===1?"texto":"textos"}${np?`, a buscar em ${np}`:""}</p>${refEdit===r.id?"":""}${refCard(r)}${refEdit===r.id?"":`<div class="row"><button class="link" data-a="rdel" data-id="${r.id}">Excluir</button></div>`}</div>`}).join("")||`<div class="empty">Nenhuma obra cadastrada ainda.</div>`}</details>`};
  const typeSel=id=>`<select id="${id}"><option value="prim">Fonte primária</option><option value="com">Comentador contemporâneo</option></select>`;
  return `<button class="back" data-a="nav" data-to="concepts">‹ Conceitos</button><h1>Bibliografia</h1>
- <div class="row" style="margin:-6px 0 18px"><button class="secondary" data-a="newref">+ Cadastrar obra</button><button class="secondary" data-a="bulkref">Colar lista de obras</button></div>
+ <div class="row" style="margin:-6px 0 18px"><button class="secondary" data-a="newref">+ Cadastrar obra</button><button class="secondary" data-a="bulkref">Colar lista de obras</button><button class="secondary" data-a="abcopyall">Copiar a lista completa (ABNT)</button></div>
+ <div class="panel ab-cfg"><p style="margin:0 0 8px"><b>Autor nas chamadas</b></p><div class="chips"><button class="chip" data-a="abcaps" data-v="0" aria-pressed="${!caixaAlta()}">(Freud, 1912/2010, p. 44)</button><button class="chip" data-a="abcaps" data-v="1" aria-pressed="${caixaAlta()}">(FREUD, 1912/2010, p. 44)</button></div><p class="hint" style="margin:8px 0 0">A NBR 10520:2023 usa maiúsculas e minúsculas. A forma em caixa alta é a da norma anterior; use-a se o programa ainda a exigir. As referências no fim (NBR 6023:2018) têm o sobrenome sempre em maiúsculas.</p></div>
  ${showNewRef?`<div class="panel"><label class="label" for="rl" style="margin-top:0">Autor e obra</label><input type="text" id="rl" placeholder="Ex.: Freud, O Eu e o Id (1923)"><label class="label" for="rt">Tipo</label>${typeSel("rt")}<button class="primary" data-a="mkref">Cadastrar</button></div>`:""}
  ${showBulk?`<div class="panel"><label class="label" for="rb" style="margin-top:0">Uma obra por linha</label><textarea id="rb" class="small" placeholder="Freud, A interpretação dos sonhos (1900)&#10;Lacan, O Seminário, livro 5"></textarea><label class="label" for="rbt">Todas as linhas são</label>${typeSel("rbt")}<button class="primary" data-a="mkbulk">Cadastrar todas</button></div>`:""}
  ${block("prim")}${block("com")}`}
@@ -1252,6 +1257,7 @@ function vPlano(){
  <section class="pl-sec"><h3>Demonstrações <small>${p.demos.length}</small></h3>${p.demos.map((d,k)=>demoH(p,d,k)).join("")}<button class="pl-add" data-a="pladd" data-t="demo">+ Adicionar demonstração</button></section>
  <section class="pl-sec">${fioH(n,p,prox)}</section>
  <section class="pl-sec">${seqH(p)}</section>
+ ${(()=>{const l=refsDoPlano(planRec(n)).sort(ordemRef);return `<section class="pl-sec"><h3>Referências deste subtítulo <small>${l.length}</small></h3>${l.length?l.map(r=>refABNT(r)?`<p class="ab-ref">${refABNT(r)}</p>`:`<p class="ab-ref">${esc(r.label)} <span class="warn-t">— ficha ABNT não preenchida</span></p>`).join("")+`<div class="row"><button class="secondary" data-a="abplano" data-n="${esc(n)}">Copiar as referências</button></div>`:`<p class="hint" style="margin:0">Aparecem aqui as obras ligadas às passagens (campo “Obra na Bibliografia”), em ordem alfabética e sem repetição.</p>`}</section>`})()}
  <section class="pl-sec"><h3>Regras específicas do subtítulo</h3><textarea class="pl-t" data-k="regras" rows="2" placeholder="Uma regra por linha">${esc(p.regras)}</textarea></section>
  <section class="pl-sec"><h3>Antes de redigir <small>${p.checklist.filter(c=>c.ok).length} de ${p.checklist.length}</small></h3>
   ${p.checklist.map((c,k)=>`<div class="pl-chk"><button class="pl-cb" data-a="plchk" data-i="${k}" aria-pressed="${c.ok}">${c.ok?"✓":""}</button><span>${esc(c.t)}</span><button class="pl-x" data-a="plrmchk" data-i="${k}" aria-label="Remover item">×</button></div>`).join("")}
@@ -1262,7 +1268,7 @@ function demoH(p,d,k){const ab=plOpen.has(k),conf=d.passagens.filter(x=>x.confer
  return `<div class="pl-demo"><button class="pl-demo-cab" data-a="pltog" data-i="${k}" aria-expanded="${ab}"><span class="pl-dn">${k+1}</span><span class="pl-dt"><b>${esc(d.nome)||"Demonstração sem nome"}</b><small>${d.passagens.length} ${d.passagens.length===1?"passagem":"passagens"} · ${conf} conferida${conf===1?"":"s"} · ${d.pars.length} parágrafos</small></span></button>
  ${ab?`<div class="pl-demo-corpo">${pcampo(p,b+".nome","Nome")}${pcampo(p,b+".insuf","Insuficiência que resolve","x")}${pcampo(p,b+".pergunta","Pergunta","q")}${pcampo(p,b+".conceitos","Conceitos e operações","c")}${pcampo(p,b+".resultado","Resultado necessário")}${pcampo(p,b+".descoberta","Descoberta","d")}${pcampo(p,b+".naoDemonstra","O que ainda não demonstra")}${pcampo(p,b+".noinsu","Nova insuficiência","x")}
   <h4>Passagens do corpus</h4>${d.passagens.map((ps,j)=>`<div class="pl-pas ${ps.conferida?"ok":""}"><button class="pl-conf" data-a="plconf" data-i="${k}" data-j="${j}" aria-pressed="${!!ps.conferida}"><span class="pl-cb">${ps.conferida?"✓":""}</span> Conferida no volume</button>
-   ${pcampo(p,`${b}.passagens.${j}.texto`,"Texto")}${pcampo(p,`${b}.passagens.${j}.passagem`,"Passagem central")}${pcampo(p,`${b}.passagens.${j}.pagina`,"Página")}${pcampo(p,`${b}.passagens.${j}.uso`,"Uso autorizado")}<button class="link" data-a="plrm" data-t="pas" data-i="${k}" data-j="${j}">Remover passagem</button></div>`).join("")}
+   ${pcampo(p,`${b}.passagens.${j}.texto`,"Texto")}${pcampo(p,`${b}.passagens.${j}.passagem`,"Passagem central")}${pcampo(p,`${b}.passagens.${j}.pagina`,"Página")}<label class="pl-rot">Obra na Bibliografia</label>${refSelect(`psr-${k}-${j}`,ps.refId||"").replace("<select ",`<select data-psr="${k}.${j}" `).replace("Ideia minha, sem leitura por trás","Escolher a obra")}${ps.refId&&R(ps.refId)?(R(ps.refId).abnt?`<p class="ab-cham">${esc(chamada(R(ps.refId),paginaNum(ps.pagina)))}</p>`:`<p class="hint" style="margin:4px 0 0">Preencha a ficha ABNT desta obra na Bibliografia para ver a chamada.</p>`):""}${pcampo(p,`${b}.passagens.${j}.uso`,"Uso autorizado")}<button class="link" data-a="plrm" data-t="pas" data-i="${k}" data-j="${j}">Remover passagem</button></div>`).join("")}
   <button class="pl-add" data-a="pladd" data-t="pas" data-i="${k}">+ Passagem</button>
   <details class="pl-pars"><summary class="pl-sum">Quadro dos parágrafos <span class="count">${d.pars.length}</span></summary>
    ${d.pars.map((q,j)=>`<div class="pl-par"><div class="pl-par-cab"><span class="pl-pn">${j+1}</span><span class="pl-ets">${ETAPAS.map(e=>`<button data-a="plet" data-i="${k}" data-j="${j}" data-e="${e}" aria-pressed="${q.etapas.includes(e)}">${e}</button>`).join("")}</span></div>
@@ -1364,8 +1370,8 @@ async function actWa(a,el){const d=el?el.dataset:{};
  case "ritper":ritPer=d.p;return render();
  }return actForm(a,el)}
 let isubOpen=null;
-function ideaActs(i){const subs=i.subs||[],ls=lastSend("idea",i.id);
- return `${subs.length?`<p class="hint" style="margin:8px 0 0">Material candidato: ${subs.map(x=>esc(x.n)+(x.usada?" ✓":"")).join(", ")}</p>`:""}${ls?`<p class="hint" style="margin:4px 0 0">Enviada à orientadora em ${esc(brDate(ls.dt))}</p>`:""}
+function ideaActs(i){const subs=i.subs||[],ls=lastSend("idea",i.id),rr=i.refId&&R(i.refId);
+ return `${rr&&rr.abnt&&cheio(rr.abnt.autores)?`<p class="ab-cham" style="margin:8px 0 0">${esc(chamada(rr,paginaNum(i.text)))}</p>`:""}${subs.length?`<p class="hint" style="margin:8px 0 0">Material candidato: ${subs.map(x=>esc(x.n)+(x.usada?" ✓":"")).join(", ")}</p>`:""}${ls?`<p class="hint" style="margin:4px 0 0">Enviada à orientadora em ${esc(brDate(ls.dt))}</p>`:""}
  <div class="acts"><button class="link" data-a="iedit" data-id="${i.id}">Editar</button><button class="link" data-a="isub" data-id="${i.id}">Subtítulo</button><button class="link" data-a="wsopen" data-kind="idea" data-ref="${i.id}">Orientadora</button></div>
  ${isubOpen===i.id?`<div class="chips" style="margin-top:10px">${subsSorted().map(s=>`<button class="chip" data-a="isubtog" data-id="${i.id}" data-n="${s.n}" aria-pressed="${subs.some(x=>x.n===s.n)}">${esc(s.n)}</button>`).join("")||`<span class="hint">Adicione subtítulos na aba Dissertação.</span>`}</div>`:""}
  ${ws&&ws.kind==="idea"&&ws.ref===i.id?wsPanel():""}`}
@@ -1479,7 +1485,7 @@ async function actCits(a,el){const d=el?el.dataset:{};
   if(dm.passagens.some(x=>normT(x.passagem).slice(0,40)===normT(c.texto).slice(0,40)))return toast("Esta citação já está nessa demonstração.");
   dm.passagens.push({texto:c.obra.replace(/\s*\([^)]*\)\s*$/,""),passagem:`‘${c.texto}’`,pagina:paginaDe(c),uso:c.nota?"Nota editorial dos tradutores — não usar como afirmação autoral.":"",conferida:false,origem:`(${c.autor}, ${c.ano}, p. ${c.pag})`});
   touch(p);changed();const n=citLev.n;citLev=null;render();return toast(`Levada ao ${n}, ainda não conferida. O uso autorizado é você quem escreve.`)}
- }return actDef(a,el)}
+ }return actAbnt(a,el)}
 
 /* ---------- prazos na agenda do Google ---------- */
 const CAL_SCOPE="https://www.googleapis.com/auth/calendar.events";
@@ -1653,11 +1659,74 @@ async function actLeitor(a,el){const d=el?el.dataset:{};
   if(s.dest==="frag"){const i=touch({id:uid("i"),text:`“${t}” (${pg})`,moment:`Leitura: ${b.name.replace(/\.pdf$/i,"")}, ${pg}${s.printed?` (PDF ${s.page})`:""}`,refId:b.refId||"",concepts:[...s.cs],ts:nowIso()});db.ideas.push(i);mark.ideaId=i.id}
   else{if(!s.n||s.k==="")return toast("Escolha o subtítulo e a demonstração.");const p=planOf(s.n);let dm;
    if(s.k==="nova"){dm={nome:"",insuf:"",pergunta:"",conceitos:"",resultado:"",descoberta:"",naoDemonstra:"",noinsu:"",logica:"",passagens:[],pars:[]};p.demos.push(dm)}else dm=p.demos[+s.k];
-   dm.passagens.push({texto:r?r.label:b.name.replace(/\.pdf$/i,""),passagem:`‘${t}’`,pagina:s.printed?`p. ${s.printed} (PDF ${s.page})`:`PDF ${s.page} — página impressa a conferir`,uso:"",conferida:false});touch(p);mark.n=s.n}
+   dm.passagens.push({refId:b.refId||"",texto:r?r.label:b.name.replace(/\.pdf$/i,""),passagem:`‘${t}’`,pagina:s.printed?`p. ${s.printed} (PDF ${s.page})`:`PDF ${s.page} — página impressa a conferir`,uso:"",conferida:false});touch(p);mark.n=s.n}
   db.marks.push(touch(mark));const dest=s.dest,cs=s.cs.length;lsave=null;rd.sel=null;changed();render();
   return toast(dest==="frag"?(cs?"Citação salva como fragmento":"Citação salva em Pendentes, sem conceito"):`Levada ao ${mark.n}, ainda não conferida`)}
  case "lvmdel":{const m=db.marks.find(x=>x.id===d.id);if(!m||!confirm("Apagar este sublinhado? O fragmento ou a passagem que você criou com ele continuam onde estão."))return;m.deleted=true;touch(m);changed();return render()}
  }return actPlano(a,el)}
+
+/* ---------- referências ABNT (NBR 6023:2018) e chamadas (NBR 10520:2023) ---------- */
+let refEdit=null;
+const ABNT_TIPOS={livro:"Livro (obra inteira)",parte:"Texto dentro de um livro (capítulo, artigo de Freud num volume)",artigo:"Artigo de revista"};
+const romano=/^[ivxlcdm]+$/i;
+function autoresDe(s){return String(s||"").split(/\s*;\s*/).map(x=>x.trim()).filter(Boolean).map(x=>{const [sob,...pn]=x.split(/\s*,\s*/);return{sob:(sob||"").trim(),pn:pn.join(", ").trim()}})}
+function autoresRef(s){const a=autoresDe(s);if(!a.length)return "";const f=x=>x.sob.toLocaleUpperCase("pt-BR")+(x.pn?", "+x.pn:"");return a.length>3?f(a[0])+" et al.":a.map(f).join("; ")}
+function tituloH(t,sub,neg){if(!cheio(t))return "";const T=neg?`<b>${esc(t)}</b>`:esc(t);return T+(cheio(sub)?`: ${esc(sub)}`:"")}
+const fim=s=>s&&!/[.?!]$/.test(s)?s+".":s;
+function refABNT(r){const a=r&&r.abnt;if(!a||!cheio(a.titulo))return null;const p=[],pgs=cheio(a.paginas)?`p. ${a.paginas.replace(/\s*[-–]\s*/,"-")}`:"";
+ const imp=()=>`${cheio(a.local)?a.local:"[<i>S. l.</i>]"}: ${cheio(a.editora)?esc(a.editora):"[<i>s. n.</i>]"}, ${cheio(a.ano)?esc(a.ano):"[<i>s. d.</i>]"}`;
+ const aut=autoresRef(a.autores);
+ if(a.tipo==="artigo"){p.push(aut?fim(esc(aut)):"");p.push(fim(tituloH(a.titulo,a.subtitulo,false)));
+  p.push(`<b>${esc(a.periodico||"")}</b>${cheio(a.local)?", "+esc(a.local):""}${cheio(a.volume)?", v. "+esc(a.volume):""}${cheio(a.numero)?", n. "+esc(a.numero):""}${pgs?", "+pgs:""}, ${esc(a.ano||"[s. d.]")}.`)}
+ else if(a.tipo==="parte"){p.push(aut?fim(esc(aut)):"");p.push(fim(tituloH(a.titulo,a.subtitulo,false)));
+  const org=cheio(a.orgs)?autoresRef(a.orgs)+" (org.)":aut;p.push(`<i>In</i>: ${esc(org)}.`);
+  p.push(fim(tituloH(a.obra,a.obraSub,true)));
+  if(cheio(a.trad))p.push(`Tradução de ${esc(a.trad)}.`);if(cheio(a.edicao))p.push(`${esc(a.edicao)}. ed.`);
+  const vp=[cheio(a.volume)?`v. ${esc(a.volume)}`:"",pgs].filter(Boolean).join(", ");p.push(imp()+(vp?`. ${vp}.`:"."))}
+ else{p.push(aut?fim(esc(aut)):"");p.push(fim(tituloH(a.titulo,a.subtitulo,true)));if(cheio(a.trad))p.push(`Tradução de ${esc(a.trad)}.`);if(cheio(a.edicao))p.push(`${esc(a.edicao)}. ed.`);
+  p.push(imp()+(cheio(a.volume)?`. v. ${esc(a.volume)}.`:"."))}
+ if(cheio(a.anoOrig))p.push(`Publicado originalmente em ${esc(a.anoOrig)}.`);
+ if(cheio(a.url))p.push(`Disponível em: ${esc(a.url)}.${cheio(a.acesso)?" Acesso em: "+esc(a.acesso)+".":""}`);
+ return p.filter(Boolean).join(" ").replace(/\s+/g," ").replace(/\.\./g,".").trim()}
+function faltasRef(r){const a=r.abnt||{},f=[];if(!cheio(a.autores))f.push("autor");if(!cheio(a.titulo))f.push("título");if(a.tipo==="artigo"){if(!cheio(a.periodico))f.push("nome da revista")}else{if(!cheio(a.local))f.push("cidade");if(!cheio(a.editora))f.push("editora")}if(!cheio(a.ano))f.push("ano");if(a.tipo==="parte"&&!cheio(a.obra))f.push("título do livro");if(a.tipo==="parte"&&!cheio(a.paginas))f.push("páginas do texto");return f}
+const caixaAlta=()=>!!db.meta.abntCaps;
+function chamada(r,pag){const a=r&&r.abnt;if(!a||!cheio(a.autores))return "";const au=autoresDe(a.autores),nm=x=>caixaAlta()?x.sob.toLocaleUpperCase("pt-BR"):x.sob;
+ const quem=au.length>3?nm(au[0])+" et al.":au.map(nm).join("; "),ano=(cheio(a.anoOrig)&&a.anoOrig!==a.ano?a.anoOrig+"/":"")+(a.ano||"[s. d.]");
+ return `(${quem}, ${ano}${pag?", p. "+pag:""})`}
+function paginaNum(s){const m=String(s||"").match(/p\.\s*([\divxlc]+(?:\s*[-–]\s*[\divxlc]+)?)/i);return m?m[1].replace(/\s*[-–]\s*/,"-"):""}
+const semTags=h=>h.replace(/<[^>]+>/g,"").replace(/&amp;/g,"&").replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&quot;/g,'"').replace(/&#39;/g,"'");
+async function copiarRefs(htmls){const html=htmls.map(h=>`<p style="font-family:'Times New Roman';font-size:12pt;margin:0 0 12pt">${h}</p>`).join(""),txt=htmls.map(semTags).join("\n\n");
+ try{if(window.ClipboardItem&&navigator.clipboard.write){await navigator.clipboard.write([new ClipboardItem({"text/html":new Blob([html],{type:"text/html"}),"text/plain":new Blob([txt],{type:"text/plain"})})]);return toast(htmls.length>1?"Referências copiadas, com o negrito":"Referência copiada, com o negrito")}}catch(e){}
+ try{await navigator.clipboard.writeText(txt);toast("Copiado (sem o negrito: aplique no título ao colar)")}catch(e){toast("Não foi possível copiar")}}
+function refCard(r){const h=refABNT(r),f=faltasRef(r),ed=refEdit===r.id,a=r.abnt||{};
+ if(ed){const fld=(k,rot,ph="",ex="")=>`<label class="label" for="ab-${k}">${rot}</label><input type="text" id="ab-${k}" data-ab="${k}" value="${esc(a[k]||"")}" placeholder="${esc(ph)}">${ex?`<p class="hint" style="margin:2px 0 0">${ex}</p>`:""}`,t=a.tipo||"livro";
+  return `<div class="doc ab-ed"><p class="fname">${esc(r.label)}</p><p class="label" style="margin-top:6px">O que é</p><div class="chips">${Object.entries(ABNT_TIPOS).map(([k,v])=>`<button class="chip" data-a="abtipo" data-t="${k}" aria-pressed="${t===k}">${v}</button>`).join("")}</div>
+  ${fld("autores","Autor(es)","Freud, Sigmund","Sobrenome, Prenome. Vários autores separados por ponto e vírgula.")}${fld("titulo",t==="parte"?"Título do texto":t==="artigo"?"Título do artigo":"Título","A dinâmica da transferência")}${fld("subtitulo","Subtítulo (se houver)")}${fld("anoOrig","Ano da publicação original (se diferente)","1912","Entra na chamada como 1912/2010 e numa nota ao fim da referência.")}
+  ${t==="parte"?fld("orgs","Organizador(es) do livro, se não for o mesmo autor","Sobrenome, Prenome")+fld("obra","Título do livro","Obras completas")+fld("obraSub","Subtítulo do livro")+fld("volume","Volume","10"):""}
+  ${t==="artigo"?fld("periodico","Nome da revista","Letra Freudiana")+fld("volume","Volume (v.)")+fld("numero","Número (n.)"):""}
+  ${t!=="artigo"?fld("trad","Tradução de","Paulo César de Souza")+fld("edicao","Edição (só o número, se não for a 1ª)","2")+(t==="livro"?fld("volume","Volume"):""):""}
+  ${fld("local","Cidade","São Paulo")}${t!=="artigo"?fld("editora","Editora","Companhia das Letras"):""}${fld("ano",t==="artigo"?"Ano":"Ano desta edição","2010")}${t!=="livro"?fld("paginas","Páginas do texto","100-110"):""}
+  ${fld("url","Endereço na internet (se for on-line)")}${cheio(a.url)?fld("acesso","Acesso em","26 set. 2026"):""}
+  <div class="panel ab-prev"><p class="label" style="margin-top:0">Como fica</p><p id="abprev">${refABNT({abnt:{...a,tipo:t}})||"<span class='hint'>Preencha ao menos o título.</span>"}</p></div>
+  <div class="row"><button class="primary" data-a="absave" data-id="${r.id}">Salvar</button></div><div class="row"><button class="link" data-a="abx">Cancelar</button></div></div>`}
+ return h?`<p class="ab-ref">${h}</p>${f.length?`<p class="warn" style="margin:4px 0 0">Falta: ${f.join(", ")}.</p>`:""}<div class="row"><button class="link" data-a="abcopy" data-id="${r.id}">Copiar a referência</button><button class="link" data-a="abedit" data-id="${r.id}">Editar a ficha ABNT</button></div>`
+ :`<div class="row"><button class="secondary" data-a="abedit" data-id="${r.id}">Preencher a ficha ABNT</button></div>`}
+let abDraft=null;
+function bindPsRef(){document.querySelectorAll("[data-psr]").forEach(sl=>sl.addEventListener("change",()=>{const [k,j]=sl.dataset.psr.split(".").map(Number),p=planOf(route.k);p.demos[k].passagens[j].refId=sl.value;touch(p);changed();render()}))}
+function bindAbnt(){document.querySelectorAll("[data-ab]").forEach(i=>i.addEventListener("input",()=>{abDraft=abDraft||{};abDraft[i.dataset.ab]=i.value;const r=db.refs.find(x=>x.id===refEdit),p=$("#abprev");if(r&&p)p.innerHTML=refABNT({abnt:{...(r.abnt||{}),...abDraft}})||"<span class='hint'>Preencha ao menos o título.</span>"}))}
+function refsDoPlano(p){const ids=[];(p?p.demos:[]).forEach(d=>d.passagens.forEach(x=>{if(x.refId&&!ids.includes(x.refId))ids.push(x.refId)}));return ids.map(R).filter(Boolean)}
+function ordemRef(a,b){return semTags(refABNT(a)||a.label).localeCompare(semTags(refABNT(b)||b.label),"pt")}
+async function actAbnt(a,el){const d=el?el.dataset:{};
+ switch(a){
+ case "abedit":refEdit=d.id;abDraft={};return render();
+ case "abx":refEdit=null;abDraft=null;return render();
+ case "abtipo":{const r=db.refs.find(x=>x.id===refEdit);abDraft=abDraft||{};abDraft.tipo=d.t;r.abnt={...(r.abnt||{}),...abDraft};abDraft={};return render()}
+ case "absave":{const r=db.refs.find(x=>x.id===d.id);r.abnt={tipo:"livro",...(r.abnt||{}),...(abDraft||{})};Object.keys(r.abnt).forEach(k=>{if(typeof r.abnt[k]==="string")r.abnt[k]=r.abnt[k].trim()});touch(r);refEdit=null;abDraft=null;changed();render();return toast("Ficha salva")}
+ case "abcopy":{const r=R(d.id);return copiarRefs([refABNT(r)])}
+ case "abcopyall":{const l=L("refs").filter(r=>refABNT(r)).sort(ordemRef);if(!l.length)return toast("Nenhuma obra com ficha ABNT ainda.");return copiarRefs(l.map(refABNT))}
+ case "abcaps":db.meta.abntCaps=d.v==="1";changed();return render();
+ case "abplano":{const p=planRec(d.n),l=refsDoPlano(p).filter(r=>refABNT(r)).sort(ordemRef);if(!l.length)return toast("Nenhuma passagem com obra de ficha ABNT preenchida.");return copiarRefs(l.map(refABNT))}
+ }return actDef(a,el)}
 
 /* ---------- desenho geral ---------- */
 const NAV=[["capture","Capturar"],["concepts","Conceitos"],["timeline","Linha do tempo","Tempo"],["pending","Pendentes"],["diss","Dissertação"]];
@@ -1687,7 +1756,7 @@ function bind(){
  on("#de-s","change",e=>de.state=e.target.value);
  document.querySelectorAll(".cites").forEach(i=>i.addEventListener("input",e=>de.inc[e.target.dataset.ref]=Math.max(0,parseInt(e.target.value)||0)));
  on("#acvq","input",e=>{acvQ=e.target.value;const pos=e.target.selectionStart;render();const n=$("#acvq");if(n){n.focus();n.setSelectionRange(pos,pos)}});
- bindForm();bindPlano();bindWa();bindCits();bindLeitor();bindDiss()}
+ bindForm();bindPlano();bindWa();bindCits();bindLeitor();bindAbnt();bindPsRef();bindDiss()}
 
 /* ---------- ações ---------- */
 function tog(arr,id){const i=arr.indexOf(id);i>=0?arr.splice(i,1):arr.push(id);return arr.includes(id)}
@@ -1731,7 +1800,8 @@ async function act(a,el){
   const ideas=L("ideas").filter(i=>i.concepts.includes(id)).sort((a,b)=>a.ts.localeCompare(b.ts)),docs=docsOf(id);
   const P=[{t:c.name,s:"title"},{t:"Exportado do Bloco Mágico em "+fmtFull(nowIso()),s:"meta"}];if(cheio(c.def)){P.push({t:"Minha definição ("+defEstado(c)+")",s:"h"});P.push({t:c.def,s:"p"});if(c.defSrc)P.push({t:"Apoiada em: "+c.defSrc,s:"meta"})}P.push({t:"Fragmentos",s:"h"});
   if(!ideas.length)P.push({t:"Nenhum fragmento.",s:"meta"});
-  ideas.forEach(i=>{P.push({t:fmtFull(i.ts)+(i.moment?". "+i.moment:""),s:"meta"});P.push({t:i.text,s:"p"});const r=i.refId&&R(i.refId);if(r)P.push({t:"Procedência"+(r.type==="com"?" (comentador)":"")+": "+r.label,s:"meta"})});
+  ideas.forEach(i=>{P.push({t:fmtFull(i.ts)+(i.moment?". "+i.moment:""),s:"meta"});P.push({t:i.text,s:"p"});const r=i.refId&&R(i.refId);if(r)P.push({t:"Procedência"+(r.type==="com"?" (comentador)":"")+": "+(r.abnt&&cheio(r.abnt.autores)?chamada(r,paginaNum(i.text))+" — ":"")+r.label,s:"meta"})});
+  {const rs=[...new Set(ideas.map(i=>i.refId).filter(Boolean))].map(R).filter(Boolean).sort(ordemRef);if(rs.length){P.push({t:"Referências",s:"h"});rs.forEach(r=>P.push({t:semTags(refABNT(r)||r.label),s:"p"}))}}
   P.push({t:"Textos vinculados",s:"h"});if(!docs.length)P.push({t:"Nenhum texto vinculado.",s:"meta"});
   docs.forEach(d=>{P.push({t:d.name,s:"b"});P.push({t:"Estado: "+STATES[d.state]+". Citações: "+citeLine(d)+".",s:"meta"});P.push({t:driveLink(d),s:"meta"})});
   const r=await upload({name:`Exportação — ${c.name} — ${todayIso()}.docx`,parents:[await subFolder("Exportações")]},await buildDocx(P));
