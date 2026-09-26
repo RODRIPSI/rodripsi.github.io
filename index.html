@@ -296,6 +296,17 @@ a.d-docl span:nth-child(2){text-decoration:underline;text-underline-offset:3px}
 .d-outro a{text-decoration:underline;text-underline-offset:3px}.d-outro{flex-wrap:wrap}
 .d-no{width:100%;border:0;background:none;text-align:left;cursor:pointer;font:inherit;color:inherit}.d-no small{color:var(--accent)}
 .d-missinfo{margin:4px 0 10px 34px;padding:10px 12px;border-left:3px solid var(--accent);background:var(--bg);border-radius:0 8px 8px 0;font-size:14.5px;line-height:1.5}
+.d-chev{flex:none;color:var(--muted);transition:transform .15s}.d-head[aria-expanded="true"] .d-chev{transform:rotate(180deg)}
+.d-q{margin:14px 0 0;padding:12px 14px;border-radius:12px;background:color-mix(in srgb,var(--c-q) 9%,var(--surface))}.d-q small,.d-blk small,.d-lab{display:block;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 0 5px}.d-q small{color:var(--c-q)}
+.d-q p,.d-blk p{margin:0;font-family:var(--serif);line-height:1.55}.d-q p{font-size:17.5px}.d-blk{margin-top:14px}.d-blk p{font-size:16px}
+.d-eixos{display:flex;flex-wrap:wrap;gap:7px}.d-eixos span{padding:6px 12px;border-radius:999px;background:color-mix(in srgb,var(--accent) 10%,var(--surface));color:var(--accent);font-size:14.5px;line-height:1.35}
+.d-lab{margin-top:14px}.d-drow{display:flex;align-items:center;gap:10px;min-height:48px;border-bottom:1px dashed var(--rule)}
+.d-drow a{flex:1;display:flex;justify-content:space-between;align-items:center;gap:12px;min-height:44px;text-decoration:none;color:var(--ink);font-size:15.5px;flex-wrap:wrap}.d-drow a span{text-decoration:underline;text-underline-offset:3px}.d-drow small{color:var(--muted);font-size:13px}
+.d-x{flex:none;width:44px;height:44px;display:grid;place-items:center;border:1px solid var(--rule);border-radius:10px;background:var(--surface);color:var(--c-x)}
+.d-undo{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:10px 0;padding:10px 12px;border-radius:10px;background:var(--bg);font-size:14.5px;line-height:1.45}.d-undo .secondary{flex:none}
+.d-mais{display:inline-flex;align-items:center;gap:6px}.d-menu{margin-top:8px;border:1px solid var(--rule);border-radius:12px;overflow:hidden;max-width:420px}
+.d-menu>button{display:block;width:100%;min-height:48px;padding:0 16px;border:0;border-bottom:1px solid var(--rule);background:var(--surface);text-align:left;font-size:15px;color:var(--ink)}.d-menu>button:last-child{border-bottom:0}.d-menu .d-del{color:var(--c-x)}
+.d-przbox{padding:10px 14px;border-bottom:1px solid var(--rule)}.d-ed{margin-top:10px}.d-ed textarea{width:100%}.d-lq{color:var(--c-q)}.d-out{border-color:var(--accent);color:var(--accent)}
 .d-link{margin:10px 0;padding:10px;border:1px solid var(--accent);border-radius:10px}
 .d-loose{margin:0;padding:6px 0;font-size:14px;border-bottom:1px dashed var(--rule)}
 .d-wrap{flex-wrap:wrap}.d-wrap input{flex:1 1 150px}
@@ -670,7 +681,7 @@ async function checkDocs(cid){
 /* ---------- dissertação: painel dos subtítulos ---------- */
 const DKINDS=[["red","Redação Consolidada"],["mapa","Mapa Demonstrativo"],["demo","Demonstração Documental"],["abnt","Versão ABNT"]];
 const DK=Object.fromEntries(DKINDS);
-let dlink=null,dlTimer=null,dmiss=null;let dscan=null,dscanning=false,dscanErr="",dopen=new Set(),dfold=null,dfq="",dnew=false,dcapEdit=null;
+let dlink=null,dlTimer=null,dmiss=null,dmais=null,dedit=null,dprz=null,dundo=null;let dscan=null,dscanning=false,dscanErr="",dopen=new Set(),dfold=null,dfq="",dnew=false,dcapEdit=null;
 try{dscan=JSON.parse(localStorage.getItem("bm-diss-scan")||"null")}catch(e){}
 let dwords={};try{dwords=JSON.parse(localStorage.getItem("bm-diss-words")||"{}")}catch(e){}
 const numKey=n=>String(n).split(".").map(x=>String(+x).padStart(3,"0")).join(".");
@@ -759,29 +770,47 @@ function vDiss(){
  ${dnew?`<div class="panel"><label class="label" for="dnn" style="margin-top:0">Número</label><input type="text" id="dnn" inputmode="decimal" placeholder="Ex.: 2.3"><label class="label" for="dnt">Título</label><input type="text" id="dnt" placeholder="Pode ficar para depois"><button class="primary" data-a="dnewsave">Adicionar subtítulo</button><div class="row"><button class="link" data-a="dnew">Cancelar</button></div></div>`
   :`<div class="row" style="margin-top:4px"><button class="secondary" data-a="dnew">+ Subtítulo</button><button class="secondary" data-a="dscan">Atualizar do Drive</button><button class="link" data-a="dpickfolder">Trocar pasta</button></div>`}
  ${loose.length?`<details class="block" style="margin-top:22px"><summary>Documentos da pasta sem subtítulo reconhecido <span class="count">${loose.length}</span></summary><p class="hint" style="margin:-4px 0 10px">Ficam fora do painel porque o nome não traz o número do subtítulo e o tipo de documento. Nada foi alterado neles.</p>${loose.slice(0,80).map(f=>`<p class="d-loose"><a href="${esc(f.webViewLink||"#")}" target="_blank" rel="noopener">${esc(f.name)}</a></p>`).join("")}</details>`:""}`}
+function docsDoSub(s,x){const out=[],oc=s.ocultos||[];
+ DKINDS.forEach(([k,nome],i)=>{const d=x.docs[i];if(d)out.push({f:d,nome,manual:!!d.manual})});
+ if(x.esq)out.push({f:x.esq,nome:"Esquema de Escrita",manual:!!x.esq.manual});
+ x.outros.forEach(o=>out.push({f:o,nome:o.label||o.name,manual:!!o.manual}));
+ const vistos=new Set();return out.filter(o=>{if(oc.includes(o.f.id)||vistos.has(o.f.id))return false;vistos.add(o.f.id);return true})}
 function subCard(s,x){
- const aberto=dopen.has(s.id),falta=DKINDS.find((k,i)=>!x.docs[i]);
- return `<div class="doc d-sub ${x.nv?"d-b-"+x.nv.c:x.feitos===4?"d-b-ok":""}">
+ const aberto=dopen.has(s.id),p=planRec(s.n),perg=p&&cheio(p.ficha.pergunta)?p.ficha.pergunta:"",eixos=String(s.eixos||"").split("\n").map(t=>t.trim()).filter(Boolean);
+ const docs=docsDoSub(s,x),pal=docs.reduce((a,o)=>a+(wordsOf(o.f)||0),0),contando=docs.some(o=>o.f.modifiedTime&&wordsOf(o.f)===null);
+ const e=estadoPlano(s.n),nc=L("ideas").filter(i=>(i.subs||[]).some(m=>m.n===s.n)).length,ed=dedit===s.id;
+ const meta=[docs.length?`${pal.toLocaleString("pt-BR")} palavras${contando?"…":""} · ${docs.length} ${docs.length===1?"documento":"documentos"}`:"nenhum documento",
+  e?(e.arq?`arquitetado, ${e.conf} de ${e.pas} passagens conferidas`:`planejamento em andamento${e.pas?`, ${e.pas} ${e.pas===1?"passagem":"passagens"}`:""}`):"",nc?`${nc} ${nc===1?"ideia":"ideias"}`:""].filter(Boolean).join(" · ");
+ return `<div class="doc d-sub ${x.nv?"d-b-"+x.nv.c:""}">
  <button class="d-head" data-a="dtoggle" data-id="${s.id}" aria-expanded="${aberto}">
-  <span class="d-num ${x.feitos===4?"ok":""}">${esc(s.n)}</span>
-  <span class="d-tt"><span class="${s.title?"":"d-vazio"}">${esc(s.title||"Sem título")}</span>
-   <span class="d-meta">${x.feitos||x.outros.length?`${x.palavras.toLocaleString("pt-BR")} palavras${x.contando?"…":""}`:"nenhum documento"}${x.outros.length?` · ${x.outros.length} ${x.outros.length===1?"outro documento":"outros documentos"}`:""}${x.fim?` · levou ${dayDiff(x.ini,x.fim)} dias`:""}${(()=>{const e=estadoPlano(s.n);return e?(e.arq?` · arquitetado, ${e.conf} de ${e.pas} passagens conferidas`:` · planejamento em andamento${e.pas?`, ${e.pas} ${e.pas===1?"passagem":"passagens"}`:""}`):""})()}${(()=>{const c=L("ideas").filter(i=>(i.subs||[]).some(m=>m.n===s.n)).length;return c?` · ${c} ${c===1?"ideia":"ideias"}`:""})()}${x.nv?` <span class="d-prazo d-${x.nv.c}">${esc(x.nv.t)}</span>`:""}</span></span>
-  ${!x.feitos&&x.outros.length?`<span class="d-nd">${x.outros.length} doc.</span>`:`<span class="d-pips" aria-label="${x.feitos} de 4 documentos">${x.docs.map(d=>`<i class="${d?"on":""}"></i>`).join("")}</span>`}</button>
+  <span class="d-num">${esc(s.n)}</span>
+  <span class="d-tt"><span class="${s.title?"":"d-vazio"}">${esc(s.title||"Sem título")}</span><span class="d-meta">${meta}${x.nv?` <span class="d-prazo d-${x.nv.c}">${esc(x.nv.t)}</span>`:""}</span></span>
+  <svg class="d-chev" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
  ${aberto?`<div class="d-body">
-  ${(()=>{const p=planRec(s.n);return p&&cheio(p.ficha.pergunta)?`<div class="d-perg"><small>Pergunta organizadora</small>${esc(p.ficha.pergunta)}</div>`:""})()}
-  <div class="row" style="margin:10px 0 6px"><button class="secondary d-acc" data-a="plano" data-k="${esc(s.n)}">${estadoPlano(s.n)?"Abrir planejamento":"Planejar este subtítulo"}</button>${x.feitos||x.esq||x.outros.length?`<button class="secondary d-wa" data-a="wsopen" data-kind="sub" data-ref="${esc(s.n)}">Enviar à orientadora</button>`:""}</div>
+ ${ed?`<div class="d-ed">
+  <label class="label" for="de-t">Título</label><input type="text" id="de-t" value="${esc(s.title||"")}" placeholder="Título do ${esc(s.n)}">
+  <label class="label d-lq" for="de-p">Pergunta — é a mesma do planejamento</label><textarea id="de-p" rows="2">${esc(perg)}</textarea>
+  <label class="label" for="de-o">Objetivo</label><textarea id="de-o" rows="4">${esc(s.objetivo||"")}</textarea>
+  <label class="label" for="de-e">Eixos possíveis — um por linha</label><textarea id="de-e" rows="4">${esc(s.eixos||"")}</textarea>
+  <div class="row"><button class="primary" style="margin-top:6px;width:auto;padding:12px 24px" data-a="dssave" data-id="${s.id}">Salvar</button><button class="link" data-a="dsedx">Cancelar</button></div></div>`
+ :`${perg||cheio(s.objetivo)||eixos.length?`
+  ${perg?`<div class="d-q"><small>Pergunta</small><p>${esc(perg)}</p></div>`:""}
+  ${cheio(s.objetivo)?`<div class="d-blk"><small>Objetivo</small><p>${esc(s.objetivo).replace(/\n/g,"<br>")}</p></div>`:""}
+  ${eixos.length?`<div class="d-blk"><small>Eixos possíveis</small><div class="d-eixos">${eixos.map(t=>`<span>${esc(t)}</span>`).join("")}</div></div>`:""}`
+  :`<p class="hint" style="margin:14px 0 4px">Ainda sem pergunta, objetivo e eixos.</p><div class="row" style="margin-top:4px"><button class="secondary d-out" data-a="dsedit" data-id="${s.id}">Escrever pergunta, objetivo e eixos</button></div>`}
+  <div class="row" style="margin:16px 0 6px"><button class="secondary d-acc" data-a="plano" data-k="${esc(s.n)}">${e?"Abrir planejamento":"Planejar este subtítulo"}</button>${docs.length?`<button class="secondary d-wa" data-a="wsopen" data-kind="sub" data-ref="${esc(s.n)}">Enviar à orientadora</button>`:""}</div>
   ${(()=>{const ls=lastSend("sub",s.n);return ls?`<p class="hint" style="margin:0 0 6px">Último envio à orientadora: ${esc(brDate(ls.dt))}</p>`:""})()}
   ${ws&&ws.kind==="sub"&&ws.ref===s.n?wsPanel():""}
-  ${!x.feitos&&x.outros.length?`<p class="hint" style="margin:8px 0 4px">Nenhum dos quatro documentos do padrão (Redação Consolidada, Mapa, Demonstração, ABNT). Os documentos deste subtítulo:</p>`:""}
-  ${(!x.feitos&&x.outros.length?[]:DKINDS).map(([k,nome],i)=>{const d=x.docs[i],w=wordsOf(d);return d?`<a class="d-docl" href="${esc(d.webViewLink||"#")}" target="_blank" rel="noopener"><span class="d-ck">✓</span><span>${nome}</span><small>${w===null?"contando…":w.toLocaleString("pt-BR")+" palavras"}${d.versions>1?` · ${d.versions} versões na pasta, mostrando a mais recente`:""}${d.manual?" · ligado à mão":""}</small></a>${d.manual?`<div class="row" style="margin:-4px 0 4px 34px"><button class="link" data-a="dunlink" data-id="${s.id}" data-f="${d.id}">desligar ${nome}</button></div>`:""}`:`<button class="d-docl d-no" data-a="dmiss" data-id="${s.id}" data-k="${k}" aria-expanded="${!!(dmiss&&dmiss.sid===s.id&&dmiss.k===k)}"><span class="d-ck"></span><span>${nome}</span><small>não encontrado ›</small></button>${dmiss&&dmiss.sid===s.id&&dmiss.k===k?`<div class="d-missinfo"><p style="margin:0 0 8px">Ainda não há no Drive um documento de <b>${nome}</b> para o ${esc(s.n)}. Duas formas de resolver:</p><p style="margin:0 0 6px"><b>1.</b> Crie ou renomeie no Drive um documento com o nome <b>${esc(s.n)} — ${nome}</b> e toque em <b>Atualizar do Drive</b>.</p><p style="margin:0 0 8px"><b>2.</b> Se o texto já existe com outro nome, ligue-o aqui, sem renomear:</p><button class="secondary" data-a="dlink" data-id="${s.id}" data-k="${k}">Ligar um documento como ${nome}</button></div>`:""}`}).join("")}
-  ${x.esq?`<a class="d-docl" href="${esc(x.esq.webViewLink||"#")}" target="_blank" rel="noopener"><span class="d-ck d-esq">E</span><span>Esquema de Escrita</span><small>planejamento</small></a>`:""}
-  ${x.outros.map(o=>{const w=wordsOf(o);return `<div class="d-docl d-outro"><span class="d-ck d-esq">·</span><a href="${esc(o.webViewLink||"#")}" target="_blank" rel="noopener">${esc(o.label||o.name)}</a><small>${o.modifiedTime?(w===null?"contando…":w.toLocaleString("pt-BR")+" palavras"):""}${o.range?` · reúne ${esc(o.range)}`:""}${o.manual?` · ligado à mão <button class="link" data-a="dunlink" data-id="${s.id}" data-f="${o.id}">desligar</button>`:""}</small></div>`}).join("")}
-  ${dlink&&dlink.sid===s.id?`<div class="d-link">${dlink.kind?`<p class="hint" style="margin:0 0 6px">Escolha o documento que vale como <b>${(DKINDS.find(([k])=>k===dlink.kind)||[,""])[1]}</b> do ${esc(s.n)}.</p>`:""}<input type="text" id="dlq" value="${esc(dlink.q)}" placeholder="Parte do nome do documento no Drive"><div id="dlres">${dlResHTML()}</div><div class="row"><button class="link" data-a="dlinkx">Cancelar</button></div></div>`:`<div class="row"><button class="link" data-a="dlink" data-id="${s.id}">+ Ligar um documento do Drive a este subtítulo</button></div>`}
-  ${x.feitos?`<p class="hint" style="margin:10px 0 0">${x.feitos===4?`Completo em ${brDate(x.fim)}${s.prazo?(x.fim<=s.prazo?", dentro do prazo.":", depois do prazo."):"."}`:`Próximo: ${falta[1]}.`}</p>`:""}
-  ${candHTML(s.n)}
-  <label class="label" for="dt-${s.id}">Título</label><div class="inline" style="margin-top:0"><input type="text" id="dt-${s.id}" value="${esc(s.title||"")}" placeholder="Título do ${esc(s.n)}"><button class="secondary" data-a="dtitle" data-id="${s.id}">Salvar</button></div>
-  ${x.feitos<4?`<label class="label" for="dp-${s.id}">Prazo</label><div class="inline d-wrap" style="margin-top:0"><input type="date" id="dp-${s.id}" value="${esc(s.prazo||"")}"><button class="secondary" data-a="dprazo" data-id="${s.id}">Salvar</button>${s.prazo?`<button class="secondary" data-a="dprazox" data-id="${s.id}">Tirar</button>`:""}</div>${calAviso(s)}<p class="hint">Prazo só nos subtítulos em andamento.</p>`:""}
-  <div class="row"><button class="link" data-a="dsubdel" data-id="${s.id}">Tirar do painel</button></div></div>`:""}</div>`}
+  <p class="d-lab">Documentos</p>
+  ${docs.length?docs.map(o=>{const w=wordsOf(o.f);return `<div class="d-drow"><a href="${esc(o.f.webViewLink||"#")}" target="_blank" rel="noopener"><span>${esc(o.nome)}</span><small>${o.f.modifiedTime?(w===null?"contando…":w.toLocaleString("pt-BR")+" palavras"):""}${o.f.range?` · reúne ${esc(o.f.range)}`:""}${o.manual?" · acrescentado por você":""}</small></a><button class="d-x" data-a="dtira" data-id="${s.id}" data-f="${o.f.id}" data-nome="${esc(o.nome)}" data-m="${o.manual?1:""}" aria-label="Tirar ${esc(o.nome)} deste subtítulo" title="Tirar deste subtítulo"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="6" y1="6" x2="18" y2="18"></line><line x1="18" y1="6" x2="6" y2="18"></line></svg></button></div>`}).join(""):`<p class="hint" style="margin:4px 0">Nenhum documento neste subtítulo.</p>`}
+  ${dundo&&dundo.sid===s.id?`<div class="d-undo"><span><b>${esc(dundo.nome)}</b> saiu deste subtítulo. O arquivo continua no Drive, sem nenhuma alteração.</span><button class="secondary" data-a="dundo">Desfazer</button></div>`:""}
+  ${dlink&&dlink.sid===s.id?`<div class="d-link"><input type="text" id="dlq" value="${esc(dlink.q)}" placeholder="Parte do nome do documento no Drive"><div id="dlres">${dlResHTML()}</div><div class="row"><button class="link" data-a="dlinkx">Cancelar</button></div></div>`:`<div class="row"><button class="link" data-a="dlink" data-id="${s.id}">+ Acrescentar um documento do Drive</button></div>`}
+  ${nc?candHTML(s.n):""}
+  <div class="row" style="margin-top:14px"><button class="secondary d-mais" data-a="dmais" data-id="${s.id}" aria-expanded="${dmais===s.id}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="5" cy="12" r="1"></circle><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle></svg> Mais</button></div>
+  ${dmais===s.id?`<div class="d-menu"><button data-a="dsedit" data-id="${s.id}">Editar título, pergunta, objetivo e eixos</button><button data-a="dprz" data-id="${s.id}" aria-expanded="${dprz===s.id}">Prazo${s.prazo?` · ${esc(brDate(s.prazo))}`:""}</button>
+   ${dprz===s.id?`<div class="d-przbox"><div class="inline d-wrap" style="margin-top:0"><input type="date" id="dp-${s.id}" value="${esc(s.prazo||"")}" aria-label="Prazo do ${esc(s.n)}"><button class="secondary" data-a="dprazo" data-id="${s.id}">Salvar</button>${s.prazo?`<button class="secondary" data-a="dprazox" data-id="${s.id}">Tirar</button>`:""}</div>${calAviso(s)}</div>`:""}
+   <button class="d-del" data-a="dsubdel" data-id="${s.id}">Tirar do painel</button></div>`:""}`}
+ </div>`:""}</div>`}
 function vDissFolder(){
  const fo=db.meta.dissFolder,back=fo?`<button class="back" data-a="dpickcancel">‹ Dissertação</button>`:"";
  if(!hasToken())return back+`<h1>Dissertação</h1><p class="hint" style="margin-top:-8px">O painel lê os documentos de cada subtítulo direto da pasta da dissertação no Drive.</p>${connectBox()}`;
@@ -814,6 +843,14 @@ async function actDiss(a,el){
   if(L("subs").some(s=>s.n===`${+n.split(".")[0]}.${+n.split(".")[1]}`))return toast("Esse subtítulo já está no painel.");
   db.subs.push(touch({id:uid("s"),n:`${+n.split(".")[0]}.${+n.split(".")[1]}`,title:t,prazo:""}));dnew=false;changed();render();return toast("Subtítulo adicionado")}
  case "dlink":dlink={sid:id,q:"",res:null,kind:el.dataset.k||""};dmiss=null;return render();
+ case "dmais":dmais=dmais===id?null:id;dprz=null;return render();
+ case "dprz":dprz=dprz===id?null:id;return render();
+ case "dsedit":dedit=id;dmais=null;dopen.add(id);return render();
+ case "dsedx":dedit=null;return render();
+ case "dssave":{const s=S(),t=($("#de-t").value||"").trim(),pg=($("#de-p").value||"").trim(),ob=($("#de-o").value||"").trim(),ex=($("#de-e").value||"").split("\n").map(x=>x.trim()).filter(Boolean).join("\n");
+  s.title=t;s.objetivo=ob;s.eixos=ex;touch(s);const pl=planRec(s.n);if(pg||pl){const q=planOf(s.n);if((q.ficha.pergunta||"")!==pg){q.ficha.pergunta=pg;touch(q)}}dedit=null;changed();render();return toast("Subtítulo salvo")}
+ case "dtira":{const s=S(),f=el.dataset.f,nome=el.dataset.nome;if(el.dataset.m){const l=(s.links||[]).find(x=>x.id===f);s.links=(s.links||[]).filter(x=>x.id!==f);dundo={sid:id,f,nome,link:l}}else{s.ocultos=[...(s.ocultos||[]),f];dundo={sid:id,f,nome}}touch(s);changed();return render()}
+ case "dundo":{const s=db.subs.find(x=>x.id===dundo.sid);if(dundo.link)s.links=[...(s.links||[]),dundo.link];else s.ocultos=(s.ocultos||[]).filter(x=>x!==dundo.f);touch(s);dundo=null;changed();return render()}
  case "dmiss":{const k=el.dataset.k;dmiss=dmiss&&dmiss.sid===id&&dmiss.k===k?null:{sid:id,k};return render()}
  case "dlinkx":dlink=null;return render();
  case "dlinkpick":{const s=db.subs.find(x=>x.id===dlink.sid),f=dlink.res.find(x=>x.id===id);s.links=s.links||[];s.links=s.links.filter(l=>!(dlink.kind&&l.kind===dlink.kind));if(!s.links.some(l=>l.id===f.id))s.links.push({id:f.id,name:f.name,link:f.webViewLink,kind:dlink.kind||""});touch(s);
