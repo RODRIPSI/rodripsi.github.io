@@ -294,6 +294,8 @@ a.d-docl span:nth-child(2){text-decoration:underline;text-underline-offset:3px}
 .idea .a-img{max-height:360px;margin:4px 0 10px}
 .d-nd{flex:none;font-size:12px;font-weight:600;padding:3px 8px;border-radius:6px;background:var(--soft);color:var(--ink)}
 .d-outro a{text-decoration:underline;text-underline-offset:3px}.d-outro{flex-wrap:wrap}
+.d-no{width:100%;border:0;background:none;text-align:left;cursor:pointer;font:inherit;color:inherit}.d-no small{color:var(--accent)}
+.d-missinfo{margin:4px 0 10px 34px;padding:10px 12px;border-left:3px solid var(--accent);background:var(--bg);border-radius:0 8px 8px 0;font-size:14.5px;line-height:1.5}
 .d-link{margin:10px 0;padding:10px;border:1px solid var(--accent);border-radius:10px}
 .d-loose{margin:0;padding:6px 0;font-size:14px;border-bottom:1px dashed var(--rule)}
 .d-wrap{flex-wrap:wrap}.d-wrap input{flex:1 1 150px}
@@ -668,7 +670,7 @@ async function checkDocs(cid){
 /* ---------- dissertação: painel dos subtítulos ---------- */
 const DKINDS=[["red","Redação Consolidada"],["mapa","Mapa Demonstrativo"],["demo","Demonstração Documental"],["abnt","Versão ABNT"]];
 const DK=Object.fromEntries(DKINDS);
-let dlink=null,dlTimer=null;let dscan=null,dscanning=false,dscanErr="",dopen=new Set(),dfold=null,dfq="",dnew=false,dcapEdit=null;
+let dlink=null,dlTimer=null,dmiss=null;let dscan=null,dscanning=false,dscanErr="",dopen=new Set(),dfold=null,dfq="",dnew=false,dcapEdit=null;
 try{dscan=JSON.parse(localStorage.getItem("bm-diss-scan")||"null")}catch(e){}
 let dwords={};try{dwords=JSON.parse(localStorage.getItem("bm-diss-words")||"{}")}catch(e){}
 const numKey=n=>String(n).split(".").map(x=>String(+x).padStart(3,"0")).join(".");
@@ -680,7 +682,7 @@ function parseDissName(name){
  const kind=/redacao consolidada/.test(t)?"red":/mapa demonstrativo/.test(t)?"mapa":/demonstracao documental/.test(t)?"demo":/abnt/.test(t)?"abnt":/esquema de escrita/.test(t)?"esq":null;
  let ns=[];const rg=t.match(/(\d{1,2})[ .](\d{1,2})\s+(?:a|ate|-|–)\s+(\d{1,2})[ .](\d{1,2})(?![\d.])/);
  if(rg&&rg[1]===rg[3]&&+rg[2]<=+rg[4]&&+rg[4]-+rg[2]<15){for(let k=+rg[2];k<=+rg[4];k++)ns.push(`${+rg[1]}.${k}`)}
- else{const m=t.match(/subtitulo\s*(\d{1,2})\s*[ .]\s*(\d{1,2})(?!\d)/)||t.match(/secao\s*(\d{1,2})\s*[ .]\s*(\d{1,2})(?!\d)/)||t.match(/(?:^|[^\d.])(\d{1,2})[ .](\d{1,2})(?![\d.])/);if(m)ns=[`${+m[1]}.${+m[2]}`]}
+ else{const m=t.match(/subtitulo\s*([1-9])\s*[ .]\s*(\d{1,2})(?!\d)/)||t.match(/secao\s*([1-9])\s*[ .]\s*(\d{1,2})(?!\d)/)||t.match(/(?:^|[^\d.])([1-9])[ .](\d{1,2})(?![\d.])/);if(m&&+m[2]>=1&&+m[2]<=40)ns=[`${+m[1]}.${+m[2]}`]}
  const label=base.replace(/_+/g," ").replace(/\b\d{1,2}[ .]\d{1,2}\s+(?:a|até|ate|-|–)\s+\d{1,2}[ .]\d{1,2}\b/i,"").replace(/(^|[^\d.])\d{1,2}[.]\d{1,2}(?![\d.])/g,"$1").replace(/\s+[—–-]\s*$|^\s*[—–-]\s+/g,"").replace(/\s{2,}/g," ").trim();
  return {kind,n:ns[0]||null,ns,label:label||base,range:ns.length>1?`${ns[0]} a ${ns[ns.length-1]}`:""}}
 const countWords=t=>(String(t).match(/[\p{L}\p{N}][\p{L}\p{N}'’\-]*/gu)||[]).length;
@@ -690,7 +692,9 @@ function dissFiles(){ // documentos por subtítulo: os quatro tipos, o esquema e
   p.ns.forEach(n=>{const s=by[n]||(by[n]={outros:[]}),g={...f,label:p.label,range:p.range};
    if(p.kind){const cur=s[p.kind];if(!cur||(f.modifiedTime||"")>(cur.modifiedTime||""))s[p.kind]={...g,versions:(cur?cur.versions:0)+1};else cur.versions++}
    else s.outros.push(g)})});
- L("subs").forEach(s=>(s.links||[]).forEach(l=>{const f=dscan&&dscan.links&&dscan.links[l.id];const b=by[s.n]||(by[s.n]={outros:[]});if(!b.outros.some(x=>x.id===l.id))b.outros.push({...(f||{id:l.id,name:l.name,webViewLink:l.link}),label:(f&&f.name||l.name).replace(/\.(docx?|odt)$/i,""),manual:true})}));
+ L("subs").forEach(s=>(s.links||[]).forEach(l=>{const f=dscan&&dscan.links&&dscan.links[l.id];const b=by[s.n]||(by[s.n]={outros:[]});
+  if(l.kind){b[l.kind]={...(f||{id:l.id,name:l.name,webViewLink:l.link}),manual:true,versions:1};b.outros=b.outros.filter(x=>x.id!==l.id);return}
+  if(!b.outros.some(x=>x.id===l.id))b.outros.push({...(f||{id:l.id,name:l.name,webViewLink:l.link}),label:(f&&f.name||l.name).replace(/\.(docx?|odt)$/i,""),manual:true})}));
  return {by,loose}}
 function docsUnicos(by){const m=new Map();Object.values(by).forEach(s=>{DKINDS.forEach(([k])=>{if(s[k])m.set(s[k].id,s[k])});(s.outros||[]).forEach(f=>m.set(f.id,f))});return [...m.values()]}
 async function scanDiss(interactive){
@@ -769,10 +773,10 @@ function subCard(s,x){
   ${(()=>{const ls=lastSend("sub",s.n);return ls?`<p class="hint" style="margin:0 0 6px">Último envio à orientadora: ${esc(brDate(ls.dt))}</p>`:""})()}
   ${ws&&ws.kind==="sub"&&ws.ref===s.n?wsPanel():""}
   ${!x.feitos&&x.outros.length?`<p class="hint" style="margin:8px 0 4px">Nenhum dos quatro documentos do padrão (Redação Consolidada, Mapa, Demonstração, ABNT). Os documentos deste subtítulo:</p>`:""}
-  ${(!x.feitos&&x.outros.length?[]:DKINDS).map(([k,nome],i)=>{const d=x.docs[i],w=wordsOf(d);return d?`<a class="d-docl" href="${esc(d.webViewLink||"#")}" target="_blank" rel="noopener"><span class="d-ck">✓</span><span>${nome}</span><small>${w===null?"contando…":w.toLocaleString("pt-BR")+" palavras"}${d.versions>1?` · ${d.versions} versões na pasta, mostrando a mais recente`:""}</small></a>`:`<p class="d-docl d-no"><span class="d-ck"></span><span>${nome}</span><small>não encontrado</small></p>`}).join("")}
+  ${(!x.feitos&&x.outros.length?[]:DKINDS).map(([k,nome],i)=>{const d=x.docs[i],w=wordsOf(d);return d?`<a class="d-docl" href="${esc(d.webViewLink||"#")}" target="_blank" rel="noopener"><span class="d-ck">✓</span><span>${nome}</span><small>${w===null?"contando…":w.toLocaleString("pt-BR")+" palavras"}${d.versions>1?` · ${d.versions} versões na pasta, mostrando a mais recente`:""}${d.manual?" · ligado à mão":""}</small></a>${d.manual?`<div class="row" style="margin:-4px 0 4px 34px"><button class="link" data-a="dunlink" data-id="${s.id}" data-f="${d.id}">desligar ${nome}</button></div>`:""}`:`<button class="d-docl d-no" data-a="dmiss" data-id="${s.id}" data-k="${k}" aria-expanded="${!!(dmiss&&dmiss.sid===s.id&&dmiss.k===k)}"><span class="d-ck"></span><span>${nome}</span><small>não encontrado ›</small></button>${dmiss&&dmiss.sid===s.id&&dmiss.k===k?`<div class="d-missinfo"><p style="margin:0 0 8px">Ainda não há no Drive um documento de <b>${nome}</b> para o ${esc(s.n)}. Duas formas de resolver:</p><p style="margin:0 0 6px"><b>1.</b> Crie ou renomeie no Drive um documento com o nome <b>${esc(s.n)} — ${nome}</b> e toque em <b>Atualizar do Drive</b>.</p><p style="margin:0 0 8px"><b>2.</b> Se o texto já existe com outro nome, ligue-o aqui, sem renomear:</p><button class="secondary" data-a="dlink" data-id="${s.id}" data-k="${k}">Ligar um documento como ${nome}</button></div>`:""}`}).join("")}
   ${x.esq?`<a class="d-docl" href="${esc(x.esq.webViewLink||"#")}" target="_blank" rel="noopener"><span class="d-ck d-esq">E</span><span>Esquema de Escrita</span><small>planejamento</small></a>`:""}
   ${x.outros.map(o=>{const w=wordsOf(o);return `<div class="d-docl d-outro"><span class="d-ck d-esq">·</span><a href="${esc(o.webViewLink||"#")}" target="_blank" rel="noopener">${esc(o.label||o.name)}</a><small>${o.modifiedTime?(w===null?"contando…":w.toLocaleString("pt-BR")+" palavras"):""}${o.range?` · reúne ${esc(o.range)}`:""}${o.manual?` · ligado à mão <button class="link" data-a="dunlink" data-id="${s.id}" data-f="${o.id}">desligar</button>`:""}</small></div>`}).join("")}
-  ${dlink&&dlink.sid===s.id?`<div class="d-link"><input type="text" id="dlq" value="${esc(dlink.q)}" placeholder="Parte do nome do documento no Drive"><div id="dlres">${dlResHTML()}</div><div class="row"><button class="link" data-a="dlinkx">Cancelar</button></div></div>`:`<div class="row"><button class="link" data-a="dlink" data-id="${s.id}">+ Ligar um documento do Drive a este subtítulo</button></div>`}
+  ${dlink&&dlink.sid===s.id?`<div class="d-link">${dlink.kind?`<p class="hint" style="margin:0 0 6px">Escolha o documento que vale como <b>${(DKINDS.find(([k])=>k===dlink.kind)||[,""])[1]}</b> do ${esc(s.n)}.</p>`:""}<input type="text" id="dlq" value="${esc(dlink.q)}" placeholder="Parte do nome do documento no Drive"><div id="dlres">${dlResHTML()}</div><div class="row"><button class="link" data-a="dlinkx">Cancelar</button></div></div>`:`<div class="row"><button class="link" data-a="dlink" data-id="${s.id}">+ Ligar um documento do Drive a este subtítulo</button></div>`}
   ${x.feitos?`<p class="hint" style="margin:10px 0 0">${x.feitos===4?`Completo em ${brDate(x.fim)}${s.prazo?(x.fim<=s.prazo?", dentro do prazo.":", depois do prazo."):"."}`:`Próximo: ${falta[1]}.`}</p>`:""}
   ${candHTML(s.n)}
   <label class="label" for="dt-${s.id}">Título</label><div class="inline" style="margin-top:0"><input type="text" id="dt-${s.id}" value="${esc(s.title||"")}" placeholder="Título do ${esc(s.n)}"><button class="secondary" data-a="dtitle" data-id="${s.id}">Salvar</button></div>
@@ -809,9 +813,10 @@ async function actDiss(a,el){
   if(!/^\d{1,2}\.\d{1,2}$/.test(n))return toast("Escreva o número no formato capítulo.subtítulo, por exemplo 2.3.");
   if(L("subs").some(s=>s.n===`${+n.split(".")[0]}.${+n.split(".")[1]}`))return toast("Esse subtítulo já está no painel.");
   db.subs.push(touch({id:uid("s"),n:`${+n.split(".")[0]}.${+n.split(".")[1]}`,title:t,prazo:""}));dnew=false;changed();render();return toast("Subtítulo adicionado")}
- case "dlink":dlink={sid:id,q:"",res:null};return render();
+ case "dlink":dlink={sid:id,q:"",res:null,kind:el.dataset.k||""};dmiss=null;return render();
+ case "dmiss":{const k=el.dataset.k;dmiss=dmiss&&dmiss.sid===id&&dmiss.k===k?null:{sid:id,k};return render()}
  case "dlinkx":dlink=null;return render();
- case "dlinkpick":{const s=db.subs.find(x=>x.id===dlink.sid),f=dlink.res.find(x=>x.id===id);s.links=s.links||[];if(!s.links.some(l=>l.id===f.id))s.links.push({id:f.id,name:f.name,link:f.webViewLink});touch(s);
+ case "dlinkpick":{const s=db.subs.find(x=>x.id===dlink.sid),f=dlink.res.find(x=>x.id===id);s.links=s.links||[];s.links=s.links.filter(l=>!(dlink.kind&&l.kind===dlink.kind));if(!s.links.some(l=>l.id===f.id))s.links.push({id:f.id,name:f.name,link:f.webViewLink,kind:dlink.kind||""});touch(s);
   dscan=dscan||{at:nowIso(),folder:db.meta.dissFolder.id,files:[]};dscan.links=dscan.links||{};dscan.links[f.id]=f;dlink=null;changed();render();toast("Documento ligado ao "+s.n+", sem renomear");return scanDiss(false)}
  case "dunlink":{const s=db.subs.find(x=>x.id===id);s.links=(s.links||[]).filter(l=>l.id!==el.dataset.f);touch(s);changed();render();return toast("Documento desligado. Nada foi alterado no Drive.")}
  case "dtitle":{const s=S();s.title=$("#dt-"+id).value.trim();touch(s);changed();render();return toast("Título salvo")}
