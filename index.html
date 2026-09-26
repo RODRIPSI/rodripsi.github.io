@@ -745,7 +745,7 @@ function subCard(s,x){
   ${x.feitos?`<p class="hint" style="margin:10px 0 0">${x.feitos===4?`Completo em ${brDate(x.fim)}${s.prazo?(x.fim<=s.prazo?", dentro do prazo.":", depois do prazo."):"."}`:`Próximo: ${falta[1]}.`}</p>`:""}
   ${candHTML(s.n)}
   <label class="label" for="dt-${s.id}">Título</label><div class="inline" style="margin-top:0"><input type="text" id="dt-${s.id}" value="${esc(s.title||"")}" placeholder="Título do ${esc(s.n)}"><button class="secondary" data-a="dtitle" data-id="${s.id}">Salvar</button></div>
-  ${x.feitos<4?`<label class="label" for="dp-${s.id}">Prazo</label><div class="inline d-wrap" style="margin-top:0"><input type="date" id="dp-${s.id}" value="${esc(s.prazo||"")}"><button class="secondary" data-a="dprazo" data-id="${s.id}">Salvar</button>${s.prazo?`<button class="secondary" data-a="dprazox" data-id="${s.id}">Tirar</button>`:""}</div><p class="hint">Prazo só nos subtítulos em andamento. A ligação com a agenda do Google entra numa próxima etapa.</p>`:""}
+  ${x.feitos<4?`<label class="label" for="dp-${s.id}">Prazo</label><div class="inline d-wrap" style="margin-top:0"><input type="date" id="dp-${s.id}" value="${esc(s.prazo||"")}"><button class="secondary" data-a="dprazo" data-id="${s.id}">Salvar</button>${s.prazo?`<button class="secondary" data-a="dprazox" data-id="${s.id}">Tirar</button>`:""}</div>${calAviso(s)}<p class="hint">Prazo só nos subtítulos em andamento.</p>`:""}
   <div class="row"><button class="link" data-a="dsubdel" data-id="${s.id}">Tirar do painel</button></div></div>`:""}</div>`}
 function vDissFolder(){
  const fo=db.meta.dissFolder,back=fo?`<button class="back" data-a="dpickcancel">‹ Dissertação</button>`:"";
@@ -784,8 +784,9 @@ async function actDiss(a,el){
   dscan=dscan||{at:nowIso(),folder:db.meta.dissFolder.id,files:[]};dscan.links=dscan.links||{};dscan.links[f.id]=f;dlink=null;changed();render();toast("Documento ligado ao "+s.n+", sem renomear");return scanDiss(false)}
  case "dunlink":{const s=db.subs.find(x=>x.id===id);s.links=(s.links||[]).filter(l=>l.id!==el.dataset.f);touch(s);changed();render();return toast("Documento desligado. Nada foi alterado no Drive.")}
  case "dtitle":{const s=S();s.title=$("#dt-"+id).value.trim();touch(s);changed();render();return toast("Título salvo")}
- case "dprazo":{const v=$("#dp-"+id).value;if(!v)return toast("Escolha uma data.");const s=S();s.prazo=v;touch(s);changed();render();return toast("Prazo salvo")}
- case "dprazox":{const s=S();s.prazo="";touch(s);changed();render();return toast("Prazo removido")}
+ case "dprazo":{const v=$("#dp-"+id).value;if(!v)return toast("Escolha uma data.");const s=S();s.prazo=v;touch(s);changed();render();toast("Prazo salvo. Colocando na agenda…");const m=await sincronizarPrazo(s);render();return toast(m)}
+ case "dcal":{const s=S();toast("Colocando na agenda…");const m=await sincronizarPrazo(s);render();return toast(m)}
+ case "dprazox":{const s=S();s.prazo="";touch(s);changed();render();if(!s.calId)return toast("Prazo removido");const m=await sincronizarPrazo(s);render();return toast(m)}
  case "dsubdel":{const s=S();if(!confirm(`Tirar o ${s.n} do painel? Os documentos no Drive não são tocados.`))return;s.deleted=true;touch(s);dopen.delete(id);changed();render();return toast("Tirado do painel")}
  case "dcapedit":dcapEdit=el.dataset.k;return render();
  case "dcapsave":{const k=el.dataset.k,v=($("#dcap").value||"").trim();let c=db.chapters.find(x=>x.n===k&&!x.deleted);if(!c){c={id:"cap-"+k,n:k};db.chapters.push(c)}c.title=v;touch(c);dcapEdit=null;changed();return render()}
@@ -1453,6 +1454,42 @@ async function actCits(a,el){const d=el?el.dataset:{};
   dm.passagens.push({texto:c.obra.replace(/\s*\([^)]*\)\s*$/,""),passagem:`‘${c.texto}’`,pagina:paginaDe(c),uso:c.nota?"Nota editorial dos tradutores — não usar como afirmação autoral.":"",conferida:false,origem:`(${c.autor}, ${c.ano}, p. ${c.pag})`});
   touch(p);changed();const n=citLev.n;citLev=null;render();return toast(`Levada ao ${n}, ainda não conferida. O uso autorizado é você quem escreve.`)}
  }return actWa(a,el)}
+
+/* ---------- prazos na agenda do Google ---------- */
+const CAL_SCOPE="https://www.googleapis.com/auth/calendar.events";
+let calToken=null,calExp=0,calClient=null,calWait=null;
+async function getCalToken(){
+ if(calToken&&Date.now()<calExp-60000)return calToken;
+ await gisReady();
+ if(!calClient)calClient=google.accounts.oauth2.initTokenClient({client_id:CLIENT_ID,scope:CAL_SCOPE,include_granted_scopes:true,
+  callback:r=>{const w=calWait;calWait=null;if(!w)return;if(r.error)w.rej(new Error("calauth"));else{calToken=r.access_token;calExp=Date.now()+(+r.expires_in||3600)*1000;try{localStorage.setItem("bm-cal","1")}catch(e){}w.res(calToken)}},
+  error_callback:()=>{const w=calWait;calWait=null;if(w)w.rej(new Error("calauth"))}});
+ let first=true;try{first=!localStorage.getItem("bm-cal")}catch(e){}
+ return new Promise((res,rej)=>{calWait={res,rej};calClient.requestAccessToken({prompt:first?"consent":""})})}
+async function cal(path,opts={}){
+ const t=await getCalToken();
+ const r=await fetch("https://www.googleapis.com/calendar/v3/"+path,{...opts,headers:{Authorization:"Bearer "+t,"Content-Type":"application/json",...(opts.headers||{})}});
+ if(r.status===401){calToken=null;throw new Error("calauth")}
+ if(r.status===404||r.status===410){const e=new Error("sumiu");e.status=404;throw e}
+ if(!r.ok){let m="";try{m=(await r.json()).error.message}catch(e){}if(/has not been used|is disabled|accessNotConfigured/i.test(m))throw new Error("calapi");throw new Error(m||("Erro "+r.status))}
+ return r.status===204?null:r.json()}
+const diaSeguinte=d=>{const x=new Date(d+"T12:00");x.setDate(x.getDate()+1);return x.toISOString().slice(0,10)};
+function eventoPrazo(s){return{summary:`Prazo: ${s.n}${s.title?" — "+s.title:""}`,description:`Prazo do subtítulo ${s.n} da dissertação, definido no Bloco Mágico.`,
+ start:{date:s.prazo},end:{date:diaSeguinte(s.prazo)},transparency:"transparent",
+ reminders:{useDefault:false,overrides:[{method:"popup",minutes:2340}]}}} // 9h, dois dias antes
+async function sincronizarPrazo(s){
+ try{
+  if(!s.prazo){if(s.calId){try{await cal(`calendars/primary/events/${s.calId}`,{method:"DELETE"})}catch(e){if(e.status!==404)throw e}s.calId="";touch(s);changed()}return "Prazo removido da agenda"}
+  let ev=null;if(s.calId){try{ev=await cal(`calendars/primary/events/${s.calId}`,{method:"PATCH",body:JSON.stringify(eventoPrazo(s))})}catch(e){if(e.status!==404)throw e}}
+  if(!ev)ev=await cal("calendars/primary/events",{method:"POST",body:JSON.stringify(eventoPrazo(s))});
+  s.calId=ev.id;s.calErr="";touch(s);changed();return `Prazo na agenda: ${brDate(s.prazo)}, com lembrete dois dias antes`}
+ catch(e){s.calErr=e.message==="calapi"?"api":e.message==="calauth"?"auth":"erro";touch(s);changed();
+  if(e.message==="calapi")return "O prazo foi salvo, mas a agenda do Google ainda não está ativada no projeto. Veja as instruções no subtítulo.";
+  if(e.message==="calauth")return "O prazo foi salvo, mas a agenda não foi autorizada.";
+  return "O prazo foi salvo, mas não consegui falar com a agenda: "+e.message}}
+function calAviso(s){if(!s.prazo)return "";if(s.calId&&!s.calErr)return `<p class="hint" style="margin:6px 0 0">Está na sua agenda do Google, com lembrete às 9h, dois dias antes.</p>`;
+ if(s.calErr==="api")return `<div class="warn" style="margin-top:8px">A agenda do Google ainda não está ativada no projeto do aplicativo. Para ativar, uma vez só: em console.cloud.google.com, abra o projeto <b>Bloco Magico</b>, vá em <b>APIs e serviços → Biblioteca</b>, procure <b>Google Calendar API</b> e toque em <b>Ativar</b>. Depois toque abaixo.</div><div class="row"><button class="secondary" data-a="dcal" data-id="${s.id}">Colocar na agenda</button></div>`;
+ return `<div class="row"><button class="secondary" data-a="dcal" data-id="${s.id}">Colocar na agenda do Google</button></div>`}
 
 /* ---------- desenho geral ---------- */
 const NAV=[["capture","Capturar"],["concepts","Conceitos"],["timeline","Linha do tempo","Tempo"],["pending","Pendentes"],["diss","Dissertação"]];
