@@ -248,7 +248,7 @@ a.d-docl span:nth-child(2){text-decoration:underline;text-underline-offset:3px}
 .def-v{font-size:14px;color:var(--muted);border-left:3px solid var(--rule);padding:4px 0 4px 10px;margin-top:8px}.def-v b{display:block;font-size:12.5px;color:var(--ink)}
 .d-ok{background:var(--c-d);border-color:var(--c-d);color:#fff}
 .a-img{display:block;width:100%;max-height:420px;object-fit:contain;border-radius:10px;background:var(--surface);margin:0 0 14px}
-.a-img.big{max-height:520px}.a-ph{display:grid;place-items:center;height:220px;color:var(--muted);font-size:14px;border:1px dashed var(--rule)}
+.a-img.big{max-height:520px}.a-ph{display:grid;place-items:center;text-align:center;padding:12px;height:220px;color:var(--muted);font-size:14px;border:1px dashed var(--rule)}
 .a-imgs{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
 .a-cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;margin-bottom:14px}
 @media (max-width:620px){.a-cols,.a-imgs{grid-template-columns:1fr}}
@@ -910,9 +910,13 @@ function vAcervo(){
  <ul class="clist">${gs.map(g=>{const c=g.cid&&C(g.cid);return `<li><button data-a="aficha" data-k="${esc(g.k)}"><span class="cbar" style="background:${c?c.color:"var(--rule)"}"></span><span style="flex:1"><span class="cname">${esc(g.nome)}</span><span class="cmeta">${[g.F?"Freud":"",g.L?"Lacan":""].filter(Boolean).join(" e ")}${c?" · conceito do app":""}${acvPend(g.F)||acvPend(g.L)?" · pendência":""}</span></span></button></li>`}).join("")||`<li class="hint" style="padding:16px 0">Nenhum conceito encontrado.</li>`}</ul>`}
 function imgTag(r,big){
  const id=driveId(r&&r.img);if(!r||!r.img)return "";if(!id)return `<p><a class="link" href="${esc(r.img)}" target="_blank" rel="noopener">Abrir a imagem no Drive</a></p>`;
- const u=imgCache[id];if(u===undefined){imgCache[id]=null;api(`drive/v3/files/${id}?alt=media`).then(x=>x.blob()).then(b=>{imgCache[id]=URL.createObjectURL(b);softRender()}).catch(()=>{imgCache[id]="";softRender()})}
- if(u)return `<img class="a-img ${big?"big":""}" src="${u}" alt="Sua imagem de ${esc(r.n)}">`;
- if(u==="")return `<p><a class="link" href="${esc(r.img)}" target="_blank" rel="noopener">Abrir a imagem no Drive</a></p>`;
+ let u=imgCache[id];
+ if(u&&u.err&&Date.now()-u.at>20000&&hasToken())u=undefined; // uma falha não fica guardada para sempre: tenta de novo
+ if(u===undefined){
+  if(!hasToken())return `<div class="a-img a-ph ${big?"big":""}">A imagem aparece quando o aplicativo estiver conectado ao Drive.</div>`;
+  imgCache[id]=null;api(`drive/v3/files/${id}?alt=media`).then(x=>x.blob()).then(b=>{imgCache[id]=URL.createObjectURL(b);softRender()}).catch(e=>{imgCache[id]={err:true,at:Date.now(),msg:e.message};softRender()})}
+ if(typeof u==="string"&&u)return `<img class="a-img ${big?"big":""}" src="${u}" alt="Sua imagem de ${esc(r.n)}">`;
+ if(u&&u.err)return `<div class="a-img a-ph ${big?"big":""}"><span>Não consegui carregar a imagem agora.<br><button class="link" data-a="imgretry" data-id="${id}">Tentar de novo</button> · <a class="link" href="${esc(r.img)}" target="_blank" rel="noopener">abrir no Drive</a></span></div>`;
  return `<div class="a-img a-ph ${big?"big":""}">Carregando a imagem…</div>`}
 function colAutor(r,aut){
  if(!r)return `<div class="a-col vazio"><p class="a-h">${aut}</p><p class="hint" style="margin:0">Sem compilação deste conceito em ${aut}.</p></div>`;
@@ -1512,6 +1516,7 @@ function defBloco(c){const h=c.defHist||[],ed=defEdit===c.id;
  ${h.length&&!ed?`<details style="margin-top:10px"><summary class="hint" style="cursor:pointer">Versões anteriores (${h.length})</summary>${h.slice().reverse().map(v=>`<div class="def-v"><b>${esc(brDate(v.dt))}${v.estab?" · estava estabilizada":""}</b>${esc(v.def).replace(/\n/g,"<br>")}</div>`).join("")}</details>`:""}</div>`}
 async function actDef(a,el){const d=el?el.dataset:{},c=d.id&&C(d.id);
  switch(a){
+ case "imgretry":delete imgCache[d.id];return render();
  case "defedit":defEdit=d.id;return render();
  case "defx":defEdit=null;return render();
  case "defsave":{const v=($("#defta").value||"").trim(),src=($("#defsrc").value||"").trim();
