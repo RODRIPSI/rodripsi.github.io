@@ -757,7 +757,7 @@ function subCard(s,x){
  <button class="d-head" data-a="dtoggle" data-id="${s.id}" aria-expanded="${aberto}">
   <span class="d-num ${x.feitos===4?"ok":""}">${esc(s.n)}</span>
   <span class="d-tt"><span class="${s.title?"":"d-vazio"}">${esc(s.title||"Sem título")}</span>
-   <span class="d-meta">${x.feitos||x.outros.length?`${x.palavras.toLocaleString("pt-BR")} palavras${x.contando?"…":""}`:"nenhum documento"}${x.outros.length?` · ${x.outros.length} ${x.outros.length===1?"outro documento":"outros documentos"}`:""}${x.fim?` · levou ${dayDiff(x.ini,x.fim)} dias`:""}${(()=>{const e=estadoPlano(s.n);return e?(e.arq?` · arquitetado, ${e.conf} de ${e.pas} passagens conferidas`:" · planejamento em andamento"):""})()}${(()=>{const c=L("ideas").filter(i=>(i.subs||[]).some(m=>m.n===s.n)).length;return c?` · ${c} ${c===1?"ideia":"ideias"}`:""})()}${x.nv?` <span class="d-prazo d-${x.nv.c}">${esc(x.nv.t)}</span>`:""}</span></span>
+   <span class="d-meta">${x.feitos||x.outros.length?`${x.palavras.toLocaleString("pt-BR")} palavras${x.contando?"…":""}`:"nenhum documento"}${x.outros.length?` · ${x.outros.length} ${x.outros.length===1?"outro documento":"outros documentos"}`:""}${x.fim?` · levou ${dayDiff(x.ini,x.fim)} dias`:""}${(()=>{const e=estadoPlano(s.n);return e?(e.arq?` · arquitetado, ${e.conf} de ${e.pas} passagens conferidas`:` · planejamento em andamento${e.pas?`, ${e.pas} ${e.pas===1?"passagem":"passagens"}`:""}`):""})()}${(()=>{const c=L("ideas").filter(i=>(i.subs||[]).some(m=>m.n===s.n)).length;return c?` · ${c} ${c===1?"ideia":"ideias"}`:""})()}${x.nv?` <span class="d-prazo d-${x.nv.c}">${esc(x.nv.t)}</span>`:""}</span></span>
   ${!x.feitos&&x.outros.length?`<span class="d-nd">${x.outros.length} doc.</span>`:`<span class="d-pips" aria-label="${x.feitos} de 4 documentos">${x.docs.map(d=>`<i class="${d?"on":""}"></i>`).join("")}</span>`}</button>
  ${aberto?`<div class="d-body">
   ${(()=>{const p=planRec(s.n);return p&&cheio(p.ficha.pergunta)?`<div class="d-perg"><small>Pergunta organizadora</small>${esc(p.ficha.pergunta)}</div>`:""})()}
@@ -1571,7 +1571,7 @@ function vLeitor(){const b=book(route.k);if(!b)return vLivros();
  ${rd.err&&rd.bookId===b.id?`<p class="err">${esc(rd.err)}</p>`:""}
  <div id="lvwrap"><div class="lv-load">${rd.loading?"Abrindo o livro…":""}</div></div>
  ${b.off!=null?`<p class="hint">Página impressa = página do PDF ${b.off>=0?"+ "+b.off:"− "+(-b.off)}. <button class="link" data-a="lvoffx">corrigir</button></p>`:""}
- <details class="block" ${ms.length?"":""}><summary>Sublinhados deste livro <span class="count">${ms.length}</span></summary>${ms.length?ms.map(m=>`<div class="lv-m"><p class="ct-q">“${esc(m.text.length>240?m.text.slice(0,240)+"…":m.text)}”</p><p class="hint" style="margin:3px 0 0">${m.printed?`p. ${esc(m.printed)} · `:""}PDF ${m.page} · ${m.dest==="plan"?`planejamento do ${esc(m.n||"")}`:"fragmento"}</p><div class="row"><button class="link" data-a="lvjump" data-p="${m.page}">Ir à página</button><button class="link" data-a="lvmdel" data-id="${m.id}">Apagar o sublinhado</button></div></div>`).join(""):`<p class="hint">Selecione um trecho no texto e toque em “Levar como citação”.</p>`}</details>
+ <details class="block" ${ms.length?"":""}><summary>Sublinhados deste livro <span class="count">${ms.length}</span></summary>${ms.length?ms.map(m=>`<div class="lv-m"><p class="ct-q">“${esc(m.text.length>240?m.text.slice(0,240)+"…":m.text)}”</p><p class="hint" style="margin:3px 0 0">${m.printed?`p. ${esc(m.printed)} · `:""}PDF ${m.page} · ${m.dest==="plan"?`planejamento do ${esc(m.n||"")}`:"fragmento"}</p><div class="row"><button class="link" data-a="lvjump" data-p="${m.page}">Ir à página</button>${m.dest==="plan"&&m.n?`<button class="link" data-a="lvplano" data-n="${esc(m.n)}" data-k="${m.k!=null?m.k:""}">Abrir no planejamento do ${esc(m.n)}</button>`:""}<button class="link" data-a="lvmdel" data-id="${m.id}">Apagar o sublinhado</button></div></div>`).join(""):`<p class="hint">Selecione um trecho no texto e toque em “Levar como citação”.</p>`}</details>
  <div id="lvsel" class="lv-sel" hidden><button class="primary" data-a="lvleva">Levar como citação</button></div>`}
 function saveHTML(b){const s=lsave,subs=subsSorted(),demos=s.n?(planRec(s.n)||{demos:[]}).demos:[];
  return `<div class="panel lv-save"><p class="label" style="margin-top:0">Citação</p><textarea id="lvtxt" class="small">${esc(s.text)}</textarea>
@@ -1581,7 +1581,7 @@ function saveHTML(b){const s=lsave,subs=subsSorted(),demos=s.n?(planRec(s.n)||{d
  ${s.dest==="frag"?`<p class="label">Conceitos</p><div class="chips">${sortedConcepts().map(c=>`<button class="chip" data-a="lvc" data-id="${c.id}" aria-pressed="${s.cs.includes(c.id)}">${esc(c.name)}</button>`).join("")}</div>`
  :`<p class="label">Subtítulo</p><div class="chips">${subs.map(x=>`<button class="chip" data-a="lvsub" data-n="${esc(x.n)}" aria-pressed="${s.n===x.n}">${esc(x.n)}</button>`).join("")||`<span class="hint">Adicione subtítulos na aba Dissertação.</span>`}</div>
   ${s.n?`<p class="label">Demonstração</p><div class="chips">${demos.map((d,k)=>`<button class="chip" data-a="lvdemo" data-k="${k}" aria-pressed="${s.k===String(k)}">${k+1}. ${esc(d.nome||"sem nome")}</button>`).join("")}<button class="chip" data-a="lvdemo" data-k="nova" aria-pressed="${s.k==="nova"}">+ Nova</button></div>`:""}`}
- <div class="row"><button class="primary" style="margin-top:12px" data-a="lvsalva">Salvar a citação</button></div><div class="row"><button class="link" data-a="lvx">Cancelar</button></div></div>`}
+ ${s.dest==="plan"&&(!s.n||s.k==="")?`<p class="warn" style="margin-top:10px">${!s.n?"Escolha o subtítulo":"Escolha a demonstração"} antes de salvar.</p>`:""}<div class="row"><button class="primary" style="margin-top:12px" data-a="lvsalva" ${s.dest==="plan"&&(!s.n||s.k==="")?"disabled":""}>Salvar a citação</button></div><div class="row"><button class="link" data-a="lvx">Cancelar</button></div></div>`}
 async function abrirLivro(b){
  if(rd.bookId===b.id&&rd.doc)return;
  rd={...rd,bookId:b.id,doc:null,loading:true,err:"",node:null,key:""};render();
@@ -1644,6 +1644,7 @@ async function actLeitor(a,el){const d=el?el.dataset:{};
  case "lvz":rd.zoom=Math.min(3,Math.max(1,rd.zoom+(+d.d)*.25));rd.key="";return render();
  case "lvoff":{const b=book(route.k),v=parseInt(($("#lvimp").value||"").trim(),10);if(!(v>0))return toast("Escreva o número impresso na página.");b.off=v-(b.lastPage||1);touch(b);changed();render();return toast("Páginas ajustadas")}
  case "lvmk":rd.marker=!rd.marker;if(rd.node)rd.node.classList.toggle("marcando",rd.marker);return render();
+ case "lvplano":{plOpen=new Set(d.k!==""?[+d.k]:[0]);plImp=null;return go({name:"plano",k:d.n})}
  case "lvdepois":lvDepois.add(route.k);return render();
  case "lvagora":lvDepois.delete(route.k);return render();
  case "lvoffx":{const b=book(route.k);b.off=null;touch(b);changed();return render()}
@@ -1659,9 +1660,9 @@ async function actLeitor(a,el){const d=el?el.dataset:{};
   if(s.dest==="frag"){const i=touch({id:uid("i"),text:`“${t}” (${pg})`,moment:`Leitura: ${b.name.replace(/\.pdf$/i,"")}, ${pg}${s.printed?` (PDF ${s.page})`:""}`,refId:b.refId||"",concepts:[...s.cs],ts:nowIso()});db.ideas.push(i);mark.ideaId=i.id}
   else{if(!s.n||s.k==="")return toast("Escolha o subtítulo e a demonstração.");const p=planOf(s.n);let dm;
    if(s.k==="nova"){dm={nome:"",insuf:"",pergunta:"",conceitos:"",resultado:"",descoberta:"",naoDemonstra:"",noinsu:"",logica:"",passagens:[],pars:[]};p.demos.push(dm)}else dm=p.demos[+s.k];
-   dm.passagens.push({refId:b.refId||"",texto:r?r.label:b.name.replace(/\.pdf$/i,""),passagem:`‘${t}’`,pagina:s.printed?`p. ${s.printed} (PDF ${s.page})`:`PDF ${s.page} — página impressa a conferir`,uso:"",conferida:false});touch(p);mark.n=s.n}
+   mark.k=s.k==="nova"?p.demos.length-1:+s.k;dm.passagens.push({refId:b.refId||"",texto:r?r.label:b.name.replace(/\.pdf$/i,""),passagem:`‘${t}’`,pagina:s.printed?`p. ${s.printed} (PDF ${s.page})`:`PDF ${s.page} — página impressa a conferir`,uso:"",conferida:false});touch(p);mark.n=s.n}
   db.marks.push(touch(mark));const dest=s.dest,cs=s.cs.length;lsave=null;rd.sel=null;changed();render();
-  return toast(dest==="frag"?(cs?"Citação salva como fragmento":"Citação salva em Pendentes, sem conceito"):`Levada ao ${mark.n}, ainda não conferida`)}
+  return toast(dest==="frag"?(cs?"Citação salva como fragmento":"Citação salva em Pendentes, sem conceito"):`Salva no ${mark.n}. Está em Sublinhados deste livro → Abrir no planejamento`)}
  case "lvmdel":{const m=db.marks.find(x=>x.id===d.id);if(!m||!confirm("Apagar este sublinhado? O fragmento ou a passagem que você criou com ele continuam onde estão."))return;m.deleted=true;touch(m);changed();return render()}
  }return actPlano(a,el)}
 
