@@ -252,7 +252,8 @@ a.d-docl span:nth-child(2){text-decoration:underline;text-underline-offset:3px}
 #lvwrap{width:100%;overflow-x:auto;margin:6px 0 14px}.lv-load{padding:40px 0;text-align:center;color:var(--muted)}
 .lv-page{position:relative;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.15);margin:0 auto}.lv-page canvas{display:block}
 .lv-marks{position:absolute;inset:0;pointer-events:none;z-index:1}.lv-hl{position:absolute;background:rgba(242,196,0,.38);border-radius:2px;mix-blend-mode:multiply}.lv-hl.plan{background:rgba(43,76,155,.25)}
-.lv-sel{position:fixed;left:0;right:0;bottom:calc(76px + env(safe-area-inset-bottom,0px));display:flex;justify-content:center;z-index:30;pointer-events:none}.lv-sel[hidden]{display:none}.lv-sel .primary{pointer-events:auto;box-shadow:0 4px 14px rgba(0,0,0,.25);width:auto;padding:12px 22px}
+.lv-sel{position:fixed;left:0;right:0;bottom:calc(76px + env(safe-area-inset-bottom,0px));display:flex;justify-content:center;z-index:30;pointer-events:none}.lv-page.marcando,.lv-page.marcando .textLayer{touch-action:none;cursor:text}.lv-page.marcando{outline:2px solid #e2b400;outline-offset:2px}.lv-mk[aria-pressed="true"]{background:#e2b400;border-color:#e2b400;color:#1C2330}
+.lv-sel[hidden]{display:none}.lv-sel .primary{pointer-events:auto;box-shadow:0 4px 14px rgba(0,0,0,.25);width:auto;padding:12px 22px}
 .lv-save{border:1px solid var(--accent)}.lv-m{border-left:3px solid #e2b400;padding:4px 0 4px 10px;margin:10px 0}.lv-pag .inline input{max-width:120px}
 .textLayer{position:absolute;text-align:initial;inset:0;overflow:clip;opacity:1;line-height:1;-webkit-text-size-adjust:none;text-size-adjust:none;forced-color-adjust:none;transform-origin:0 0;caret-color:CanvasText;z-index:2}
 .textLayer :is(span,br){color:transparent;position:absolute;white-space:pre;cursor:text;transform-origin:0% 0%}
@@ -1560,7 +1561,7 @@ function vLeitor(){const b=book(route.k);if(!b)return vLivros();
  ${b.off==null&&tot&&lvDepois.has(b.id)?`<p class="hint" style="margin:0 0 8px">Páginas impressas ainda não informadas. <button class="link" data-a="lvagora">Informar agora</button></p>`:""}
  ${lsave?saveHTML(b):""}
  <div class="lv-bar"><button class="secondary" data-a="lvpg" data-d="-1" aria-label="Página anterior">‹</button><span class="lv-pn">${tot?`PDF ${p} de ${tot}${imp?` · <b>p. ${esc(imp)}</b>`:""}`:"…"}</span><button class="secondary" data-a="lvpg" data-d="1" aria-label="Próxima página">›</button>
-  <input type="text" inputmode="numeric" id="lvir" placeholder="ir para" aria-label="Ir para a página do PDF"><button class="secondary" data-a="lvz" data-d="-1" aria-label="Diminuir">−</button><button class="secondary" data-a="lvz" data-d="1" aria-label="Aumentar">+</button></div>
+  <button class="secondary lv-mk" data-a="lvmk" aria-pressed="${!!rd.marker}" title="Passar a caneta ou o dedo sobre o texto para marcar">✎ ${rd.marker?"Marcando":"Marcar"}</button><input type="text" inputmode="numeric" id="lvir" placeholder="ir para" aria-label="Ir para a página do PDF"><button class="secondary" data-a="lvz" data-d="-1" aria-label="Diminuir">−</button><button class="secondary" data-a="lvz" data-d="1" aria-label="Aumentar">+</button></div>
  ${rd.err&&rd.bookId===b.id?`<p class="err">${esc(rd.err)}</p>`:""}
  <div id="lvwrap"><div class="lv-load">${rd.loading?"Abrindo o livro…":""}</div></div>
  ${b.off!=null?`<p class="hint">Página impressa = página do PDF ${b.off>=0?"+ "+b.off:"− "+(-b.off)}. <button class="link" data-a="lvoffx">corrigir</button></p>`:""}
@@ -1585,18 +1586,32 @@ async function abrirLivro(b){
 async function desenharPagina(){
  const b=book(route.k),w=$("#lvwrap");if(!b||!w||!rd.doc||rd.bookId!==b.id)return;
  const p=Math.min(Math.max(1,b.lastPage||1),rd.doc.numPages),larg=Math.max(280,w.clientWidth),key=`${b.id}|${p}|${larg}|${rd.zoom}`;
- if(rd.node&&rd.key===key){w.innerHTML="";w.appendChild(rd.node);pintarMarcas();return}
+ if(rd.node&&rd.key===key){rd.node.classList.toggle("marcando",!!rd.marker);w.innerHTML="";w.appendChild(rd.node);pintarMarcas();return}
  const pg=await rd.doc.getPage(p),v1=pg.getViewport({scale:1}),sc=larg/v1.width*rd.zoom,vp=pg.getViewport({scale:sc}),dpr=Math.min(window.devicePixelRatio||1,2);
  const node=document.createElement("div");node.className="lv-page";node.style.cssText=`width:${Math.floor(vp.width)}px;height:${Math.floor(vp.height)}px;--scale-factor:${sc};--user-unit:1;--total-scale-factor:${sc};--scale-round-x:1px;--scale-round-y:1px`;
  const cv=document.createElement("canvas");cv.width=Math.floor(vp.width*dpr);cv.height=Math.floor(vp.height*dpr);cv.style.cssText=`width:${Math.floor(vp.width)}px;height:${Math.floor(vp.height)}px`;
  const marks=document.createElement("div");marks.className="lv-marks";const tl=document.createElement("div");tl.className="textLayer";
- node.append(cv,marks,tl);w.innerHTML="";w.appendChild(node);rd.node=node;rd.key=key;
+ node.append(cv,marks,tl);node.classList.toggle("marcando",!!rd.marker);ligarMarcador(node,tl);w.innerHTML="";w.appendChild(node);rd.node=node;rd.key=key;
  await pg.render({canvasContext:cv.getContext("2d"),viewport:vp,transform:dpr!==1?[dpr,0,0,dpr,0,0]:null}).promise;
  try{const tc=await pg.getTextContent();await new pdfLib.TextLayer({textContentSource:tc,container:tl,viewport:vp}).render();if(!tc.items.length)tl.dataset.vazio="1"}catch(e){}
  if(rd.key!==key)return;const temTexto=!tl.dataset.vazio;if(!temTexto){const av=document.createElement("p");av.className="warn";av.style.margin="8px 0 0";av.textContent="Esta página não tem texto selecionável (parece ser uma imagem escaneada).";node.after(av)}
  pintarMarcas()}
 function pintarMarcas(){const b=book(route.k),node=rd.node;if(!b||!node)return;const box=node.querySelector(".lv-marks");box.innerHTML="";
  L("marks").filter(m=>m.bookId===b.id&&m.page===(b.lastPage||1)).forEach(m=>(m.rects||[]).forEach(([x,y,w,h])=>{const d=document.createElement("div");d.className="lv-hl"+(m.dest==="plan"?" plan":"");d.style.cssText=`left:${x*100}%;top:${y*100}%;width:${w*100}%;height:${h*100}%`;box.appendChild(d)}))}
+function pontoTexto(x,y,tl){let n=null,o=0;
+ if(document.caretPositionFromPoint){const c=document.caretPositionFromPoint(x,y);if(c){n=c.offsetNode;o=c.offset}}
+ else if(document.caretRangeFromPoint){const r=document.caretRangeFromPoint(x,y);if(r){n=r.startContainer;o=r.startOffset}}
+ return n&&n.nodeType===3&&tl.contains(n)?{n,o}:null}
+const letra=c=>!!c&&/[\p{L}\p{N}’'-]/u.test(c);
+function borda(p,d){let o=p.o;const t=p.n.textContent;if(d<0){while(o>0&&letra(t[o-1]))o--}else{while(o<t.length&&letra(t[o]))o++}return{n:p.n,o}} // puxa até a palavra inteira
+function antes(a,b){if(a.n===b.n)return a.o<=b.o;return !!(a.n.compareDocumentPosition(b.n)&Node.DOCUMENT_POSITION_FOLLOWING)}
+function ligarMarcador(node,tl){let ini=null,ativo=false;
+ node.addEventListener("pointerdown",e=>{if(!rd.marker||(e.pointerType==="mouse"&&e.button!==0))return;e.preventDefault();ativo=true;try{node.setPointerCapture(e.pointerId)}catch(x){}
+  ini=pontoTexto(e.clientX,e.clientY,tl);const s=document.getSelection();s.removeAllRanges();if(ini)s.setBaseAndExtent(ini.n,ini.o,ini.n,ini.o)});
+ node.addEventListener("pointermove",e=>{if(!ativo)return;e.preventDefault();const p=pontoTexto(e.clientX,e.clientY,tl);if(!p)return;if(!ini){ini=p}
+  const fr=antes(ini,p),A=fr?borda(ini,-1):borda(ini,1),B=fr?borda(p,1):borda(p,-1);document.getSelection().setBaseAndExtent(A.n,A.o,B.n,B.o)});
+ const fim=e=>{if(!ativo)return;ativo=false;ini=null;try{node.releasePointerCapture(e.pointerId)}catch(x){}lerSelecao()};
+ node.addEventListener("pointerup",fim);node.addEventListener("pointercancel",fim)}
 function limparTexto(t){return t.replace(/-\s*\n\s*/g,"").replace(/\s*\n\s*/g," ").replace(/\s{2,}/g," ").trim()}
 function lerSelecao(){const bar=$("#lvsel");if(!bar)return;const s=document.getSelection(),node=rd.node;
  if(!s||s.isCollapsed||!node||!s.rangeCount||!node.contains(s.anchorNode)){if(!lsave)bar.hidden=true;return}
@@ -1622,6 +1637,7 @@ async function actLeitor(a,el){const d=el?el.dataset:{};
  case "lvjump":return irPara(+d.p);
  case "lvz":rd.zoom=Math.min(3,Math.max(1,rd.zoom+(+d.d)*.25));rd.key="";return render();
  case "lvoff":{const b=book(route.k),v=parseInt(($("#lvimp").value||"").trim(),10);if(!(v>0))return toast("Escreva o número impresso na página.");b.off=v-(b.lastPage||1);touch(b);changed();render();return toast("Páginas ajustadas")}
+ case "lvmk":rd.marker=!rd.marker;if(rd.node)rd.node.classList.toggle("marcando",rd.marker);return render();
  case "lvdepois":lvDepois.add(route.k);return render();
  case "lvagora":lvDepois.delete(route.k);return render();
  case "lvoffx":{const b=book(route.k);b.off=null;touch(b);changed();return render()}
