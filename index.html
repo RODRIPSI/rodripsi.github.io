@@ -681,7 +681,7 @@ async function checkDocs(cid){
 /* ---------- dissertação: painel dos subtítulos ---------- */
 const DKINDS=[["red","Redação Consolidada"],["mapa","Mapa Demonstrativo"],["demo","Demonstração Documental"],["abnt","Versão ABNT"]];
 const DK=Object.fromEntries(DKINDS);
-let dlink=null,dlTimer=null,dmiss=null,dmais=null,dedit=null,dprz=null,dundo=null;let dscan=null,dscanning=false,dscanErr="",dopen=new Set(),dfold=null,dfq="",dnew=false,dcapEdit=null;
+let dlink=null,dlTimer=null,dmiss=null,dmais=null,dedit=null,dprz=null,dundo=null,dcapNew=false,dnewCap=null;let dscan=null,dscanning=false,dscanErr="",dopen=new Set(),dfold=null,dfq="",dnew=false,dcapEdit=null;
 try{dscan=JSON.parse(localStorage.getItem("bm-diss-scan")||"null")}catch(e){}
 let dwords={};try{dwords=JSON.parse(localStorage.getItem("bm-diss-words")||"{}")}catch(e){}
 const numKey=n=>String(n).split(".").map(x=>String(+x).padStart(3,"0")).join(".");
@@ -751,24 +751,27 @@ function vDiss(){
  const comp=subs.filter(s=>info[s.id].feitos===4).length,and=subs.filter(s=>{const f=info[s.id].feitos;return f>0&&f<4}).length;
  const total=docsUnicos(by).reduce((a,f)=>a+(wordsOf(f)||0),0),durs=subs.filter(s=>info[s.id].fim).map(s=>dayDiff(info[s.id].ini,info[s.id].fim));
  const urg=subs.filter(s=>info[s.id].nv&&info[s.id].nv.r<=7).sort((a,b)=>info[a.id].nv.r-info[b.id].nv.r);
- const caps=[...new Set(subs.map(s=>capOf(s.n)))];
+ const caps=[...new Set([...subs.map(s=>capOf(s.n)),...L("chapters").filter(c=>c.n).map(c=>String(c.n))])].sort((a,b)=>+a-+b);
+ const comPerg=subs.filter(s=>{const p=planRec(s.n);return p&&cheio(p.ficha.pergunta)}).length,comPlano=subs.filter(s=>estadoPlano(s.n)).length;
+ const formNovo=pre=>`<div class="panel"><label class="label" for="dnn" style="margin-top:0">Número do subtítulo</label><input type="text" id="dnn" inputmode="decimal" value="${esc(pre||"")}" placeholder="Ex.: 2.3"><label class="label" for="dnt">Título</label><input type="text" id="dnt" placeholder="Pode ficar para depois"><button class="primary" data-a="dnewsave">Adicionar subtítulo</button><div class="row"><button class="link" data-a="dnewx">Cancelar</button></div></div>`;
  return `<h1>Dissertação</h1>
  <div class="row" style="margin:-8px 0 12px"><button class="secondary" data-a="nav" data-to="form">Formalização</button><button class="secondary" data-a="nav" data-to="ritmo">Ritmo de escrita</button></div>
  <p class="hint" style="margin:0 0 14px">Pasta ${esc(fo.name)} · ${dscanning?"lendo o Drive…":dscan&&dscan.folder===fo.id?"lida "+esc(fmtShort(dscan.at)):"ainda não lida"}</p>
  ${!hasToken()?connectBox("Para ler os documentos da dissertação, conecte o aplicativo ao Drive."):""}
  ${dscanErr?`<p class="warn">${esc(dscanErr)}</p>`:""}
  ${urg.map(s=>`<button class="d-alert d-${info[s.id].nv.c}" data-a="dtoggle" data-id="${s.id}"><b>${esc(s.n)}</b> ${esc(s.title||"")} — ${esc(info[s.id].nv.t)}</button>`).join("")}
- ${subs.length?`<div class="panel"><p style="margin:0 0 10px"><b>${comp} de ${subs.length}</b> subtítulos com os quatro documentos. ${and} em andamento.</p>
-  <div class="d-bar"><span style="width:${comp/subs.length*100}%" class="d-bar-ok"></span><span style="width:${and/subs.length*100}%" class="d-bar-and"></span></div>
-  <div class="d-stats"><div><b>${total.toLocaleString("pt-BR")}</b><span>palavras nos documentos</span></div><div><b>${durs.length?Math.round(durs.reduce((a,b)=>a+b,0)/durs.length)+" dias":"—"}</b><span>por subtítulo, em média</span></div><div><b>${subs.filter(s=>info[s.id].nv).length}</b><span>com prazo</span></div></div></div>`:""}
+ ${subs.length?`<div class="panel"><p style="margin:0 0 10px"><b>${caps.length} ${caps.length===1?"capítulo":"capítulos"}, ${subs.length} ${subs.length===1?"subtítulo":"subtítulos"}.</b> ${comPerg} com pergunta definida · ${comPlano} com planejamento.</p>
+  <div class="d-bar"><span style="width:${comPerg/subs.length*100}%" class="d-bar-ok"></span></div>
+  <div class="d-stats"><div><b>${total.toLocaleString("pt-BR")}</b><span>palavras nos documentos</span></div><div><b>${comPlano}</b><span>com planejamento</span></div><div><b>${subs.filter(s=>info[s.id].nv).length}</b><span>com prazo</span></div></div></div>`:""}
  ${novos.length?`<div class="panel"><p style="margin:0">Encontrei na pasta documentos de subtítulos que ainda não estão no painel: <b>${novos.map(esc).join(", ")}</b>.</p><div class="row"><button class="secondary" data-a="daddfound">Adicionar ao painel</button></div></div>`:""}
  ${!subs.length&&!novos.length&&dscan?`<div class="empty">Nenhum documento de subtítulo reconhecido nesta pasta. Os nomes precisam trazer o número (por exemplo 1.5 ou 1_5) e o tipo: Redação Consolidada, Mapa Demonstrativo, Demonstração Documental ou Versão ABNT.</div>`:""}
  ${caps.map(k=>{const l=subs.filter(s=>capOf(s.n)===k),t=capTitle(k);
   return `<details class="block" open><summary>Capítulo ${esc(k)}${t?" — "+esc(t):""} <span class="count">${l.length}</span></summary>
   ${dcapEdit===k?`<div class="inline" style="margin:-4px 0 12px"><input type="text" id="dcap" value="${esc(t)}" placeholder="Título do capítulo ${esc(k)}"><button class="secondary" data-a="dcapsave" data-k="${esc(k)}">Salvar</button></div>`:`<button class="link" style="margin:-4px 0 12px;display:block" data-a="dcapedit" data-k="${esc(k)}">${t?"Renomear capítulo":"Dar título ao capítulo"}</button>`}
-  ${l.map(s=>subCard(s,info[s.id])).join("")}</details>`}).join("")}
- ${dnew?`<div class="panel"><label class="label" for="dnn" style="margin-top:0">Número</label><input type="text" id="dnn" inputmode="decimal" placeholder="Ex.: 2.3"><label class="label" for="dnt">Título</label><input type="text" id="dnt" placeholder="Pode ficar para depois"><button class="primary" data-a="dnewsave">Adicionar subtítulo</button><div class="row"><button class="link" data-a="dnew">Cancelar</button></div></div>`
-  :`<div class="row" style="margin-top:4px"><button class="secondary" data-a="dnew">+ Subtítulo</button><button class="secondary" data-a="dscan">Atualizar do Drive</button><button class="link" data-a="dpickfolder">Trocar pasta</button></div>`}
+  ${l.length?l.map(s=>subCard(s,info[s.id])).join(""):`<p class="hint" style="margin:0 0 8px">Nenhum subtítulo neste capítulo ainda.</p>`}
+  ${dnew&&dnewCap===k?formNovo(k+"."):`<div class="row" style="margin:2px 0 6px"><button class="link" data-a="dnewcap" data-k="${esc(k)}">+ Subtítulo no capítulo ${esc(k)}</button>${!l.length?`<button class="link" data-a="dcapdel" data-k="${esc(k)}">Tirar este capítulo</button>`:""}</div>`}</details>`}).join("")}
+ ${dcapNew?`<div class="panel"><label class="label" for="dcn" style="margin-top:0">Número do capítulo</label><input type="text" id="dcn" inputmode="numeric" placeholder="Ex.: 2"><label class="label" for="dct">Título do capítulo</label><input type="text" id="dct" placeholder="Pode ficar para depois"><button class="primary" data-a="dcapnewsave">Adicionar capítulo</button><div class="row"><button class="link" data-a="dcapnew">Cancelar</button></div></div>`:""}
+ ${dnew&&!dnewCap?formNovo(""):`<div class="row" style="margin-top:4px"><button class="secondary" data-a="dcapnew">+ Capítulo</button><button class="secondary" data-a="dnew">+ Subtítulo</button><button class="secondary" data-a="dscan">Atualizar do Drive</button><button class="link" data-a="dpickfolder">Trocar pasta</button></div>`}
  ${loose.length?`<details class="block" style="margin-top:22px"><summary>Documentos da pasta sem subtítulo reconhecido <span class="count">${loose.length}</span></summary><p class="hint" style="margin:-4px 0 10px">Ficam fora do painel porque o nome não traz o número do subtítulo e o tipo de documento. Nada foi alterado neles.</p>${loose.slice(0,80).map(f=>`<p class="d-loose"><a href="${esc(f.webViewLink||"#")}" target="_blank" rel="noopener">${esc(f.name)}</a></p>`).join("")}</details>`:""}`}
 function docsDoSub(s,x){const out=[],oc=s.ocultos||[];
  DKINDS.forEach(([k,nome],i)=>{const d=x.docs[i];if(d)out.push({f:d,nome,manual:!!d.manual})});
@@ -837,11 +840,17 @@ async function actDiss(a,el){
  case "dfolder":{const f=dfold.folders.find(x=>x.id===id);db.meta.dissFolder={id:f.id,name:f.name};dfold=null;dscan=null;changed();render();return scanDiss(true)}
  case "dscan":return scanDiss(true);
  case "daddfound":{const {by}=dissFiles(),have=new Set(L("subs").map(s=>s.n));let n=0;Object.keys(by).filter(k=>!have.has(k)).forEach(k=>{db.subs.push(touch({id:uid("s"),n:k,title:"",prazo:""}));n++});changed();render();return toast(`${n} ${n===1?"subtítulo adicionado":"subtítulos adicionados"}. Dê os títulos quando quiser.`)}
- case "dnew":dnew=!dnew;return render();
+ case "dnew":dnew=!dnew;dnewCap=null;return render();
+ case "dnewx":dnew=false;dnewCap=null;return render();
+ case "dnewcap":dnew=true;dnewCap=el.dataset.k;render();{const i=$("#dnn");if(i){i.focus();i.setSelectionRange(i.value.length,i.value.length)}}return;
+ case "dcapnew":dcapNew=!dcapNew;return render();
+ case "dcapnewsave":{const k=String(parseInt(($("#dcn").value||"").trim(),10)),t=($("#dct").value||"").trim();if(!(+k>=1&&+k<=9))return toast("Escreva o número do capítulo, de 1 a 9.");
+  let c=db.chapters.find(x=>String(x.n)===k&&!x.deleted);if(!c){c={id:"cap-"+k+"-"+uid("x").slice(-4),n:k};db.chapters.push(c)}if(t)c.title=t;touch(c);dcapNew=false;changed();render();return toast(`Capítulo ${k} no painel`)}
+ case "dcapdel":{const k=el.dataset.k;db.chapters.filter(x=>String(x.n)===k&&!x.deleted).forEach(c=>{c.deleted=true;touch(c)});changed();render();return toast(`Capítulo ${k} tirado do painel`)}
  case "dnewsave":{const n=($("#dnn").value||"").trim().replace(",",".").replace(/\s+/g,""),t=($("#dnt").value||"").trim();
   if(!/^\d{1,2}\.\d{1,2}$/.test(n))return toast("Escreva o número no formato capítulo.subtítulo, por exemplo 2.3.");
   if(L("subs").some(s=>s.n===`${+n.split(".")[0]}.${+n.split(".")[1]}`))return toast("Esse subtítulo já está no painel.");
-  db.subs.push(touch({id:uid("s"),n:`${+n.split(".")[0]}.${+n.split(".")[1]}`,title:t,prazo:""}));dnew=false;changed();render();return toast("Subtítulo adicionado")}
+  db.subs.push(touch({id:uid("s"),n:`${+n.split(".")[0]}.${+n.split(".")[1]}`,title:t,prazo:""}));dnew=false;dnewCap=null;changed();render();return toast("Subtítulo adicionado")}
  case "dlink":dlink={sid:id,q:"",res:null,kind:el.dataset.k||""};dmiss=null;return render();
  case "dmais":dmais=dmais===id?null:id;dprz=null;return render();
  case "dprz":dprz=dprz===id?null:id;return render();
