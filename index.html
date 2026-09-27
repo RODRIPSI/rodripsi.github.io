@@ -315,6 +315,9 @@ a.d-docl span:nth-child(2){text-decoration:underline;text-underline-offset:3px}
 .lt-word{display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid var(--rule);border-radius:12px;background:var(--surface);text-decoration:none;color:var(--ink);font-size:15px;margin-bottom:6px}
 .lt-notaslab{display:block;margin:14px 0 6px}
 #ltnotas{width:100%;box-sizing:border-box;padding:12px 14px;border:1px solid var(--rule);border-radius:12px;background:var(--surface);font-family:var(--serif);font-size:16px;line-height:1.6;color:var(--ink);resize:vertical}
+.art-bar{flex:1;display:block;height:8px;border-radius:999px;background:var(--soft);overflow:hidden}.art-bar span{display:block;height:8px;border-radius:999px}
+.art-lim{margin-bottom:6px}.art-pn{font-family:var(--serif);font-size:20px;font-weight:600}
+.art-mv{width:32px;height:26px;border:1px solid var(--rule);border-radius:6px;background:var(--surface);color:var(--ink);font-size:13px}.art-mv:disabled{opacity:.35}
 .a-img{display:block;width:100%;max-height:420px;object-fit:contain;border-radius:10px;background:var(--surface);margin:0 0 14px}
 .a-img.big{max-height:520px}.a-ph{display:grid;place-items:center;text-align:center;padding:12px;height:220px;color:var(--muted);font-size:14px;border:1px dashed var(--rule)}
 .a-imgs{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
@@ -403,8 +406,8 @@ const fmtFull=ts=>new Date(ts).toLocaleDateString("pt-BR",{day:"numeric",month:"
 const brDate=iso=>iso?iso.slice(0,10).split("-").reverse().join("/"):"";
 
 /* ---------- dados ---------- */
-function seed(){return{version:1,concepts:SEED.map((n,i)=>({id:"seed-"+slug(n),name:n,color:PALETTE[i%PALETTE.length],updatedAt:"2026-01-01T00:00:00.000Z"})),refs:[],ideas:[],docs:[],subs:[],chapters:[],symbols:[],plans:[],sends:[],ritmo:[],books:[],marks:[],rascunhos:[],glossario:[],textos:[],capitulos:[],meta:{}}}
-function loadLocal(){try{const s=localStorage.getItem(KEY);if(s){const d=JSON.parse(s);for(const k of["concepts","refs","ideas","docs","subs","chapters","symbols","plans","sends","ritmo","books","marks","rascunhos","glossario","textos","capitulos"])d[k]=d[k]||[];d.meta=d.meta||{};return d}}catch(e){}return seed()}
+function seed(){return{version:1,concepts:SEED.map((n,i)=>({id:"seed-"+slug(n),name:n,color:PALETTE[i%PALETTE.length],updatedAt:"2026-01-01T00:00:00.000Z"})),refs:[],ideas:[],docs:[],subs:[],chapters:[],symbols:[],plans:[],sends:[],ritmo:[],books:[],marks:[],rascunhos:[],glossario:[],textos:[],capitulos:[],artigos:[],artsubs:[],meta:{}}}
+function loadLocal(){try{const s=localStorage.getItem(KEY);if(s){const d=JSON.parse(s);for(const k of["concepts","refs","ideas","docs","subs","chapters","symbols","plans","sends","ritmo","books","marks","rascunhos","glossario","textos","capitulos","artigos","artsubs"])d[k]=d[k]||[];d.meta=d.meta||{};return d}}catch(e){}return seed()}
 let db=loadLocal();
 function saveLocal(){try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){toast("Não foi possível salvar no aparelho.")}}
 const L=k=>db[k].filter(x=>!x.deleted);
@@ -419,7 +422,7 @@ function changed(){saveLocal();setDirty(true);scheduleSync()}
 function merge(a,b){
  const out={version:1,meta:{...(b.meta||{}),...(a.meta||{})}};
  if(((b.meta||{}).lastBackup||"")>((a.meta||{}).lastBackup||""))out.meta.lastBackup=b.meta.lastBackup;
- for(const k of["concepts","refs","ideas","docs","subs","chapters","symbols","plans","sends","ritmo","books","marks","rascunhos","glossario","textos","capitulos"]){const m=new Map();for(const x of(b[k]||[]))m.set(x.id,x);
+ for(const k of["concepts","refs","ideas","docs","subs","chapters","symbols","plans","sends","ritmo","books","marks","rascunhos","glossario","textos","capitulos","artigos","artsubs"]){const m=new Map();for(const x of(b[k]||[]))m.set(x.id,x);
   for(const x of(a[k]||[])){const y=m.get(x.id);if(!y||(x.updatedAt||"")>=(y.updatedAt||""))m.set(x.id,x)}out[k]=[...m.values()]}
  return out}
 function makeConcept(name){name=name.trim();if(!name){toast("Digite o nome do conceito.");return null}
@@ -801,7 +804,7 @@ function vDiss(){
  const comPerg=subs.filter(s=>{const p=planRec(s.n);return p&&cheio(p.ficha.pergunta)}).length,comPlano=subs.filter(s=>estadoPlano(s.n)).length;
  const formNovo=pre=>`<div class="panel"><label class="label" for="dnn" style="margin-top:0">Número do subtítulo</label><input type="text" id="dnn" inputmode="decimal" value="${esc(pre||"")}" placeholder="Ex.: 2.3"><label class="label" for="dnt">Título</label><input type="text" id="dnt" placeholder="Pode ficar para depois"><button class="primary" data-a="dnewsave">Adicionar subtítulo</button><div class="row"><button class="link" data-a="dnewx">Cancelar</button></div></div>`;
  return `<h1>Dissertação</h1>
- <div class="row" style="margin:-8px 0 12px"><button class="secondary" data-a="nav" data-to="medidor">Medidor</button><button class="secondary" data-a="nav" data-to="leituratextos">Leitura de textos</button><button class="secondary" data-a="nav" data-to="form">Formalização</button><button class="secondary" data-a="nav" data-to="ritmo">Ritmo de escrita</button></div>
+ <div class="row" style="margin:-8px 0 12px"><button class="secondary" data-a="nav" data-to="medidor">Medidor</button><button class="secondary" data-a="nav" data-to="leituratextos">Leitura de textos</button><button class="secondary" data-a="nav" data-to="artigos">Artigos</button><button class="secondary" data-a="nav" data-to="form">Formalização</button><button class="secondary" data-a="nav" data-to="ritmo">Ritmo de escrita</button></div>
  <p class="hint" style="margin:0 0 14px">Pasta ${esc(fo.name)} · ${dscanning?"lendo o Drive…":dscan&&dscan.folder===fo.id?"lida "+esc(fmtShort(dscan.at)):"ainda não lida"}</p>
  ${!hasToken()?connectBox("Para ler os documentos da dissertação, conecte o aplicativo ao Drive."):""}
  ${dscanErr?`<p class="warn">${esc(dscanErr)}</p>`:""}
@@ -1964,7 +1967,7 @@ function vEscBlocos(r,pas){
   return `<div class="esc-b"><div class="esc-bh"><span class="esc-sig" style="background:${t.cor}">${b.tipo==="LIVRE"?"—":b.tipo}</span><span class="esc-nm">${t.nome}</span>
    <button class="esc-mv" data-a="escmv" data-i="${i}" data-d="-1" aria-label="Subir bloco">↑</button><button class="esc-mv" data-a="escmv" data-i="${i}" data-d="1" aria-label="Descer bloco">↓</button><button class="esc-mv esc-x" data-a="escrm" data-i="${i}" aria-label="Tirar bloco">×</button></div>
    <textarea class="esc-ta" data-i="${i}" rows="${b.texto.length>220?6:3}" placeholder="${esc(t.orient)}">${esc(b.texto)}</textarea>
-   ${b.tipo==="CI"?`<button class="secondary" data-a="escpas" data-i="${i}">Inserir passagem do planejamento</button>
+   ${b.tipo==="CI"&&pas!==null?`<button class="secondary" data-a="escpas" data-i="${i}">Inserir passagem do planejamento</button>
     ${escPas===i?`<div class="esc-pas">${pas.length?pas.filter(x=>cheio(x.passagem)).map(x=>`<button class="esc-pasit" data-a="escpasp" data-i="${i}" data-k="${x.k}" data-j="${x.j}">${esc(x.passagem.length>90?x.passagem.slice(0,90)+"…":x.passagem)}${x.pagina?` — ${esc(x.pagina)}`:""}</button>`).join(""):`<p class="hint" style="margin:0">Nenhuma passagem no planejamento deste subtítulo ainda.</p>`}</div>`:""}`:""}
   </div>`}).join("")}</div>
  <div class="esc-add"><p class="hint" style="margin:0 0 8px">Acrescentar bloco — nenhum é obrigatório, e a ordem é sua</p><div class="chips">${Object.entries(RTIPOS).map(([k,t])=>`<button class="chip" data-a="escadd" data-t="${k}"><b style="color:${t.cor}">${k==="LIVRE"?"+":k}</b> ${t.nome}</button>`).join("")}</div></div>`}
@@ -2153,19 +2156,109 @@ async function actLeituraTextos(a,el){const d=el?el.dataset:{};
  case "ltdoc2":ltDoc="c2:"+d.id;ltDocQ="";ltDocRes=null;return render();
  case "ltdocx":ltDoc=null;return render();
  case "ltdocpick":{const cid=ltDoc.startsWith("c2:")?ltDoc.slice(3):ltDoc,c=capOf2(cid);c.doc={id:d.id,name:d.n,webViewLink:d.l};touch(c);ltDoc=null;changed();return render()}
+ }return actArtigos(a,el)}
+
+/* ---------- Artigos: mesmo modelo da dissertação, com limite de páginas e bibliografia ---------- */
+let artNovo=false,artSubNovo=false,artImgOpen=false,artImgQ="",artImgRes=null,artRefAdd=false,artMetaEdit=false,artSaveT2=null;
+function artigoOf(id){return L("artigos").find(a=>a.id===id)}
+function artsubsOf(aid){return L("artsubs").filter(s=>s.artigoId===aid).sort((a,b)=>a.n-b.n)}
+function artsubOf(id){return L("artsubs").find(s=>s.id===id)}
+function artBlocosPalavras(bl){return bl.reduce((a,b)=>a+(b.texto.trim()?b.texto.trim().split(/\s+/).length:0),0)}
+function artPalavras(aid){return artsubsOf(aid).reduce((s,x)=>s+artBlocosPalavras(x.blocos),0)}
+function artPorPagina(a){return a.porPagina||300}
+function artPaginas(a){return artPalavras(a.id)/artPorPagina(a)}
+function corLimite(pct){return pct>100?"#C0392B":pct>=85?"#8A5600":"#1B7A43"}
+function tagLimite(pct){return pct>100?"Passou do limite":pct>=85?"Quase no limite":"Dentro do limite"}
+function artRefsDe(aid){const ids=[];artsubsOf(aid).forEach(s=>(s.refs||[]).forEach(r=>{if(!ids.includes(r))ids.push(r)}));return ids.map(R).filter(Boolean)}
+function artImgAlvo(){return route.name==="artigo"?{obj:artigoOf(route.k),nome:artigoOf(route.k)&&artigoOf(route.k).nome}:{obj:artsubOf(route.k),nome:artsubOf(route.k)&&artsubOf(route.k).titulo}}
+function artImgHTML(){return `<div class="panel esc-imgpick"><label class="label" style="margin-top:0" for="aiq">Procurar a imagem no Drive</label><input type="text" id="aiq" value="${esc(artImgQ)}" placeholder="Parte do nome do arquivo"><div id="aires">${artImgResHTML()}</div><div class="row"><button class="link" data-a="artimgx">Cancelar</button></div></div>`}
+function artImgResHTML(){if(!artImgRes)return `<p class="hint">Digite ao menos três letras.</p>`;return artImgRes.length?artImgRes.map(f=>`<button class="res" data-a="artimgpick" data-id="${f.id}" data-n="${esc(f.name)}"><img class="esc-thumb" src="${esc(f.thumbnailLink||"")}" onerror="this.style.display='none'"><p class="fname" style="margin:0">${esc(f.name)}</p></button>`).join(""):`<p class="hint">Nenhuma imagem com esse nome.</p>`}
+function vArtigos(){const l=L("artigos");
+ return `<button class="back" data-a="nav" data-to="diss">‹ Dissertação</button><h1>Artigos</h1>
+ <p class="hint" style="margin:-6px 0 16px">Um espaço à parte, no mesmo modelo: subtítulos, escrita por blocos e bibliografia — com limite de páginas.</p>
+ ${l.length?l.map(a=>{const pag=artPaginas(a),pct=Math.min(999,Math.round(pag/(a.meta||1)*100)),cor=corLimite(pct),n=artsubsOf(a.id).length;
+  return `<button class="doc lt-card" data-a="artopen" data-id="${a.id}"><p class="fname" style="margin:0">${esc(a.nome)}</p>
+  <div class="row" style="align-items:center;gap:10px;margin:8px 0 2px"><span class="art-bar"><span style="width:${Math.min(100,pct)}%;background:${cor}"></span></span><span class="hint" style="margin:0;white-space:nowrap">${pag.toFixed(1)} de ${a.meta||"?"} pág.</span></div>
+  <p class="hint" style="margin:2px 0 0">${n} ${n===1?"subtítulo":"subtítulos"}</p></button>`}).join(""):`<div class="empty">Nenhum artigo ainda.</div>`}
+ ${artNovo?`<div class="panel"><label class="label" style="margin-top:0" for="an">Nome do artigo</label><input type="text" id="an" placeholder="Ex.: A transferência como campo de trabalho"><label class="label" for="am">Limite de páginas</label><input type="number" id="am" value="10" style="max-width:120px"><div class="row"><button class="primary" data-a="artnovosave">Adicionar</button><button class="link" data-a="artnovox">Cancelar</button></div></div>`:`<div class="row"><button class="secondary" data-a="artnovo">+ Novo artigo</button></div>`}`}
+function vArtigo(){const a=artigoOf(route.k);if(!a)return vArtigos();const subs=artsubsOf(a.id),pag=artPaginas(a),meta=a.meta||1,pct=Math.min(999,Math.round(pag/meta*100)),cor=corLimite(pct),refs=artRefsDe(a.id).sort(ordemRef);
+ return `<button class="back" data-a="nav" data-to="artigos">‹ Artigos</button><h1>${esc(a.nome)}</h1>
+ ${artImgOpen?artImgHTML():a.img?`<div class="lt-img">${imgTag({img:a.img.webViewLink,n:a.nome},true)}<div class="row" style="margin-top:6px"><button class="link" data-a="artimg">Trocar imagem</button><button class="link" data-a="artimgdel">Tirar imagem</button></div></div>`:`<div class="row" style="margin:0 0 14px"><button class="secondary" data-a="artimg">+ Escolher imagem do artigo</button></div>`}
+ <div class="panel art-lim"><div class="row" style="justify-content:space-between;align-items:baseline;margin:0"><p class="med-h" style="margin:0">Limite de páginas</p><span class="art-pn" style="color:${cor}">${pag.toFixed(1)} / ${artMetaEdit?`<input type="number" id="am2" value="${a.meta||10}" style="width:64px;font:inherit;color:inherit">`:esc(String(a.meta||"?"))}</span></div>
+ <span class="art-bar" style="margin-top:8px"><span style="width:${Math.min(100,pct)}%;background:${cor}"></span></span>
+ <span class="med-tag sm" style="background:${cor};margin-top:8px;display:inline-block">${tagLimite(pct)}</span>
+ <p class="hint" style="margin:8px 0 0">${artPalavras(a.id).toLocaleString("pt-BR")} palavras · estimativa em Times New Roman 12, espaço 1,5, ABNT (${artMetaEdit?`<input type="number" id="app" value="${artPorPagina(a)}" style="width:64px">`:artPorPagina(a)} palavras por página) — <button class="link" data-a="${artMetaEdit?"artmetasave":"artmetaedit"}" data-id="${a.id}" style="padding:0">${artMetaEdit?"Salvar":"Mudar o limite ou o padrão"}</button></p></div>
+ <div class="row" style="justify-content:space-between;align-items:baseline;margin:16px 0 10px"><p class="med-h" style="margin:0">Subtítulos</p><button class="link" data-a="artinteiro" data-id="${a.id}">Ver o artigo inteiro ›</button></div>
+ ${subs.length?subs.map((s,i)=>{const pal=artBlocosPalavras(s.blocos);return `<div class="lt-caprow"><button class="lt-capmain" data-a="artsuopen" data-id="${s.id}"><span class="${s.titulo&&s.titulo!=="Sem título"?"":"d-vazio"}">${s.n}. ${esc(s.titulo||"Sem título")}</span><small>${pal?pal+" palavras":"ainda vazio"}</small></button>
+  <span class="col" style="display:flex;flex-direction:column;gap:3px"><button class="art-mv" data-a="artsumv" data-id="${s.id}" data-d="-1" ${i===0?"disabled":""} aria-label="Subir">↑</button><button class="art-mv" data-a="artsumv" data-id="${s.id}" data-d="1" ${i===subs.length-1?"disabled":""} aria-label="Descer">↓</button></span></div>`}).join(""):`<p class="hint">Nenhum subtítulo ainda.</p>`}
+ ${artSubNovo?`<div class="panel"><label class="label" style="margin-top:0" for="asn">Título (pode ficar em branco por enquanto)</label><input type="text" id="asn" placeholder="Título do subtítulo"><div class="row"><button class="primary" data-a="artsusave" data-id="${a.id}">Adicionar</button><button class="link" data-a="artsux">Cancelar</button></div></div>`:`<div class="row"><button class="secondary" data-a="artsunovo">+ Novo subtítulo</button></div>`}
+ <div class="panel" style="margin-top:20px"><p class="med-h">Bibliografia deste artigo</p><p class="hint" style="margin:0 0 10px">Reúne, sem repetir, as obras usadas em todos os subtítulos.</p>
+ ${refs.length?refs.map(r=>`<p class="ab-ref">${refABNT(r)||esc(r.label)}</p>`).join(""):`<p class="hint" style="margin:0">Nenhuma obra ainda. Acrescente em “Referências em uso”, dentro de cada subtítulo.</p>`}
+ ${refs.length?`<div class="row" style="margin-top:10px"><button class="secondary" data-a="artbib" data-id="${a.id}">Copiar a bibliografia</button></div>`:""}</div>
+ <p class="hint" style="margin-top:18px"><button class="link" data-a="artdel" data-id="${a.id}">Excluir este artigo</button></p>`}
+function vArtSub(){const s=artsubOf(route.k);if(!s)return vArtigos();const a=artigoOf(s.artigoId);
+ return `<button class="back" data-a="artsuback" data-id="${esc(s.artigoId)}">‹ ${esc(a?a.nome:"")}</button>
+ <div class="esc-cab"><div><h1 style="margin:0">${s.n}. ${esc(s.titulo||"Sem título")}</h1></div><span class="hint" style="margin:0">${artBlocosPalavras(s.blocos)} palavras</span></div>
+ ${artImgOpen?artImgHTML():s.img?`<div class="esc-img">${imgTag({img:s.img.webViewLink,n:s.titulo||("Subtítulo "+s.n)},true)}<div class="row" style="margin-top:6px"><button class="link" data-a="artimg">Trocar imagem</button><button class="link" data-a="artimgdel">Tirar imagem</button></div></div>`:`<div class="row" style="margin:0 0 12px"><button class="secondary" data-a="artimg">+ Escolher imagem do Drive</button></div>`}
+ ${escRefsArtHTML(s)}
+ <div class="chips" style="margin:12px 0"><button class="chip" data-a="escmodo" data-v="blocos" aria-pressed="${escModo==="blocos"}">Escrever por blocos</button><button class="chip" data-a="escmodo" data-v="corrido" aria-pressed="${escModo==="corrido"}">Ver como texto corrido</button></div>
+ ${escModo==="blocos"?vEscBlocos(s,null):vEscCorrido(s)}
+ <div class="row" style="margin-top:16px"><button class="secondary" data-a="artsutitulo" data-id="${s.id}">Título do subtítulo</button></div>`}
+function escRefsArtHTML(s){const refs=(s.refs||[]).map(R).filter(Boolean).sort(ordemRef);
+ return `<div class="panel esc-refs"><p class="med-h">Referências em uso</p>
+ ${refs.length?refs.map(r=>`<div class="esc-refl"><p class="ab-ref" style="margin:0;flex:1">${refABNT(r)||esc(r.label)}</p><button class="d-x" data-a="artrefx" data-id="${r.id}" aria-label="Tirar ${esc(r.label)}">×</button></div>`).join(""):`<p class="hint" style="margin:0 0 8px">Nenhuma obra adicionada ainda.</p>`}
+ ${artRefAdd?`<div class="row" style="margin-top:8px;align-items:center">${refSelect("artrefsel","").replace("Ideia minha, sem leitura por trás","Escolher na Bibliografia")}<button class="link" data-a="artrefx2">Cancelar</button></div>`:`<div class="row" style="margin-top:4px"><button class="link" data-a="artrefadd">+ Adicionar obra</button></div>`}</div>`}
+function vArtigoInteiro(){const a=artigoOf(route.k);if(!a)return vArtigos();const subs=artsubsOf(a.id),pag=artPaginas(a),meta=a.meta||1,pct=Math.min(999,Math.round(pag/meta*100)),cor=corLimite(pct);
+ const paras=[];subs.forEach(s=>s.blocos.filter(b=>cheio(b.texto)).forEach(b=>paras.push({texto:b.texto.trim(),cit:b.tipo==="CI"&&b.texto.length>180})));
+ return `<button class="back" data-a="artopen" data-id="${a.id}">‹ ${esc(a.nome)} — o artigo inteiro</button><h1>${esc(a.nome)}</h1>
+ <div class="row" style="align-items:center;gap:12px;margin:0 0 14px"><span class="art-pn" style="color:${cor}">${pag.toFixed(1)} de ${meta} páginas</span><span class="med-tag sm" style="background:${cor}">${tagLimite(pct)}</span></div>
+ ${paras.length?`<div class="panel esc-corr">${paras.map(p=>`<p class="${p.cit?"esc-cit":"esc-par"}">${esc(p.texto)}</p>`).join("")}</div>`:`<div class="empty">Nada escrito ainda em nenhum subtítulo.</div>`}
+ <p class="hint">Junta, na ordem, o que está escrito em cada subtítulo — sem os rótulos dos blocos.</p>`}
+function bindArtigos(){
+ on("#aiq","input",e=>{artImgQ=e.target.value;clearTimeout(lvTimer);lvTimer=setTimeout(async()=>{const q=artImgQ.trim();if(fold(q).length<3)artImgRes=null;else{try{artImgRes=await listFiles(`trashed=false and mimeType contains 'image/' and name contains '${qesc(q)}'`,"files(id,name,thumbnailLink,webViewLink)")}catch(e){artImgRes=[]}}const el=$("#aires");if(el)el.innerHTML=artImgResHTML()},500)});
+ on("#artrefsel","change",e=>{const v=e.target.value;if(!v)return;const s=artsubOf(route.k);s.refs=[...new Set([...(s.refs||[]),v])];touch(s);artRefAdd=false;changed();render()});
+ if(route.name==="artsub"){document.querySelectorAll(".esc-ta").forEach(t=>{t.addEventListener("input",()=>{const s=artsubOf(route.k);s.blocos[+t.dataset.i].texto=t.value;touch(s);clearTimeout(artSaveT2);artSaveT2=setTimeout(changed,900);
+   const w=$(".esc-cab .hint");if(w){const n=artBlocosPalavras(s.blocos);w.textContent=n+" palavras"}})})}}
+async function actArtigos(a,el){const d=el?el.dataset:{};
+ switch(a){
+ case "artigos":return go({name:"artigos"});
+ case "artopen":return go({name:"artigo",k:d.id});
+ case "artnovo":artNovo=true;return render();
+ case "artnovox":artNovo=false;return render();
+ case "artnovosave":{const nome=($("#an").value||"").trim();if(!nome)return toast("Escreva o nome do artigo.");const meta=parseInt(($("#am").value||"10"),10)||10;
+  const art=touch({id:uid("art"),nome,meta,porPagina:300});db.artigos.push(art);artNovo=false;changed();render();return go({name:"artigo",k:art.id})}
+ case "artdel":{if(!confirm("Excluir este artigo e todos os seus subtítulos do painel? O que já foi escrito se perde."))return;const art=artigoOf(d.id);art.deleted=true;touch(art);artsubsOf(d.id).forEach(s=>{s.deleted=true;touch(s)});changed();return go({name:"artigos"})}
+ case "artmetaedit":artMetaEdit=true;return render();
+ case "artmetasave":{const art=artigoOf(d.id),m=parseInt(($("#am2").value||"").trim(),10),p=parseInt(($("#app").value||"").trim(),10);if(m>0)art.meta=m;if(p>0)art.porPagina=p;touch(art);artMetaEdit=false;changed();return render()}
+ case "artsunovo":artSubNovo=true;return render();
+ case "artsux":artSubNovo=false;return render();
+ case "artsusave":{const titulo=($("#asn").value||"").trim(),n=artsubsOf(d.id).length+1;const s=touch({id:uid("as"),artigoId:d.id,n,titulo,...rascVazio()});db.artsubs.push(s);artSubNovo=false;changed();return render()}
+ case "artsuopen":escModo="blocos";return go({name:"artsub",k:d.id});
+ case "artsuback":return go({name:"artigo",k:d.id});
+ case "artsumv":{const s=artsubOf(d.id),list=artsubsOf(s.artigoId),i=list.findIndex(x=>x.id===s.id),j=i+ +d.d;if(j<0||j>=list.length)return;const outro=list[j],ni=s.n;s.n=outro.n;outro.n=ni;touch(s);touch(outro);changed();return render()}
+ case "artsutitulo":{const s=artsubOf(d.id),v=(prompt("Título do subtítulo:",s.titulo||"")||"").trim();if(v===s.titulo)return;s.titulo=v;touch(s);changed();return render()}
+ case "artinteiro":return go({name:"artigointeiro",k:d.id});
+ case "artbib":{const l=artRefsDe(d.id).filter(r=>refABNT(r)).sort(ordemRef);if(!l.length)return toast("Nenhuma obra com ficha ABNT ainda.");return copiarRefs(l.map(refABNT))}
+ case "artimg":artImgOpen=true;artImgQ="";artImgRes=null;return render();
+ case "artimgx":artImgOpen=false;return render();
+ case "artimgpick":{const img={id:d.id,name:d.n,webViewLink:`https://drive.google.com/file/d/${d.id}/view`},alvo=artImgAlvo().obj;alvo.img=img;touch(alvo);delete imgCache[d.id];artImgOpen=false;changed();return render()}
+ case "artimgdel":{const alvo=artImgAlvo().obj;delete alvo.img;touch(alvo);changed();return render()}
+ case "artrefadd":artRefAdd=true;return render();
+ case "artrefx2":artRefAdd=false;return render();
+ case "artrefx":{const s=artsubOf(route.k);s.refs=(s.refs||[]).filter(x=>x!==d.id);touch(s);changed();return render()}
  }return actLeitor(a,el)}
 
 /* ---------- desenho geral ---------- */
 const NAV=[["capture","Capturar"],["concepts","Conceitos"],["timeline","Linha do tempo","Tempo"],["pending","Pendentes"],["diss","Dissertação"]];
 function renderNav(){
- const sub=["concept","batch","bib","auto","acervo","aficha","livros","leitor","dicionario"].includes(route.name),cur=sub?"concepts":["form","plano","ritmo","medidor","escrever","leituratextos","leituracaps","leituracap"].includes(route.name)?"diss":route.name,np=pending().length;
+ const sub=["concept","batch","bib","auto","acervo","aficha","livros","leitor","dicionario"].includes(route.name),cur=sub?"concepts":["form","plano","ritmo","medidor","escrever","leituratextos","leituracaps","leituracap","artigos","artigo","artsub","artigointeiro"].includes(route.name)?"diss":route.name,np=pending().length;
  $("#tabs").classList.toggle("cinco",NAV.length>4);$("#tabs").innerHTML=NAV.map(([k,l,s])=>`<button data-a="nav" data-to="${k}" aria-current="${cur===k}">${s||l}${k==="pending"&&np?`<span class="badge-n">${np}</span>`:""}</button>`).join("");
  $("#side").innerHTML=`<div class="topb"><span class="mark">${KNOT}</span><span class="brand">Bloco Mágico</span></div><button class="syncbtn" data-a="sync"></button>
  <nav>${NAV.map(([k,l])=>`<button data-a="nav" data-to="${k}" aria-current="${cur===k&&!sub}">${l}${k==="pending"&&np?`<span class="badge-n">${np}</span>`:""}</button>`).join("")}
  <button data-a="nav" data-to="batch" aria-current="${route.name==="batch"}">Organizar pasta do Drive</button><button data-a="nav" data-to="bib" aria-current="${route.name==="bib"}">Bibliografia</button><button data-a="nav" data-to="acervo" aria-current="${route.name==="acervo"||route.name==="aficha"}">Acervo Freud e Lacan</button><button data-a="nav" data-to="form" aria-current="${route.name==="form"}">Formalização</button></nav>
  <p class="sub">Seus conceitos</p><div class="cl">${sortedConcepts().map(c=>`<button data-a="open" data-id="${c.id}" aria-current="${route.name==="concept"&&route.id===c.id}"><span style="width:9px;height:9px;border-radius:50%;background:${c.color};display:inline-block;flex:none"></span>${esc(c.name)}</button>`).join("")}</div>`;
  setSync()}
-function render(){renderNav();$("#main").innerHTML=({capture:vCapture,concepts:vConcepts,concept:vConcept,timeline:vTimeline,pending:vPending,batch:vBatch,bib:vBib,diss:vDiss,auto:vAuto,acervo:vAcervo,aficha:vAficha,form:vForm,plano:vPlano,ritmo:vRitmo,medidor:vMedidor,escrever:vEscrever,livros:vLivros,leitor:vLeitor,dicionario:vDicionario,leituratextos:vLeituraTextos,leituracaps:vLeituraCaps,leituracap:vLeituraCap}[route.name]||vConcepts)();bind()}
+function render(){renderNav();$("#main").innerHTML=({capture:vCapture,concepts:vConcepts,concept:vConcept,timeline:vTimeline,pending:vPending,batch:vBatch,bib:vBib,diss:vDiss,auto:vAuto,acervo:vAcervo,aficha:vAficha,form:vForm,plano:vPlano,ritmo:vRitmo,medidor:vMedidor,escrever:vEscrever,livros:vLivros,leitor:vLeitor,dicionario:vDicionario,leituratextos:vLeituraTextos,leituracaps:vLeituraCaps,leituracap:vLeituraCap,artigos:vArtigos,artigo:vArtigo,artsub:vArtSub,artigointeiro:vArtigoInteiro}[route.name]||vConcepts)();bind()}
 function softRender(){const a=document.activeElement;if(a&&$("#main").contains(a)&&/INPUT|TEXTAREA|SELECT/.test(a.tagName)){renderNav()}else render()}
 function on(sel,ev,fn){const e=$(sel);if(e)e.addEventListener(ev,fn);return e}
 function bind(){
@@ -2183,7 +2276,7 @@ function bind(){
  on("#de-s","change",e=>de.state=e.target.value);
  document.querySelectorAll(".cites").forEach(i=>i.addEventListener("input",e=>de.inc[e.target.dataset.ref]=Math.max(0,parseInt(e.target.value)||0)));
  on("#acvq","input",e=>{acvQ=e.target.value;const pos=e.target.selectionStart;render();const n=$("#acvq");if(n){n.focus();n.setSelectionRange(pos,pos)}});
- bindForm();bindPlano();bindWa();bindCits();bindLeitor();bindMedidor();bindEscrever();bindImgRef();bindDic();bindIaLeitura();bindLeituraTextos();bindAbnt();bindPsRef();bindDiss()}
+ bindForm();bindPlano();bindWa();bindCits();bindLeitor();bindMedidor();bindEscrever();bindImgRef();bindDic();bindIaLeitura();bindLeituraTextos();bindArtigos();bindAbnt();bindPsRef();bindDiss()}
 
 /* ---------- ações ---------- */
 function tog(arr,id){const i=arr.indexOf(id);i>=0?arr.splice(i,1):arr.push(id);return arr.includes(id)}
