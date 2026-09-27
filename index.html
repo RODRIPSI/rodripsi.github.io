@@ -294,6 +294,9 @@ a.d-docl span:nth-child(2){text-decoration:underline;text-underline-offset:3px}
 .esc-pasit{min-height:44px;padding:8px 12px;border:1px solid var(--rule);border-radius:9px;background:var(--surface);text-align:left;font-size:14px;color:var(--ink)}
 .esc-add{border:1px dashed var(--rule);border-radius:14px;padding:12px 14px;margin-top:6px}
 .esc-corr{padding:26px 28px}.esc-par{margin:0 0 14px;font-family:var(--serif);font-size:17px;line-height:1.7;text-indent:1.25cm}.esc-cit{margin:0 0 14px 4cm;font-family:var(--serif);font-size:14.5px;line-height:1.6}
+.esc-img{margin-bottom:14px}.esc-img a{display:block}.esc-thumb{display:block;width:100%;height:90px;object-fit:cover;border-radius:8px 8px 0 0;margin-bottom:6px;background:var(--soft)}
+.esc-imgpick{margin-bottom:14px}.esc-imgpick .res{align-items:stretch}
+.esc-refs{margin:14px 0}.esc-refl{display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px dashed var(--rule)}
 .a-img{display:block;width:100%;max-height:420px;object-fit:contain;border-radius:10px;background:var(--surface);margin:0 0 14px}
 .a-img.big{max-height:520px}.a-ph{display:grid;place-items:center;text-align:center;padding:12px;height:220px;color:var(--muted);font-size:14px;border:1px dashed var(--rule)}
 .a-imgs{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
@@ -1911,9 +1914,11 @@ function vEscrever(){const n=route.k,s=L("subs").find(x=>x.n===n)||{n},p=planRec
  const eixos=String(s.eixos||"").split("\n").map(t=>t.trim()).filter(Boolean),pas=p?p.demos.flatMap((d,k)=>d.passagens.map((x,j)=>({...x,k,j}))):[];
  return `<button class="back" data-a="nav" data-to="diss">‹ Dissertação</button>
  <div class="esc-cab"><div><h1 style="margin:0">Escrever o ${esc(n)}</h1>${s.title?`<p class="esc-tit">${esc(s.title)}</p>`:""}</div><span class="hint" style="margin:0">${rascPalavras(r)} ${rascPalavras(r)===1?"palavra":"palavras"}</span></div>
+ ${escImgHTML(s)}
  ${(cheio(p&&p.ficha.pergunta)||eixos.length)?`<div class="panel esc-cx">
   ${p&&cheio(p.ficha.pergunta)?`<div class="d-q" style="margin:0"><small>Pergunta do subtítulo</small><p>${esc(p.ficha.pergunta)}</p></div>`:""}
   ${eixos.length?`<div class="chips" style="margin-top:${p&&cheio(p.ficha.pergunta)?"12px":"0"}"><span class="hint" style="margin:0 4px 0 0">Eixos</span>${eixos.map(t=>`<span class="chip" style="pointer-events:none">${esc(t)}</span>`).join("")}</div>`:""}</div>`:""}
+ ${escRefsHTML(s)}
  <div class="chips" style="margin:12px 0"><button class="chip" data-a="escmodo" data-v="blocos" aria-pressed="${escModo==="blocos"}">Escrever por blocos</button><button class="chip" data-a="escmodo" data-v="corrido" aria-pressed="${escModo==="corrido"}">Ver como texto corrido</button></div>
  ${escModo==="blocos"?vEscBlocos(r,pas):vEscCorrido(r)}
  <div class="row" style="margin-top:16px"><button class="primary" data-a="esclevar" style="width:auto;padding:0 22px">Levar para o Word no Drive</button><button class="secondary" data-a="escred" aria-pressed="${!!(s.etapas&&s.etapas.red)}">${s.etapas&&s.etapas.red?"✓ Marcado como redigido":"Marcar como redigido"}</button></div>
@@ -1943,15 +1948,42 @@ async function actEscrever(a,el){const d=el?el.dataset:{},n=route.k;
  case "escpas":escPas=escPas===+d.i?null:+d.i;return render();
  case "escpasp":{const r=rascOf(n),p=planRec(n),ps=p.demos[+d.k].passagens[+d.j],ch=ps.refId&&R(ps.refId)&&R(ps.refId).abnt?chamada(R(ps.refId),paginaNum(ps.pagina)):(ps.pagina?`(${ps.pagina})`:"");
   r.blocos[+d.i].texto=`${ps.passagem||""}${ch?" "+ch:""}`.trim();touch(r);escPas=null;changed();return render()}
- case "esclevar":{toast("Gerando o Word…");await getToken(true);const r=rascOf(n),s=L("subs").find(x=>x.n===n)||{n},P=[{t:s.title||("Subtítulo "+n),s:"title"},{t:"Rascunho gerado pelo Bloco Mágico em "+fmtFull(nowIso()),s:"meta"}];
+ case "esclevar":{toast("Gerando o Word…");await getToken(true);const r=rascOf(n),s=L("subs").find(x=>x.n===n)||{n},p2=planRec(n),pas=p2?p2.demos.flatMap(x=>x.passagens):[],P=[{t:s.title||("Subtítulo "+n),s:"title"},{t:"Rascunho gerado pelo Bloco Mágico em "+fmtFull(nowIso()),s:"meta"}];
   const esc2=r.blocos.filter(b=>cheio(b.texto));if(!esc2.length){toast("Não há nada escrito ainda.");return}
   esc2.forEach(b=>P.push({t:b.texto.trim(),s:"p"}));
+  {const rs=[...new Set([...(pas||[]).filter(x=>x.refId).map(x=>x.refId),...(s.refs||[])])].map(R).filter(Boolean).sort(ordemRef);if(rs.length){P.push({t:"Referências",s:"h"});rs.forEach(rf=>P.push({t:semTags(refABNT(rf)||rf.label),s:"p"}))}}
   try{const m=await upload({name:`${n} — Rascunho — ${todayIso()}.docx`,parents:[await subFolder("Rascunhos")]},await buildDocx(P));
    const s2=L("subs").find(x=>x.n===n);if(s2){s2.links=[...(s2.links||[]).filter(l=>l.kind!=="rasc"),{id:m.id,name:m.name,link:m.webViewLink,kind:"rasc"}];touch(s2);
     dscan=dscan||{at:nowIso(),folder:db.meta.dissFolder&&db.meta.dissFolder.id,files:[]};dscan.links=dscan.links||{};dscan.links[m.id]={id:m.id,name:m.name,webViewLink:m.webViewLink,modifiedTime:todayIso()+"T00:00:00Z"}}
    changed();render();return toast("Word salvo no Drive, em Bloco Mágico / Rascunhos")}
   catch(e){return toast("Não foi possível salvar no Drive agora.")}}
  case "escred":{const s=L("subs").find(x=>x.n===n);s.etapas={...(s.etapas||{}),red:!(s.etapas||{}).red};touch(s);changed();return render()}
+ }return actImgRef(a,el)}
+
+/* ---------- imagem do subtítulo e referências em uso ---------- */
+let escImg=null,escImgQ="",escImgRes=null,escRefAdd=false;
+function subImgTag(s){if(!s.img)return "";return imgTag({img:s.img.webViewLink||("https://drive.google.com/file/d/"+s.img.id+"/view"),n:s.title||s.n},true)}
+function escImgHTML(s){
+ if(escImg){return `<div class="panel esc-imgpick"><label class="label" style="margin-top:0" for="eiq">Procurar a imagem no Drive</label><input type="text" id="eiq" value="${esc(escImgQ)}" placeholder="Parte do nome do arquivo"><div id="eires">${escImgResHTML()}</div><div class="row"><button class="link" data-a="escimgx">Cancelar</button></div></div>`}
+ if(s.img)return `<div class="esc-img"><a href="${esc(s.img.webViewLink||"#")}" target="_blank" rel="noopener">${subImgTag(s)}</a><div class="row" style="margin-top:6px"><button class="link" data-a="escimg">Trocar imagem</button><button class="link" data-a="escimgdel">Tirar imagem</button></div></div>`;
+ return `<div class="row" style="margin:0 0 12px"><button class="secondary" data-a="escimg">+ Escolher imagem do Drive</button></div>`}
+function escImgResHTML(){if(!escImgRes)return `<p class="hint">Digite ao menos três letras.</p>`;return escImgRes.length?escImgRes.map(f=>`<button class="res" data-a="escimgpick" data-id="${f.id}" data-n="${esc(f.name)}"><img class="esc-thumb" src="${esc(f.thumbnailLink||"")}" onerror="this.style.display='none'"><p class="fname" style="margin:0">${esc(f.name)}</p></button>`).join(""):`<p class="hint">Nenhuma imagem com esse nome.</p>`}
+function escRefsHTML(s){const refs=(s.refs||[]).map(R).filter(Boolean).sort(ordemRef);
+ return `<div class="panel esc-refs"><p class="med-h">Referências em uso</p>
+ ${refs.length?refs.map(r=>`<div class="esc-refl"><p class="ab-ref" style="margin:0;flex:1">${refABNT(r)||esc(r.label)}</p><button class="d-x" data-a="escrefx" data-id="${r.id}" aria-label="Tirar ${esc(r.label)}">×</button></div>`).join(""):`<p class="hint" style="margin:0 0 8px">Nenhuma obra adicionada ainda.</p>`}
+ ${escRefAdd?`<div class="row" style="margin-top:8px;align-items:center">${refSelect("escrefsel","").replace("Ideia minha, sem leitura por trás","Escolher na Bibliografia")}<button class="link" data-a="escrefx2">Cancelar</button></div>`:`<div class="row" style="margin-top:4px"><button class="link" data-a="escrefadd">+ Adicionar obra</button></div>`}</div>`}
+function bindImgRef(){
+ on("#eiq","input",e=>{escImgQ=e.target.value;clearTimeout(lvTimer);lvTimer=setTimeout(async()=>{const q=escImgQ.trim();if(fold(q).length<3)escImgRes=null;else{try{escImgRes=await listFiles(`trashed=false and mimeType contains 'image/' and name contains '${qesc(q)}'`,"files(id,name,thumbnailLink,webViewLink)")}catch(e){escImgRes=[]}}const el=$("#eires");if(el)el.innerHTML=escImgResHTML()},500)});
+ on("#escrefsel","change",e=>{const v=e.target.value;if(!v)return;const s=L("subs").find(x=>x.n===route.k);s.refs=[...new Set([...(s.refs||[]),v])];touch(s);escRefAdd=false;changed();render()})}
+async function actImgRef(a,el){const d=el?el.dataset:{},s=L("subs").find(x=>x.n===route.k);
+ switch(a){
+ case "escimg":escImg={};escImgQ="";escImgRes=null;return render();
+ case "escimgx":escImg=null;return render();
+ case "escimgpick":{s.img={id:d.id,name:d.n,webViewLink:`https://drive.google.com/file/d/${d.id}/view`};touch(s);escImg=null;delete imgCache[d.id];changed();return render()}
+ case "escimgdel":{delete s.img;touch(s);changed();return render()}
+ case "escrefadd":escRefAdd=true;return render();
+ case "escrefx2":escRefAdd=false;return render();
+ case "escrefx":{s.refs=(s.refs||[]).filter(x=>x!==d.id);touch(s);changed();return render()}
  }return actLeitor(a,el)}
 
 /* ---------- desenho geral ---------- */
@@ -1982,7 +2014,7 @@ function bind(){
  on("#de-s","change",e=>de.state=e.target.value);
  document.querySelectorAll(".cites").forEach(i=>i.addEventListener("input",e=>de.inc[e.target.dataset.ref]=Math.max(0,parseInt(e.target.value)||0)));
  on("#acvq","input",e=>{acvQ=e.target.value;const pos=e.target.selectionStart;render();const n=$("#acvq");if(n){n.focus();n.setSelectionRange(pos,pos)}});
- bindForm();bindPlano();bindWa();bindCits();bindLeitor();bindMedidor();bindEscrever();bindAbnt();bindPsRef();bindDiss()}
+ bindForm();bindPlano();bindWa();bindCits();bindLeitor();bindMedidor();bindEscrever();bindImgRef();bindAbnt();bindPsRef();bindDiss()}
 
 /* ---------- ações ---------- */
 function tog(arr,id){const i=arr.indexOf(id);i>=0?arr.splice(i,1):arr.push(id);return arr.includes(id)}
