@@ -305,6 +305,16 @@ a.d-docl span:nth-child(2){text-decoration:underline;text-underline-offset:3px}
 .lv-ia{border:1px solid #2B4C9B}.lv-ia-orig{margin:0 0 10px;font-family:var(--serif);font-style:italic;font-size:14.5px;line-height:1.5;color:var(--muted)}
 .lv-ia-resp p{margin:0}.lv-ia-resp p+p{margin-top:10px}.lv-ia-resp small{display:block;font-size:11.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--accent);margin-bottom:3px}
 .lv-ia-resp p{font-family:var(--serif);font-size:16px;line-height:1.55}
+.lt-card{width:100%;text-align:left;padding:14px 16px}.lt-cap{border-radius:10px;overflow:hidden;margin:-2px -2px 0}.lt-cap img,.lt-cap .a-ph{height:90px}
+.lt-caprow{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.lt-capmain{flex:1;display:flex;flex-direction:column;gap:3px;text-align:left;border:1px solid var(--rule);border-radius:12px;background:var(--surface);padding:12px 14px;min-height:48px;justify-content:center}
+.lt-capmain small{font-size:12.5px;color:var(--muted)}
+.lt-pt{flex:none;width:38px;height:38px;border-radius:50%;border:1px solid var(--accent);background:color-mix(in srgb,var(--accent) 10%,var(--surface));color:var(--accent);display:grid;place-items:center;text-decoration:none}
+.lt-pt:not(.on){border-color:var(--rule);background:var(--surface);color:var(--muted)}
+.lt-img{margin-bottom:14px}.lt-img a{display:block}
+.lt-word{display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid var(--rule);border-radius:12px;background:var(--surface);text-decoration:none;color:var(--ink);font-size:15px;margin-bottom:6px}
+.lt-notaslab{display:block;margin:14px 0 6px}
+#ltnotas{width:100%;box-sizing:border-box;padding:12px 14px;border:1px solid var(--rule);border-radius:12px;background:var(--surface);font-family:var(--serif);font-size:16px;line-height:1.6;color:var(--ink);resize:vertical}
 .a-img{display:block;width:100%;max-height:420px;object-fit:contain;border-radius:10px;background:var(--surface);margin:0 0 14px}
 .a-img.big{max-height:520px}.a-ph{display:grid;place-items:center;text-align:center;padding:12px;height:220px;color:var(--muted);font-size:14px;border:1px dashed var(--rule)}
 .a-imgs{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
@@ -393,8 +403,8 @@ const fmtFull=ts=>new Date(ts).toLocaleDateString("pt-BR",{day:"numeric",month:"
 const brDate=iso=>iso?iso.slice(0,10).split("-").reverse().join("/"):"";
 
 /* ---------- dados ---------- */
-function seed(){return{version:1,concepts:SEED.map((n,i)=>({id:"seed-"+slug(n),name:n,color:PALETTE[i%PALETTE.length],updatedAt:"2026-01-01T00:00:00.000Z"})),refs:[],ideas:[],docs:[],subs:[],chapters:[],symbols:[],plans:[],sends:[],ritmo:[],books:[],marks:[],rascunhos:[],glossario:[],meta:{}}}
-function loadLocal(){try{const s=localStorage.getItem(KEY);if(s){const d=JSON.parse(s);for(const k of["concepts","refs","ideas","docs","subs","chapters","symbols","plans","sends","ritmo","books","marks","rascunhos","glossario"])d[k]=d[k]||[];d.meta=d.meta||{};return d}}catch(e){}return seed()}
+function seed(){return{version:1,concepts:SEED.map((n,i)=>({id:"seed-"+slug(n),name:n,color:PALETTE[i%PALETTE.length],updatedAt:"2026-01-01T00:00:00.000Z"})),refs:[],ideas:[],docs:[],subs:[],chapters:[],symbols:[],plans:[],sends:[],ritmo:[],books:[],marks:[],rascunhos:[],glossario:[],textos:[],capitulos:[],meta:{}}}
+function loadLocal(){try{const s=localStorage.getItem(KEY);if(s){const d=JSON.parse(s);for(const k of["concepts","refs","ideas","docs","subs","chapters","symbols","plans","sends","ritmo","books","marks","rascunhos","glossario","textos","capitulos"])d[k]=d[k]||[];d.meta=d.meta||{};return d}}catch(e){}return seed()}
 let db=loadLocal();
 function saveLocal(){try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){toast("Não foi possível salvar no aparelho.")}}
 const L=k=>db[k].filter(x=>!x.deleted);
@@ -409,7 +419,7 @@ function changed(){saveLocal();setDirty(true);scheduleSync()}
 function merge(a,b){
  const out={version:1,meta:{...(b.meta||{}),...(a.meta||{})}};
  if(((b.meta||{}).lastBackup||"")>((a.meta||{}).lastBackup||""))out.meta.lastBackup=b.meta.lastBackup;
- for(const k of["concepts","refs","ideas","docs","subs","chapters","symbols","plans","sends","ritmo","books","marks","rascunhos","glossario"]){const m=new Map();for(const x of(b[k]||[]))m.set(x.id,x);
+ for(const k of["concepts","refs","ideas","docs","subs","chapters","symbols","plans","sends","ritmo","books","marks","rascunhos","glossario","textos","capitulos"]){const m=new Map();for(const x of(b[k]||[]))m.set(x.id,x);
   for(const x of(a[k]||[])){const y=m.get(x.id);if(!y||(x.updatedAt||"")>=(y.updatedAt||""))m.set(x.id,x)}out[k]=[...m.values()]}
  return out}
 function makeConcept(name){name=name.trim();if(!name){toast("Digite o nome do conceito.");return null}
@@ -791,7 +801,7 @@ function vDiss(){
  const comPerg=subs.filter(s=>{const p=planRec(s.n);return p&&cheio(p.ficha.pergunta)}).length,comPlano=subs.filter(s=>estadoPlano(s.n)).length;
  const formNovo=pre=>`<div class="panel"><label class="label" for="dnn" style="margin-top:0">Número do subtítulo</label><input type="text" id="dnn" inputmode="decimal" value="${esc(pre||"")}" placeholder="Ex.: 2.3"><label class="label" for="dnt">Título</label><input type="text" id="dnt" placeholder="Pode ficar para depois"><button class="primary" data-a="dnewsave">Adicionar subtítulo</button><div class="row"><button class="link" data-a="dnewx">Cancelar</button></div></div>`;
  return `<h1>Dissertação</h1>
- <div class="row" style="margin:-8px 0 12px"><button class="secondary" data-a="nav" data-to="medidor">Medidor</button><button class="secondary" data-a="nav" data-to="form">Formalização</button><button class="secondary" data-a="nav" data-to="ritmo">Ritmo de escrita</button></div>
+ <div class="row" style="margin:-8px 0 12px"><button class="secondary" data-a="nav" data-to="medidor">Medidor</button><button class="secondary" data-a="nav" data-to="leituratextos">Leitura de textos</button><button class="secondary" data-a="nav" data-to="form">Formalização</button><button class="secondary" data-a="nav" data-to="ritmo">Ritmo de escrita</button></div>
  <p class="hint" style="margin:0 0 14px">Pasta ${esc(fo.name)} · ${dscanning?"lendo o Drive…":dscan&&dscan.folder===fo.id?"lida "+esc(fmtShort(dscan.at)):"ainda não lida"}</p>
  ${!hasToken()?connectBox("Para ler os documentos da dissertação, conecte o aplicativo ao Drive."):""}
  ${dscanErr?`<p class="warn">${esc(dscanErr)}</p>`:""}
@@ -2083,19 +2093,79 @@ async function actIaLeitura(a,el){const d=el?el.dataset:{};
  case "iacfg":iaLeit="cfg";return render();
  case "ialx":iaLeit=null;return render();
  case "iaretry":return pedirExplicacao(iaLeit.texto);
+ }return actLeituraTextos(a,el)}
+
+/* ---------- Leitura de textos: comentadores por capítulo, com imagem e Word ---------- */
+let ltNovo=false,ltCapNovo=false,ltImg=null,ltImgQ="",ltImgRes=null,ltDoc=null,ltDocQ="",ltDocRes=null,ltSaveT=null;
+function textoOf(id){return L("textos").find(t=>t.id===id)}
+function capsDoTexto(tid){return L("capitulos").filter(c=>c.textoId===tid)}
+function capOf2(id){return L("capitulos").find(c=>c.id===id)}
+function vLeituraTextos(){const l=L("textos");
+ return `<button class="back" data-a="nav" data-to="diss">‹ Dissertação</button><h1>Leitura de textos</h1>
+ <p class="hint" style="margin:-6px 0 16px">Comentadores e obras de apoio, organizados por capítulo — separado dos PDFs em “Ler um PDF”.</p>
+ ${l.length?l.map(t=>{const caps=capsDoTexto(t.id),comImg=caps.filter(c=>c.img).length;
+  return `<button class="doc lt-card" data-a="ltopen" data-id="${t.id}">${t.img?`<div class="lt-cap">${imgTag({img:t.img.webViewLink,n:t.nome},false)}</div>`:""}<p class="fname" style="margin:${t.img?"8px 0 0":"0"}">${esc(t.nome)}</p><p class="hint" style="margin:2px 0 0">${caps.length} ${caps.length===1?"capítulo":"capítulos"}${comImg?` · ${comImg} com imagem`:""}</p></button>`}).join(""):`<div class="empty">Nenhum texto ainda.</div>`}
+ ${ltNovo?`<div class="panel"><label class="label" style="margin-top:0" for="ltn">Nome do texto</label><input type="text" id="ltn" placeholder="Ex.: Roudinesco — comentário sobre a transferência"><div class="row"><button class="primary" data-a="ltnovosave">Adicionar</button><button class="link" data-a="ltnovox">Cancelar</button></div></div>`:`<div class="row"><button class="secondary" data-a="ltnovo">+ Novo texto</button></div>`}`}
+function vLeituraCaps(){const t=textoOf(route.k);if(!t)return vLeituraTextos();const caps=capsDoTexto(t.id);
+ return `<button class="back" data-a="nav" data-to="leituratextos">‹ Leitura de textos</button><h1 style="margin-bottom:2px">${esc(t.nome)}</h1><p class="hint" style="margin:0 0 16px">${caps.length} ${caps.length===1?"capítulo":"capítulos"}</p>
+ <div class="row" style="margin:-8px 0 14px"><button class="link" data-a="ltimgt" data-id="${t.id}">${t.img?"Trocar a imagem do texto":"+ Imagem para o texto"}</button>${t.img?`<button class="link" data-a="ltimgtx" data-id="${t.id}">Tirar</button>`:""}</div>
+ ${ltImg==="t:"+t.id?ltImgHTML():""}
+ ${caps.length?caps.map(c=>`<div class="lt-caprow"><button class="lt-capmain" data-a="ltcopen" data-id="${c.id}"><span class="${c.notas||c.img?"":"d-vazio"}">${esc(c.nome)}</span><small>${c.img?"com imagem":""}${c.img&&c.notas?" · ":""}${c.notas?"com notas":!c.img?"ainda vazio":""}</small></button>${c.doc?`<a class="lt-pt on" href="${esc(c.doc.webViewLink||"#")}" target="_blank" rel="noopener" title="Abrir o Word no Drive" aria-label="Abrir o Word de ${esc(c.nome)} no Drive"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></a>`:`<button class="lt-pt" data-a="ltdoc" data-id="${c.id}" title="Ligar o Word deste capítulo" aria-label="Ligar o Word de ${esc(c.nome)}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></button>`}</div>${ltDoc===c.id?ltDocHTML():""}`).join(""):`<p class="hint">Nenhum capítulo ainda.</p>`}
+ ${ltCapNovo?`<div class="panel"><label class="label" style="margin-top:0" for="ltcn">Nome do capítulo</label><input type="text" id="ltcn" placeholder="Ex.: Capítulo 2 — Transferência e repetição"><div class="row"><button class="primary" data-a="ltcapsave" data-id="${t.id}">Adicionar</button><button class="link" data-a="ltcapx">Cancelar</button></div></div>`:`<div class="row"><button class="secondary" data-a="ltcapnovo">+ Novo capítulo</button></div>`}
+ <p class="hint" style="margin-top:18px"><button class="link" data-a="ltdel" data-id="${t.id}">Excluir este texto</button></p>`}
+function vLeituraCap(){const c=capOf2(route.k);if(!c)return vLeituraTextos();const t=textoOf(c.textoId);
+ return `<button class="back" data-a="ltbackcaps" data-id="${esc(c.textoId)}">‹ ${esc(t?t.nome:"")}</button><h1>${esc(c.nome)}</h1>
+ ${ltImg==="c:"+c.id?ltImgHTML():c.img?`<div class="lt-img"><a href="${esc(c.img.webViewLink||"#")}" target="_blank" rel="noopener">${imgTag({img:c.img.webViewLink,n:c.nome},true)}</a><div class="row" style="margin-top:6px"><button class="link" data-a="ltimgc" data-id="${c.id}">Trocar imagem</button><button class="link" data-a="ltimgcx" data-id="${c.id}">Tirar imagem</button></div></div>`:`<div class="row" style="margin:0 0 12px"><button class="secondary" data-a="ltimgc" data-id="${c.id}">+ Escolher imagem do Drive</button></div>`}
+ ${c.doc?`<a class="lt-word" href="${esc(c.doc.webViewLink||"#")}" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Abrir o Word no Drive<span class="hint" style="margin-left:auto">${esc(c.doc.name)}</span></a>${ltDoc==="c2:"+c.id?ltDocHTML():`<div class="row" style="margin:6px 0 14px"><button class="link" data-a="ltdoc2" data-id="${c.id}">Trocar o Word ligado</button></div>`}`
+ :ltDoc==="c2:"+c.id?ltDocHTML():`<div class="row" style="margin:0 0 14px"><button class="secondary" data-a="ltdoc2" data-id="${c.id}">+ Ligar o Word no Drive</button></div>`}
+ <label class="label lt-notaslab" for="ltnotas">Resumo / notas deste capítulo</label>
+ <textarea id="ltnotas" rows="10" placeholder="Escreva aqui o resumo, ou o que quiser guardar deste capítulo">${esc(c.notas||"")}</textarea>
+ <p class="hint">Se salva sozinho. A imagem fica fixa no alto sempre que você abrir este capítulo.</p>`}
+function ltImgHTML(){return `<div class="panel esc-imgpick"><label class="label" style="margin-top:0" for="ltiq">Procurar a imagem no Drive</label><input type="text" id="ltiq" value="${esc(ltImgQ)}" placeholder="Parte do nome do arquivo"><div id="ltires">${ltImgResHTML()}</div><div class="row"><button class="link" data-a="ltimgx">Cancelar</button></div></div>`}
+function ltImgResHTML(){if(!ltImgRes)return `<p class="hint">Digite ao menos três letras.</p>`;return ltImgRes.length?ltImgRes.map(f=>`<button class="res" data-a="ltimgpick" data-id="${f.id}" data-n="${esc(f.name)}"><img class="esc-thumb" src="${esc(f.thumbnailLink||"")}" onerror="this.style.display='none'"><p class="fname" style="margin:0">${esc(f.name)}</p></button>`).join(""):`<p class="hint">Nenhuma imagem com esse nome.</p>`}
+function ltDocHTML(){return `<div class="panel esc-imgpick"><label class="label" style="margin-top:0" for="ltdq">Procurar o Word no Drive</label><input type="text" id="ltdq" value="${esc(ltDocQ)}" placeholder="Parte do nome do documento"><div id="ltdres">${ltDocResHTML()}</div><div class="row"><button class="link" data-a="ltdocx">Cancelar</button></div></div>`}
+function ltDocResHTML(){if(!ltDocRes)return `<p class="hint">Digite ao menos três letras.</p>`;return ltDocRes.length?ltDocRes.map(f=>`<button class="res" data-a="ltdocpick" data-id="${f.id}" data-n="${esc(f.name)}" data-l="${esc(f.webViewLink||"")}"><p class="fname" style="margin:0">${esc(f.name)}</p></button>`).join(""):`<p class="hint">Nenhum documento com esse nome.</p>`}
+function bindLeituraTextos(){
+ on("#ltiq","input",e=>{ltImgQ=e.target.value;clearTimeout(lvTimer);lvTimer=setTimeout(async()=>{const q=ltImgQ.trim();if(fold(q).length<3)ltImgRes=null;else{try{ltImgRes=await listFiles(`trashed=false and mimeType contains 'image/' and name contains '${qesc(q)}'`,"files(id,name,thumbnailLink,webViewLink)")}catch(e){ltImgRes=[]}}const el=$("#ltires");if(el)el.innerHTML=ltImgResHTML()},500)});
+ on("#ltdq","input",e=>{ltDocQ=e.target.value;clearTimeout(lvTimer);lvTimer=setTimeout(async()=>{const q=ltDocQ.trim();if(fold(q).length<3)ltDocRes=null;else{try{ltDocRes=await listFiles(`trashed=false and ${DOCQ} and name contains '${qesc(q)}'`,"files(id,name,webViewLink)")}catch(e){ltDocRes=[]}}const el=$("#ltdres");if(el)el.innerHTML=ltDocResHTML()},500)});
+ on("#ltnotas","input",e=>{const c=capOf2(route.k);c.notas=e.target.value;touch(c);clearTimeout(ltSaveT);ltSaveT=setTimeout(changed,900)})}
+async function actLeituraTextos(a,el){const d=el?el.dataset:{};
+ switch(a){
+ case "ltopen":return go({name:"leituracaps",k:d.id});
+ case "ltbackcaps":return go({name:"leituracaps",k:d.id});
+ case "ltcopen":return go({name:"leituracap",k:d.id});
+ case "ltnovo":ltNovo=true;return render();
+ case "ltnovox":ltNovo=false;return render();
+ case "ltnovosave":{const nome=($("#ltn").value||"").trim();if(!nome)return toast("Escreva o nome do texto.");const t=touch({id:uid("lt"),nome});db.textos.push(t);ltNovo=false;changed();render();return go({name:"leituracaps",k:t.id})}
+ case "ltdel":{if(!confirm("Excluir este texto e todos os seus capítulos do painel? Nada é apagado no Drive."))return;const t=textoOf(d.id);t.deleted=true;touch(t);capsDoTexto(d.id).forEach(c=>{c.deleted=true;touch(c)});changed();return go({name:"leituratextos"})}
+ case "ltcapnovo":ltCapNovo=true;return render();
+ case "ltcapx":ltCapNovo=false;return render();
+ case "ltcapsave":{const nome=($("#ltcn").value||"").trim();if(!nome)return toast("Escreva o nome do capítulo.");const c=touch({id:uid("lc"),textoId:d.id,nome,notas:""});db.capitulos.push(c);ltCapNovo=false;changed();return render()}
+ case "ltimgt":ltImg="t:"+d.id;ltImgQ="";ltImgRes=null;return render();
+ case "ltimgtx":{const t=textoOf(d.id);delete t.img;touch(t);changed();return render()}
+ case "ltimgc":ltImg="c:"+d.id;ltImgQ="";ltImgRes=null;return render();
+ case "ltimgcx":{const c=capOf2(d.id);delete c.img;touch(c);changed();return render()}
+ case "ltimgx":ltImg=null;return render();
+ case "ltimgpick":{const img={id:d.id,name:d.n,webViewLink:`https://drive.google.com/file/d/${d.id}/view`};
+  if(ltImg.startsWith("t:")){const t=textoOf(ltImg.slice(2));t.img=img;touch(t)}else{const c=capOf2(ltImg.slice(2));c.img=img;touch(c)}
+  delete imgCache[d.id];ltImg=null;changed();return render()}
+ case "ltdoc":ltDoc=d.id;ltDocQ="";ltDocRes=null;return render();
+ case "ltdoc2":ltDoc="c2:"+d.id;ltDocQ="";ltDocRes=null;return render();
+ case "ltdocx":ltDoc=null;return render();
+ case "ltdocpick":{const cid=ltDoc.startsWith("c2:")?ltDoc.slice(3):ltDoc,c=capOf2(cid);c.doc={id:d.id,name:d.n,webViewLink:d.l};touch(c);ltDoc=null;changed();return render()}
  }return actLeitor(a,el)}
 
 /* ---------- desenho geral ---------- */
 const NAV=[["capture","Capturar"],["concepts","Conceitos"],["timeline","Linha do tempo","Tempo"],["pending","Pendentes"],["diss","Dissertação"]];
 function renderNav(){
- const sub=["concept","batch","bib","auto","acervo","aficha","livros","leitor","dicionario"].includes(route.name),cur=sub?"concepts":["form","plano","ritmo","medidor","escrever"].includes(route.name)?"diss":route.name,np=pending().length;
+ const sub=["concept","batch","bib","auto","acervo","aficha","livros","leitor","dicionario"].includes(route.name),cur=sub?"concepts":["form","plano","ritmo","medidor","escrever","leituratextos","leituracaps","leituracap"].includes(route.name)?"diss":route.name,np=pending().length;
  $("#tabs").classList.toggle("cinco",NAV.length>4);$("#tabs").innerHTML=NAV.map(([k,l,s])=>`<button data-a="nav" data-to="${k}" aria-current="${cur===k}">${s||l}${k==="pending"&&np?`<span class="badge-n">${np}</span>`:""}</button>`).join("");
  $("#side").innerHTML=`<div class="topb"><span class="mark">${KNOT}</span><span class="brand">Bloco Mágico</span></div><button class="syncbtn" data-a="sync"></button>
  <nav>${NAV.map(([k,l])=>`<button data-a="nav" data-to="${k}" aria-current="${cur===k&&!sub}">${l}${k==="pending"&&np?`<span class="badge-n">${np}</span>`:""}</button>`).join("")}
  <button data-a="nav" data-to="batch" aria-current="${route.name==="batch"}">Organizar pasta do Drive</button><button data-a="nav" data-to="bib" aria-current="${route.name==="bib"}">Bibliografia</button><button data-a="nav" data-to="acervo" aria-current="${route.name==="acervo"||route.name==="aficha"}">Acervo Freud e Lacan</button><button data-a="nav" data-to="form" aria-current="${route.name==="form"}">Formalização</button></nav>
  <p class="sub">Seus conceitos</p><div class="cl">${sortedConcepts().map(c=>`<button data-a="open" data-id="${c.id}" aria-current="${route.name==="concept"&&route.id===c.id}"><span style="width:9px;height:9px;border-radius:50%;background:${c.color};display:inline-block;flex:none"></span>${esc(c.name)}</button>`).join("")}</div>`;
  setSync()}
-function render(){renderNav();$("#main").innerHTML=({capture:vCapture,concepts:vConcepts,concept:vConcept,timeline:vTimeline,pending:vPending,batch:vBatch,bib:vBib,diss:vDiss,auto:vAuto,acervo:vAcervo,aficha:vAficha,form:vForm,plano:vPlano,ritmo:vRitmo,medidor:vMedidor,escrever:vEscrever,livros:vLivros,leitor:vLeitor,dicionario:vDicionario}[route.name]||vConcepts)();bind()}
+function render(){renderNav();$("#main").innerHTML=({capture:vCapture,concepts:vConcepts,concept:vConcept,timeline:vTimeline,pending:vPending,batch:vBatch,bib:vBib,diss:vDiss,auto:vAuto,acervo:vAcervo,aficha:vAficha,form:vForm,plano:vPlano,ritmo:vRitmo,medidor:vMedidor,escrever:vEscrever,livros:vLivros,leitor:vLeitor,dicionario:vDicionario,leituratextos:vLeituraTextos,leituracaps:vLeituraCaps,leituracap:vLeituraCap}[route.name]||vConcepts)();bind()}
 function softRender(){const a=document.activeElement;if(a&&$("#main").contains(a)&&/INPUT|TEXTAREA|SELECT/.test(a.tagName)){renderNav()}else render()}
 function on(sel,ev,fn){const e=$(sel);if(e)e.addEventListener(ev,fn);return e}
 function bind(){
@@ -2113,7 +2183,7 @@ function bind(){
  on("#de-s","change",e=>de.state=e.target.value);
  document.querySelectorAll(".cites").forEach(i=>i.addEventListener("input",e=>de.inc[e.target.dataset.ref]=Math.max(0,parseInt(e.target.value)||0)));
  on("#acvq","input",e=>{acvQ=e.target.value;const pos=e.target.selectionStart;render();const n=$("#acvq");if(n){n.focus();n.setSelectionRange(pos,pos)}});
- bindForm();bindPlano();bindWa();bindCits();bindLeitor();bindMedidor();bindEscrever();bindImgRef();bindDic();bindIaLeitura();bindAbnt();bindPsRef();bindDiss()}
+ bindForm();bindPlano();bindWa();bindCits();bindLeitor();bindMedidor();bindEscrever();bindImgRef();bindDic();bindIaLeitura();bindLeituraTextos();bindAbnt();bindPsRef();bindDiss()}
 
 /* ---------- ações ---------- */
 function tog(arr,id){const i=arr.indexOf(id);i>=0?arr.splice(i,1):arr.push(id);return arr.includes(id)}
