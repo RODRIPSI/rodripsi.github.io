@@ -251,7 +251,7 @@ a.d-docl span:nth-child(2){text-decoration:underline;text-underline-offset:3px}
 .lv-bar .secondary{padding:6px 12px;min-width:40px}.lv-bar input{width:74px;padding:6px 8px}.lv-pn{font-size:14px;padding:0 4px}
 #lvwrap{width:100%;overflow-x:auto;margin:6px 0 14px}.lv-load{padding:40px 0;text-align:center;color:var(--muted)}
 .lv-page{position:relative;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.15);margin:0 auto}.lv-page canvas{display:block}
-.lv-marks{position:absolute;inset:0;pointer-events:none;z-index:1}.lv-hl{position:absolute;background:rgba(242,196,0,.38);border-radius:2px;mix-blend-mode:multiply}.lv-hl.plan{background:rgba(43,76,155,.25)}
+.lv-marks{position:absolute;inset:0;pointer-events:none;z-index:3}.lv-hl{position:absolute;background:rgba(242,196,0,.38);border-radius:2px;mix-blend-mode:multiply}.lv-hl.plan{background:rgba(43,76,155,.25)}
 .lv-sel{position:fixed;left:0;right:0;bottom:calc(76px + env(safe-area-inset-bottom,0px));display:flex;justify-content:center;z-index:30;pointer-events:none}.lv-page.marcando,.lv-page.marcando .textLayer{touch-action:none;cursor:text}.lv-page.marcando{outline:2px solid #e2b400;outline-offset:2px}.lv-mk[aria-pressed="true"]{background:#e2b400;border-color:#e2b400;color:#1C2330}
 .lv-sel[hidden]{display:none}.lv-sel .primary{pointer-events:auto;box-shadow:0 4px 14px rgba(0,0,0,.25);width:auto;padding:12px 22px}
 .lv-save{border:1px solid var(--accent)}.lv-m{border-left:3px solid #e2b400;padding:4px 0 4px 10px;margin:10px 0}.lv-pag .inline input{max-width:120px}
@@ -297,6 +297,14 @@ a.d-docl span:nth-child(2){text-decoration:underline;text-underline-offset:3px}
 .esc-img{margin-bottom:14px}.esc-img a{display:block}.esc-thumb{display:block;width:100%;height:90px;object-fit:cover;border-radius:8px 8px 0 0;margin-bottom:6px;background:var(--soft)}
 .esc-imgpick{margin-bottom:14px}.esc-imgpick .res{align-items:stretch}
 .esc-refs{margin:14px 0}.esc-refl{display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px dashed var(--rule)}
+.lv-dicb{margin-left:8px;pointer-events:auto;box-shadow:0 4px 14px rgba(0,0,0,.2)}
+.lv-hl.dic{pointer-events:auto;cursor:pointer;background:transparent;border-bottom:3px solid #1B7A43;z-index:3}
+.lv-dicpop{position:fixed;left:16px;right:16px;bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:31;max-width:420px;margin:0 auto;background:var(--surface);border:1px solid var(--rule);border-radius:14px;padding:14px 16px;box-shadow:0 8px 24px rgba(0,0,0,.18)}
+.dic-t{margin:0;font-family:var(--serif);font-size:18px;font-weight:600;color:#1B7A43}.dic-d{margin:4px 0 0;font-size:15px;line-height:1.5}
+.dic-it{padding:14px 16px}
+.lv-ia{border:1px solid #2B4C9B}.lv-ia-orig{margin:0 0 10px;font-family:var(--serif);font-style:italic;font-size:14.5px;line-height:1.5;color:var(--muted)}
+.lv-ia-resp p{margin:0}.lv-ia-resp p+p{margin-top:10px}.lv-ia-resp small{display:block;font-size:11.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--accent);margin-bottom:3px}
+.lv-ia-resp p{font-family:var(--serif);font-size:16px;line-height:1.55}
 .a-img{display:block;width:100%;max-height:420px;object-fit:contain;border-radius:10px;background:var(--surface);margin:0 0 14px}
 .a-img.big{max-height:520px}.a-ph{display:grid;place-items:center;text-align:center;padding:12px;height:220px;color:var(--muted);font-size:14px;border:1px dashed var(--rule)}
 .a-imgs{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
@@ -385,8 +393,8 @@ const fmtFull=ts=>new Date(ts).toLocaleDateString("pt-BR",{day:"numeric",month:"
 const brDate=iso=>iso?iso.slice(0,10).split("-").reverse().join("/"):"";
 
 /* ---------- dados ---------- */
-function seed(){return{version:1,concepts:SEED.map((n,i)=>({id:"seed-"+slug(n),name:n,color:PALETTE[i%PALETTE.length],updatedAt:"2026-01-01T00:00:00.000Z"})),refs:[],ideas:[],docs:[],subs:[],chapters:[],symbols:[],plans:[],sends:[],ritmo:[],books:[],marks:[],rascunhos:[],meta:{}}}
-function loadLocal(){try{const s=localStorage.getItem(KEY);if(s){const d=JSON.parse(s);for(const k of["concepts","refs","ideas","docs","subs","chapters","symbols","plans","sends","ritmo","books","marks","rascunhos"])d[k]=d[k]||[];d.meta=d.meta||{};return d}}catch(e){}return seed()}
+function seed(){return{version:1,concepts:SEED.map((n,i)=>({id:"seed-"+slug(n),name:n,color:PALETTE[i%PALETTE.length],updatedAt:"2026-01-01T00:00:00.000Z"})),refs:[],ideas:[],docs:[],subs:[],chapters:[],symbols:[],plans:[],sends:[],ritmo:[],books:[],marks:[],rascunhos:[],glossario:[],meta:{}}}
+function loadLocal(){try{const s=localStorage.getItem(KEY);if(s){const d=JSON.parse(s);for(const k of["concepts","refs","ideas","docs","subs","chapters","symbols","plans","sends","ritmo","books","marks","rascunhos","glossario"])d[k]=d[k]||[];d.meta=d.meta||{};return d}}catch(e){}return seed()}
 let db=loadLocal();
 function saveLocal(){try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){toast("Não foi possível salvar no aparelho.")}}
 const L=k=>db[k].filter(x=>!x.deleted);
@@ -401,7 +409,7 @@ function changed(){saveLocal();setDirty(true);scheduleSync()}
 function merge(a,b){
  const out={version:1,meta:{...(b.meta||{}),...(a.meta||{})}};
  if(((b.meta||{}).lastBackup||"")>((a.meta||{}).lastBackup||""))out.meta.lastBackup=b.meta.lastBackup;
- for(const k of["concepts","refs","ideas","docs","subs","chapters","symbols","plans","sends","ritmo","books","marks","rascunhos"]){const m=new Map();for(const x of(b[k]||[]))m.set(x.id,x);
+ for(const k of["concepts","refs","ideas","docs","subs","chapters","symbols","plans","sends","ritmo","books","marks","rascunhos","glossario"]){const m=new Map();for(const x of(b[k]||[]))m.set(x.id,x);
   for(const x of(a[k]||[])){const y=m.get(x.id);if(!y||(x.updatedAt||"")>=(y.updatedAt||""))m.set(x.id,x)}out[k]=[...m.values()]}
  return out}
 function makeConcept(name){name=name.trim();if(!name){toast("Digite o nome do conceito.");return null}
@@ -1087,12 +1095,21 @@ const GUIA=[
  ["Um vale exatamente quando o outro vale","⇔","equivalência","A ⇔ B","A e B são verdadeiros ou falsos juntos.",""],
  ["Por definição","≔","definição","x ≔ ...","Introduz um nome para algo.",""],
  ["Negar","¬, ∉, ≠","negação","x ∉ L; f(x) ≠ g(s,x)","Afirma que não pertence, não é igual, não vale.",""]];
-let formTab="notacao",symEdit=null,formQ="",formRes=null,formBusy=false,formErr="",fdraw=null;
-const aiKey=()=>{try{return localStorage.getItem("bm-ai-key")||""}catch(e){return ""}};
-const aiModel=()=>{try{return localStorage.getItem("bm-ai-model")||"claude-sonnet-5"}catch(e){return "claude-sonnet-5"}};
+let formTab="notacao",symEdit=null,formQ="",formRes=null,formBusy=false,formErr="",fdraw=null,aiCfgOpen=false;
+const AI_DEFAULT_MODEL={anthropic:"claude-sonnet-5",openai:"gpt-4o"};
+const aiProvider=()=>{try{return localStorage.getItem("bm-ai-provider")||"anthropic"}catch(e){return "anthropic"}};
+function aiMigrarChaveAntiga(){try{const velha=localStorage.getItem("bm-ai-key");if(velha&&!localStorage.getItem("bm-ai-key-anthropic")){localStorage.setItem("bm-ai-key-anthropic",velha);localStorage.setItem("bm-ai-model-anthropic",localStorage.getItem("bm-ai-model")||AI_DEFAULT_MODEL.anthropic);localStorage.removeItem("bm-ai-key");localStorage.removeItem("bm-ai-model")}}catch(e){}}
+const aiKey=p=>{aiMigrarChaveAntiga();try{return localStorage.getItem("bm-ai-key-"+(p||aiProvider()))||""}catch(e){return ""}};
+const aiModel=p=>{aiMigrarChaveAntiga();try{return localStorage.getItem("bm-ai-model-"+(p||aiProvider()))||AI_DEFAULT_MODEL[p||aiProvider()]}catch(e){return AI_DEFAULT_MODEL[p||aiProvider()]}};
 function seedSymbols(){if(db.meta.symSeeded)return;NOTACAO_INICIAL.forEach(([sym,leitura,tipo,def,cuidado])=>db.symbols.push(touch({id:uid("y"),sym,leitura,tipo,def,cuidado,onde:"Formalização matemática: lugar, valor e atribuição (22/09/2026)",hist:[]})));db.meta.symSeeded=true;changed()}
 async function askAI(system,user){
- const k=aiKey();if(!k)throw new Error("Configure a chave da IA primeiro.");
+ const prov=aiProvider(),k=aiKey();if(!k)throw new Error("Configure a chave da IA primeiro.");
+ if(prov==="openai"){
+  let r;try{r=await fetch("https://api.openai.com/v1/chat/completions",{method:"POST",headers:{"Authorization":"Bearer "+k,"Content-Type":"application/json"},
+   body:JSON.stringify({model:aiModel(),max_tokens:1800,messages:[{role:"system",content:system},{role:"user",content:user}]})})}
+  catch(e){throw new Error("Não consegui falar com a OpenAI direto do aplicativo. O navegador pode estar bloqueando (a OpenAI não libera chamadas de página como esta, diferente da Anthropic). Tente a Anthropic (Claude), ou me avise para eu ver outro caminho.")}
+  const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error((j.error&&j.error.message)||("Erro "+r.status));
+  return (j.choices||[]).map(c=>c.message&&c.message.content||"").join("\n")}
  const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"x-api-key":k,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true","content-type":"application/json"},
   body:JSON.stringify({model:aiModel(),max_tokens:1800,system,messages:[{role:"user",content:user}]})});
  const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error((j.error&&j.error.message)||("Erro "+r.status));
@@ -1160,7 +1177,7 @@ function vForm(){
    ${(r.opcoes||[]).map((o,i)=>`<div class="f-op"><p class="f-s">${esc(o.expressao)}</p><p class="f-l">${esc(o.objeto||"")}${o.leitura?" · "+esc(o.leitura):""}</p><p style="margin:8px 0 0"><b>Por quê:</b> ${esc(o.porque||"")}</p><p style="margin:6px 0 0"><b>O que não afirma:</b> ${esc(o.limite||"")}</p><div class="row"><button class="secondary" data-a="fsave" data-i="${i}">Guardar como ideia</button></div></div>`).join("")}
    ${(r.novos_simbolos||[]).filter(Boolean).length?`<p class="label">Símbolos novos propostos</p>${r.novos_simbolos.map(s=>`<p style="margin:0 0 4px">${esc(s)}</p>`).join("")}`:""}
    ${r.cuidado?`<p class="warn" style="margin-top:12px">${esc(r.cuidado)}</p>`:""}${r.pergunta?`<p class="label">Para decidir</p><p style="margin:0">${esc(r.pergunta)}</p>`:""}</div>`):""}
-  ${k?`<details style="margin-top:18px"><summary class="hint" style="cursor:pointer">Configuração da IA</summary><div class="panel" style="margin-top:8px">${aiCfg()}</div></details>`:""}`}
+  ${k?`<details class="ai-cfg" style="margin-top:18px" ${aiCfgOpen?"open":""}><summary class="hint" style="cursor:pointer">Configuração da IA</summary><div class="panel" style="margin-top:8px">${aiCfg()}</div></details>`:""}`}
  // desenhos
  if(!hasToken())return head+connectBox();
  const d=fdraw||{q:"",res:null};
@@ -1172,9 +1189,12 @@ function vForm(){
   <p class="hint">${d.imgs.length} ${d.imgs.length===1?"desenho encontrado":"desenhos encontrados"}${d.pulados?`; ${d.pulados} em formato que não dá para mostrar (desenho feito com formas do Word ou imagem vetorial)`:""}. Cada um vira uma ideia com a legenda como texto e vai para Pendentes, onde você marca os conceitos.</p>
   <div class="f-grid">${d.imgs.map((x,i)=>`<button class="f-img" data-a="fdtog" data-i="${i}" aria-pressed="${x.sel}"><img src="${x.url}" alt=""><span>${esc(x.cap||"Sem legenda")}</span><i>${x.sel?"✓":""}</i></button>`).join("")}</div>
   ${err?`<p class="err">${esc(err)}</p>`:""}<button class="primary" data-a="fdcreate" ${n&&!d.busy?"":"disabled"}>${d.busy?"Salvando no Drive…":`Criar ${n} ${n===1?"ideia":"ideias"} com imagem`}</button>`}
-function aiCfg(){return `<label class="label" for="aik" style="margin-top:0">Chave da API</label><input type="password" id="aik" value="${esc(aiKey())}" placeholder="sk-ant-..." autocomplete="off">
- <label class="label" for="aim">Modelo</label><input type="text" id="aim" value="${esc(aiModel())}"><div class="row"><button class="secondary" data-a="aisave">Salvar</button>${aiKey()?`<button class="link" data-a="aidel">Apagar a chave deste aparelho</button>`:""}</div>
- <p class="hint">Crie a chave em console.anthropic.com. O uso da API é cobrado à parte da assinatura do Claude; defina lá um limite de gasto mensal.</p>`}
+function aiCfg(){const p=aiProvider();
+ return `<div class="chips" style="margin-bottom:10px"><button class="chip" data-a="aiprov" data-p="anthropic" aria-pressed="${p==="anthropic"}">Anthropic (Claude)</button><button class="chip" data-a="aiprov" data-p="openai" aria-pressed="${p==="openai"}">OpenAI (ChatGPT)</button></div>
+ <label class="label" for="aik" style="margin-top:0">Chave da API${p==="openai"?" da OpenAI":" da Anthropic"}</label><input type="password" id="aik" value="${esc(aiKey(p))}" placeholder="${p==="openai"?"sk-...":"sk-ant-..."}" autocomplete="off">
+ <label class="label" for="aim">Modelo</label><input type="text" id="aim" value="${esc(aiModel(p))}"><div class="row"><button class="secondary" data-a="aisave">Salvar</button>${aiKey(p)?`<button class="link" data-a="aidel">Apagar a chave deste aparelho</button>`:""}</div>
+ ${p==="openai"?`<p class="warn">A OpenAI costuma bloquear chamadas feitas direto de uma página como esta (é uma regra do navegador, chamada CORS). Pode funcionar ou não — vale testar. Se der erro de conexão, é provavelmente isso.</p><p class="hint">Crie a chave em platform.openai.com/api-keys. O crédito é o mesmo que você já colocou na plataforma de API — separado da assinatura do ChatGPT Plus.</p>`
+ :`<p class="hint">Crie a chave em console.anthropic.com. O uso da API é cobrado à parte da assinatura do Claude; defina lá um limite de gasto mensal.</p>`}`}
 function symEditor(s){return `<div class="panel"><label class="label" for="ys" style="margin-top:0">Símbolo ou expressão</label><input type="text" id="ys" value="${esc(s.sym)}">
  <label class="label" for="yl">Leitura</label><input type="text" id="yl" value="${esc(s.leitura)}"><label class="label" for="yt">Tipo matemático</label><input type="text" id="yt" value="${esc(s.tipo)}" placeholder="conjunto, elemento, função, relação…">
  <label class="label" for="yd">Definição</label><textarea id="yd" class="small">${esc(s.def)}</textarea><label class="label" for="yc">Cuidado</label><input type="text" id="yc" value="${esc(s.cuidado)}">
@@ -1185,6 +1205,7 @@ function fdResults(){const d=fdraw;if(!d||!d.res)return `<p class="hint">Digite 
 let fdTimer=null;
 function bindForm(){
  on("#fq","input",e=>formQ=e.target.value);
+ on("details.ai-cfg","toggle",e=>aiCfgOpen=e.target.open);
  on("#fdq","input",e=>{fdraw=fdraw||{};fdraw.q=e.target.value;clearTimeout(fdTimer);fdTimer=setTimeout(async()=>{const q=fdraw.q.trim();if(fold(q).length<3){fdraw.res=null;$("#fdres").innerHTML=fdResults();return}
   fdraw.loading=true;fdraw.res=[];$("#fdres").innerHTML=fdResults();try{fdraw.res=await listFiles(`trashed=false and mimeType='${DOCX}' and name contains '${qesc(q)}'`,"files(id,name,mimeType,modifiedTime)")}catch(e){fdraw.res=[]}fdraw.loading=false;const el=$("#fdres");if(el)el.innerHTML=fdResults()},500)})}
 async function actForm(a,el){
@@ -1197,8 +1218,9 @@ async function actForm(a,el){
   if(id==="novo")db.symbols.push(touch({id:uid("y"),...n,hist:[]}));else{const s=db.symbols.find(x=>x.id===id);if(s.sym!==n.sym||s.leitura!==n.leitura||s.def!==n.def||s.tipo!==n.tipo)(s.hist=s.hist||[]).push({dt:todayIso(),sym:s.sym,leitura:s.leitura,def:s.def});Object.assign(s,n);touch(s)}
   symEdit=null;changed();render();return toast("Notação salva")}
  case "symdel":{if(!confirm("Excluir este símbolo da notação?"))return;const s=db.symbols.find(x=>x.id===id);s.deleted=true;touch(s);symEdit=null;changed();return render()}
- case "aisave":{try{localStorage.setItem("bm-ai-key",$("#aik").value.trim());localStorage.setItem("bm-ai-model",$("#aim").value.trim()||"claude-sonnet-5")}catch(e){}render();return toast("Configuração salva neste aparelho")}
- case "aidel":{try{localStorage.removeItem("bm-ai-key")}catch(e){}render();return toast("Chave apagada deste aparelho")}
+ case "aiprov":try{localStorage.setItem("bm-ai-provider",el.dataset.p)}catch(e){}aiCfgOpen=true;return render();
+ case "aisave":{const p=aiProvider();try{localStorage.setItem("bm-ai-key-"+p,$("#aik").value.trim());localStorage.setItem("bm-ai-model-"+p,$("#aim").value.trim()||AI_DEFAULT_MODEL[p])}catch(e){}if(iaLeit==="cfg")iaLeit=null;aiCfgOpen=true;render();return toast("Configuração salva neste aparelho")}
+ case "aidel":{try{localStorage.removeItem("bm-ai-key-"+aiProvider())}catch(e){}aiCfgOpen=true;render();return toast("Chave apagada deste aparelho")}
  case "fask":{formQ=($("#fq").value||"").trim();if(!formQ)return toast("Descreva a ideia primeiro.");formBusy=true;formErr="";formRes=null;render();
   try{const t=await askAI(promptForm(),formQ);formRes=parseAI(t)||{raw:t}}catch(e){formErr=e.message||"Não foi possível falar com a IA."}formBusy=false;return render()}
  case "fsave":{const o=formRes.opcoes[+el.dataset.i];db.ideas.push(touch({id:uid("i"),text:`${formQ}\n\n${o.expressao}\n${o.porque||""}`,moment:"Formalização, com sugestão da IA",refId:"",concepts:[],ts:nowIso()}));changed();return toast("Guardada em Pendentes, para você marcar os conceitos")}
@@ -1638,7 +1660,7 @@ const book=id=>L("books").find(b=>b.id===id);
 const impressa=(b,p)=>b&&b.off!=null?String(p+b.off):"";
 function vLivros(){const l=L("books").sort((a,b)=>(b.updatedAt||"").localeCompare(a.updatedAt||""));
  return `<button class="back" data-a="nav" data-to="concepts">‹ Conceitos</button><h1>Ler um PDF</h1>
- <p class="hint" style="margin:-6px 0 16px">Abra um livro do Drive, sublinhe um trecho e leve como citação, com a página impressa.</p>
+ <p class="hint" style="margin:-6px 0 16px">Abra um livro do Drive, sublinhe um trecho e leve como citação, com a página impressa.</p><div class="row" style="margin:0 0 14px"><button class="secondary" data-a="dicionario">Meu dicionário</button></div>
  <label class="label" for="lvq" style="margin-top:0">Procurar um PDF no Drive</label><input type="text" id="lvq" value="${esc(lvQ)}" placeholder="Parte do nome, ex.: Obras Completas volume 12"><div id="lvres">${lvResHTML()}</div>
  ${l.length?`<p class="label">Livros já abertos</p>${l.map(b=>{const n=L("marks").filter(m=>m.bookId===b.id).length;return `<button class="res" data-a="lvgo" data-id="${b.id}"><p class="fname" style="margin:0">${esc(b.name)}</p><p class="hint" style="margin:2px 0 0">${b.lastPage?`parou na página ${b.lastPage} do PDF`:""}${n?` · ${n} ${n===1?"sublinhado":"sublinhados"}`:""}${b.refId&&R(b.refId)?` · ${esc(R(b.refId).label)}`:""}</p></button>`}).join("")}`:""}`}
 function lvResHTML(){if(!lvRes)return `<p class="hint">Digite ao menos três letras.</p>`;return lvRes.length?lvRes.map(f=>`<button class="res" data-a="lvopen" data-id="${f.id}" data-n="${esc(f.name)}"><p class="fname" style="margin:0">${esc(f.name)}</p></button>`).join(""):`<p class="hint">Nenhum PDF com esse nome.</p>`}
@@ -1656,7 +1678,9 @@ function vLeitor(){const b=book(route.k);if(!b)return vLivros();
  <div id="lvwrap"><div class="lv-load">${rd.loading?"Abrindo o livro…":""}</div></div>
  ${b.off!=null?`<p class="hint">Página impressa = página do PDF ${b.off>=0?"+ "+b.off:"− "+(-b.off)}. <button class="link" data-a="lvoffx">corrigir</button></p>`:""}
  <details class="block" ${ms.length?"":""}><summary>Sublinhados deste livro <span class="count">${ms.length}</span></summary>${ms.length?ms.map(m=>`<div class="lv-m"><p class="ct-q">“${esc(m.text.length>240?m.text.slice(0,240)+"…":m.text)}”</p><p class="hint" style="margin:3px 0 0">${m.printed?`p. ${esc(m.printed)} · `:""}PDF ${m.page} · ${m.dest==="plan"?`planejamento do ${esc(m.n||"")}`:"fragmento"}</p><div class="row"><button class="link" data-a="lvjump" data-p="${m.page}">Ir à página</button>${m.dest==="plan"&&m.n?`<button class="link" data-a="lvplano" data-n="${esc(m.n)}" data-k="${m.k!=null?m.k:""}">Abrir no planejamento do ${esc(m.n)}</button>`:""}<button class="link" data-a="lvmdel" data-id="${m.id}">Apagar o sublinhado</button></div></div>`).join(""):`<p class="hint">Selecione um trecho no texto e toque em “Levar como citação”.</p>`}</details>
- <div id="lvsel" class="lv-sel" hidden><button class="primary" data-a="lvleva">Levar como citação</button></div>`}
+ <div id="lvsel" class="lv-sel" hidden><button class="primary" data-a="lvleva">Levar como citação</button><button class="secondary lv-dicb" data-a="lvdic">Marcar no dicionário</button><button class="secondary lv-dicb" data-a="lvia">Explicar com IA</button></div>
+ ${dicEdit?`<div class="panel esc-imgpick" style="position:fixed;left:16px;right:16px;bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:31;max-width:520px;margin:0 auto">${dicFormHTML()}</div>`:""}
+ ${dicPop?dicPopHTML():""}${iaLeit?`<div style="position:fixed;left:16px;right:16px;bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:32;max-width:560px;margin:0 auto;max-height:70vh;overflow-y:auto">${iaLeitBloco()}</div>`:""}`}
 function saveHTML(b){const s=lsave,subs=subsSorted(),demos=s.n?(planRec(s.n)||{demos:[]}).demos:[];
  return `<div class="panel lv-save"><p class="label" style="margin-top:0">Citação</p><textarea id="lvtxt" class="small">${esc(s.text)}</textarea>
  <div class="inline" style="margin-top:8px;align-items:center"><label class="hint" for="lvpimp" style="margin:0;white-space:nowrap">Página impressa</label><input type="text" id="lvpimp" value="${esc(s.printed)}" placeholder="ex.: 44" style="max-width:120px"><span class="hint" style="margin:0">PDF ${s.page}</span></div>
@@ -1687,7 +1711,9 @@ async function desenharPagina(){
  if(rd.key!==key)return;const temTexto=!tl.dataset.vazio;if(!temTexto){const av=document.createElement("p");av.className="warn";av.style.margin="8px 0 0";av.textContent="Esta página não tem texto selecionável (parece ser uma imagem escaneada).";node.after(av)}
  pintarMarcas();marcarAchados()}
 function pintarMarcas(){const b=book(route.k),node=rd.node;if(!b||!node)return;const box=node.querySelector(".lv-marks");box.innerHTML="";
- L("marks").filter(m=>m.bookId===b.id&&m.page===(b.lastPage||1)).forEach(m=>(m.rects||[]).forEach(([x,y,w,h])=>{const d=document.createElement("div");d.className="lv-hl"+(m.dest==="plan"?" plan":"");d.style.cssText=`left:${x*100}%;top:${y*100}%;width:${w*100}%;height:${h*100}%`;box.appendChild(d)}))}
+ L("marks").filter(m=>m.bookId===b.id&&m.page===(b.lastPage||1)).forEach(m=>(m.rects||[]).forEach(([x,y,w,h])=>{const d=document.createElement("div");d.className="lv-hl"+(m.dest==="plan"?" plan":m.dest==="dic"?" dic":"");d.style.cssText=`left:${x*100}%;top:${y*100}%;width:${w*100}%;height:${h*100}%`;
+  if(m.dest==="dic"){d.setAttribute("data-a","dicmark");d.setAttribute("data-id",m.id);d.setAttribute("data-gid",m.glossId);d.setAttribute("role","button");d.setAttribute("tabindex","0");d.setAttribute("aria-label","Ver o significado de "+m.text)}
+  box.appendChild(d)}))}
 function pontoTexto(x,y,tl){let n=null,o=0;
  if(document.caretPositionFromPoint){const c=document.caretPositionFromPoint(x,y);if(c){n=c.offsetNode;o=c.offset}}
  else if(document.caretRangeFromPoint){const r=document.caretRangeFromPoint(x,y);if(r){n=r.startContainer;o=r.startOffset}}
@@ -1984,19 +2010,92 @@ async function actImgRef(a,el){const d=el?el.dataset:{},s=L("subs").find(x=>x.n=
  case "escrefadd":escRefAdd=true;return render();
  case "escrefx2":escRefAdd=false;return render();
  case "escrefx":{s.refs=(s.refs||[]).filter(x=>x!==d.id);touch(s);changed();return render()}
+ }return actDic(a,el)}
+
+/* ---------- dicionário pessoal: marcar palavras na leitura ---------- */
+let dicEdit=null,dicPop=null; // dicEdit:{termo,def,markId?} | dicPop:{markId}
+function glossOf(id){return db.glossario.find(g=>g.id===id&&!g.deleted)}
+function glossAcha(termo){const f=fold(termo);return db.glossario.find(g=>!g.deleted&&fold(g.termo)===f)}
+function vDicionario(){const l=L("glossario").slice().sort((a,b)=>fold(a.termo).localeCompare(fold(b.termo),"pt"));
+ return `<button class="back" data-a="nav" data-to="livros">‹ Livros</button><h1>Meu dicionário</h1>
+ <p class="hint" style="margin:-6px 0 16px">Palavras marcadas durante a leitura, com o significado que você escreveu.</p>
+ ${l.length?l.map(g=>{const n=L("marks").filter(m=>m.glossId===g.id).length,ed=dicEdit&&dicEdit.glossId===g.id;
+  return `<div class="doc dic-it">${ed?dicFormHTML():`<p class="dic-t">${esc(g.termo)}</p><p class="dic-d">${esc(g.def)}</p><p class="hint" style="margin:6px 0 0">${n} ${n===1?"marcação":"marcações"} na leitura</p><div class="row"><button class="link" data-a="dicedit2" data-id="${g.id}">Editar</button><button class="link" data-a="dicdel" data-id="${g.id}">Excluir do dicionário</button></div>`}</div>`}).join(""):`<div class="empty">Nenhuma palavra marcada ainda. Ao ler um PDF, selecione uma palavra e toque em “Marcar no dicionário”.</div>`}`}
+function dicFormHTML(){const d=dicEdit;return `<label class="label" style="margin-top:0" for="dict">Palavra ou expressão</label><input type="text" id="dict" value="${esc(d.termo)}" placeholder="Ex.: Nachträglichkeit">
+ <label class="label" for="dicd">Significado</label><textarea id="dicd" class="small" placeholder="Como você define, ou a tradução/explicação que anotou">${esc(d.def)}</textarea>
+ <div class="row"><button class="primary" style="margin-top:8px" data-a="dicsave">Salvar</button><button class="link" data-a="dicx">Cancelar</button></div>`}
+function dicPopHTML(){const g=glossOf(dicPop.gid);if(!g)return "";
+ return `<div class="lv-dicpop"><p class="dic-t" style="margin:0">${esc(g.termo)}</p><p class="dic-d" style="margin:6px 0 0">${esc(g.def)}</p>
+ <div class="row" style="margin-top:10px"><button class="link" data-a="dicedit" data-id="${g.id}">Editar significado</button><button class="link" data-a="dicunmk" data-id="${dicPop.markId}">Tirar esta marcação</button><button class="link" data-a="dicpopx">Fechar</button></div></div>`}
+function bindIaLeitura(){}
+function bindDic(){on("#dict","input",()=>{});on("#dicd","input",()=>{})}
+async function actDic(a,el){const d=el?el.dataset:{};
+ switch(a){
+ case "dicionario":return go({name:"dicionario"});
+ case "lvdic":{const b=book(route.k);if(!rd.sel)return;const termo=rd.sel.text.trim();const ex=glossAcha(termo);
+  if(ex){db.marks.push(touch({id:uid("m"),bookId:b.id,page:b.lastPage||1,rects:rd.sel.rects,text:termo,dest:"dic",glossId:ex.id}));const s=document.getSelection();if(s)s.removeAllRanges();rd.sel=null;changed();render();return toast(`“${termo}” já estava no dicionário`)}
+  dicEdit={termo,def:"",markId:null,pending:{page:b.lastPage||1,rects:rd.sel.rects}};const s=document.getSelection();if(s)s.removeAllRanges();rd.sel=null;return render()}
+ case "dicx":dicEdit=null;return render();
+ case "dicsave":{const termo=($("#dict").value||"").trim(),def=($("#dicd").value||"").trim();if(!termo)return toast("Escreva a palavra.");if(!def)return toast("Escreva o significado.");
+  let g=dicEdit.glossId?glossOf(dicEdit.glossId):glossAcha(termo);
+  if(g){g.termo=termo;g.def=def;touch(g)}else{g=touch({id:uid("g"),termo,def});db.glossario.push(g)}
+  if(dicEdit.pending){const b=book(route.k);db.marks.push(touch({id:uid("m"),bookId:b.id,page:dicEdit.pending.page,rects:dicEdit.pending.rects,text:termo,dest:"dic",glossId:g.id}))}
+  dicEdit=null;changed();render();return toast("Salvo no dicionário")}
+ case "dicedit":{const g=glossOf(d.id);dicEdit={termo:g.termo,def:g.def,glossId:g.id};dicPop=null;return render()}
+ case "dicedit2":{const g=glossOf(d.id);dicEdit={termo:g.termo,def:g.def,glossId:g.id};return render()}
+ case "dicdel":{if(!confirm("Excluir esta palavra do dicionário? As marcações feitas na leitura também somem."))return;const g=glossOf(d.id);g.deleted=true;touch(g);db.marks.filter(m=>m.glossId===d.id).forEach(m=>{m.deleted=true;touch(m)});changed();return render()}
+ case "dicpopx":dicPop=null;return render();
+ case "dicunmk":{const m=db.marks.find(x=>x.id===d.id);if(m){m.deleted=true;touch(m)}dicPop=null;changed();return render()}
+ case "dicmark":{const g=glossOf(d.gid);if(!g)return;dicPop=(dicPop&&dicPop.markId===d.id)?null:{markId:d.id,gid:g.id};return render()}
+ }return actIaLeitura(a,el)}
+
+/* ---------- IA de leitura: explicar/simplificar um trecho selecionado ---------- */
+let iaLeit=null; // null | {texto} | {texto,loading:true} | {texto,resposta} | {texto,erro} | "cfg"
+function promptLeitura(){
+ return `Você ajuda um leitor de textos de psicanálise a entender uma passagem difícil. Ele é a única autoridade sobre a interpretação; você só reformula e explica, nunca acrescenta o que o texto não diz.
+Regras:
+- Reescreva a passagem de forma mais clara e direta, desfazendo frases longas e invertidas, sem trocar o vocabulário técnico por termos vagos.
+- Depois, em uma ou duas frases, explique o que a passagem quer dizer, só com base no que está nela.
+- Se a passagem depender claramente de algo dito antes, que não está no trecho, diga isso em vez de adivinhar.
+- Nunca invente uma citação, uma fonte, ou uma ideia que não esteja no trecho. Nunca decida o que o trecho "realmente quer dizer" além do que ele autoriza.
+- Responda em português, direto, sem introduções como "Claro" ou "Aqui está".
+Formato da resposta:
+REESCRITA: <a passagem reescrita>
+SIGNIFICADO: <a explicação em 1-2 frases>`}
+function iaLeitBloco(){
+ if(!iaLeit)return "";
+ if(iaLeit==="cfg")return `<div class="panel lv-ia"><p class="label" style="margin-top:0">IA para explicar trechos</p><p class="hint" style="margin:0 0 10px">Funciona com uma chave da API da Anthropic (Claude). Cole a sua chave — ela fica só neste aparelho.</p>${aiCfg()}<div class="row"><button class="link" data-a="ialx">Fechar</button></div></div>`;
+ return `<div class="panel lv-ia"><p class="label" style="margin-top:0">Trecho selecionado</p><p class="lv-ia-orig">“${esc(iaLeit.texto.length>500?iaLeit.texto.slice(0,500)+"…":iaLeit.texto)}”</p>
+ ${iaLeit.loading?`<p class="hint">Pensando…</p>`:iaLeit.erro?`<p class="err">${esc(iaLeit.erro)}</p><div class="row"><button class="secondary" data-a="iaretry">Tentar de novo</button>${/chave/i.test(iaLeit.erro)?`<button class="link" data-a="iacfg">Configurar a chave</button>`:""}</div>`
+ :iaLeit.resposta?`<div class="lv-ia-resp">${formatarIaResp(iaLeit.resposta)}</div><div class="row"><button class="link" data-a="iaretry">Perguntar de novo</button></div>`:""}
+ <div class="row"><button class="link" data-a="ialx">Fechar</button></div></div>`}
+function formatarIaResp(t){const re=t.match(/REESCRITA:\s*([\s\S]*?)\s*SIGNIFICADO:\s*([\s\S]*)/i);
+ if(!re)return `<p>${esc(t)}</p>`;
+ return `<p><small>Reescrita</small>${esc(re[1].trim())}</p><p style="margin-top:10px"><small>Significado</small>${esc(re[2].trim())}</p>`}
+async function pedirExplicacao(texto){iaLeit={texto,loading:true};render();
+ try{const t=await askAI(promptLeitura(),texto);iaLeit={texto,resposta:t}}
+ catch(e){iaLeit={texto,erro:e.message||"Não foi possível falar com a IA."}}render()}
+async function actIaLeitura(a,el){const d=el?el.dataset:{};
+ switch(a){
+ case "lvia":{if(!rd.sel)return;const t=rd.sel.text.trim();const s=document.getSelection();if(s)s.removeAllRanges();rd.sel=null;
+  if(!aiKey()){iaLeit="cfg";return render()}
+  return pedirExplicacao(t)}
+ case "iacfg":iaLeit="cfg";return render();
+ case "ialx":iaLeit=null;return render();
+ case "iaretry":return pedirExplicacao(iaLeit.texto);
  }return actLeitor(a,el)}
 
 /* ---------- desenho geral ---------- */
 const NAV=[["capture","Capturar"],["concepts","Conceitos"],["timeline","Linha do tempo","Tempo"],["pending","Pendentes"],["diss","Dissertação"]];
 function renderNav(){
- const sub=["concept","batch","bib","auto","acervo","aficha","livros","leitor"].includes(route.name),cur=sub?"concepts":["form","plano","ritmo","medidor","escrever"].includes(route.name)?"diss":route.name,np=pending().length;
+ const sub=["concept","batch","bib","auto","acervo","aficha","livros","leitor","dicionario"].includes(route.name),cur=sub?"concepts":["form","plano","ritmo","medidor","escrever"].includes(route.name)?"diss":route.name,np=pending().length;
  $("#tabs").classList.toggle("cinco",NAV.length>4);$("#tabs").innerHTML=NAV.map(([k,l,s])=>`<button data-a="nav" data-to="${k}" aria-current="${cur===k}">${s||l}${k==="pending"&&np?`<span class="badge-n">${np}</span>`:""}</button>`).join("");
  $("#side").innerHTML=`<div class="topb"><span class="mark">${KNOT}</span><span class="brand">Bloco Mágico</span></div><button class="syncbtn" data-a="sync"></button>
  <nav>${NAV.map(([k,l])=>`<button data-a="nav" data-to="${k}" aria-current="${cur===k&&!sub}">${l}${k==="pending"&&np?`<span class="badge-n">${np}</span>`:""}</button>`).join("")}
  <button data-a="nav" data-to="batch" aria-current="${route.name==="batch"}">Organizar pasta do Drive</button><button data-a="nav" data-to="bib" aria-current="${route.name==="bib"}">Bibliografia</button><button data-a="nav" data-to="acervo" aria-current="${route.name==="acervo"||route.name==="aficha"}">Acervo Freud e Lacan</button><button data-a="nav" data-to="form" aria-current="${route.name==="form"}">Formalização</button></nav>
  <p class="sub">Seus conceitos</p><div class="cl">${sortedConcepts().map(c=>`<button data-a="open" data-id="${c.id}" aria-current="${route.name==="concept"&&route.id===c.id}"><span style="width:9px;height:9px;border-radius:50%;background:${c.color};display:inline-block;flex:none"></span>${esc(c.name)}</button>`).join("")}</div>`;
  setSync()}
-function render(){renderNav();$("#main").innerHTML=({capture:vCapture,concepts:vConcepts,concept:vConcept,timeline:vTimeline,pending:vPending,batch:vBatch,bib:vBib,diss:vDiss,auto:vAuto,acervo:vAcervo,aficha:vAficha,form:vForm,plano:vPlano,ritmo:vRitmo,medidor:vMedidor,escrever:vEscrever,livros:vLivros,leitor:vLeitor}[route.name]||vConcepts)();bind()}
+function render(){renderNav();$("#main").innerHTML=({capture:vCapture,concepts:vConcepts,concept:vConcept,timeline:vTimeline,pending:vPending,batch:vBatch,bib:vBib,diss:vDiss,auto:vAuto,acervo:vAcervo,aficha:vAficha,form:vForm,plano:vPlano,ritmo:vRitmo,medidor:vMedidor,escrever:vEscrever,livros:vLivros,leitor:vLeitor,dicionario:vDicionario}[route.name]||vConcepts)();bind()}
 function softRender(){const a=document.activeElement;if(a&&$("#main").contains(a)&&/INPUT|TEXTAREA|SELECT/.test(a.tagName)){renderNav()}else render()}
 function on(sel,ev,fn){const e=$(sel);if(e)e.addEventListener(ev,fn);return e}
 function bind(){
@@ -2014,7 +2113,7 @@ function bind(){
  on("#de-s","change",e=>de.state=e.target.value);
  document.querySelectorAll(".cites").forEach(i=>i.addEventListener("input",e=>de.inc[e.target.dataset.ref]=Math.max(0,parseInt(e.target.value)||0)));
  on("#acvq","input",e=>{acvQ=e.target.value;const pos=e.target.selectionStart;render();const n=$("#acvq");if(n){n.focus();n.setSelectionRange(pos,pos)}});
- bindForm();bindPlano();bindWa();bindCits();bindLeitor();bindMedidor();bindEscrever();bindImgRef();bindAbnt();bindPsRef();bindDiss()}
+ bindForm();bindPlano();bindWa();bindCits();bindLeitor();bindMedidor();bindEscrever();bindImgRef();bindDic();bindIaLeitura();bindAbnt();bindPsRef();bindDiss()}
 
 /* ---------- ações ---------- */
 function tog(arr,id){const i=arr.indexOf(id);i>=0?arr.splice(i,1):arr.push(id);return arr.includes(id)}
