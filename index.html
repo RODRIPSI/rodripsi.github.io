@@ -281,6 +281,19 @@ a.d-docl span:nth-child(2){text-decoration:underline;text-underline-offset:3px}
 .med-cb{width:24px;height:24px;flex:none;border-radius:6px;border:2px solid var(--rule);display:grid;place-items:center;font-size:13px;font-weight:600;color:#fff}.med-cb.on{background:var(--accent);border-color:var(--accent)}
 .med-lb{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--muted)}.med-rit{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:12px;padding:10px 12px;border:1px solid;border-radius:10px}
 .med-mini{width:100%;display:flex;align-items:center;gap:12px;border:0;background:none;padding:0 0 12px;margin-bottom:10px;border-bottom:1px solid var(--rule);text-align:left}.med-mini b{font-family:var(--serif);font-size:28px}
+.esc-cab{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;flex-wrap:wrap}
+.esc-tit{margin:2px 0 0;font-family:var(--serif);font-size:17px;color:var(--ink)}
+.esc-cx{display:flex;flex-direction:column;gap:0}.esc-cx .d-q{background:none;padding:0}
+.esc-lista{display:flex;flex-direction:column;gap:12px}
+.esc-b{background:var(--surface);border:1px solid var(--rule);border-radius:14px;padding:12px 14px 14px;display:flex;flex-direction:column;gap:8px}
+.esc-bh{display:flex;align-items:center;gap:10px}.esc-sig{padding:3px 9px;border-radius:7px;color:#fff;font-size:12.5px;font-weight:600;letter-spacing:.03em}
+.esc-nm{flex:1;font-size:14.5px;font-weight:600}.esc-mv{width:40px;height:40px;border:1px solid var(--rule);border-radius:9px;background:var(--surface);color:var(--ink);font-size:16px}.esc-x{color:var(--c-x)}
+.esc-ta{width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid var(--rule);border-radius:10px;background:var(--bg);font-family:var(--serif);font-size:16.5px;line-height:1.6;color:var(--ink);resize:vertical}
+.esc-ta::placeholder{color:var(--muted);font-style:italic}
+.esc-pas{display:flex;flex-direction:column;gap:6px;padding:10px;border-radius:10px;background:var(--bg)}
+.esc-pasit{min-height:44px;padding:8px 12px;border:1px solid var(--rule);border-radius:9px;background:var(--surface);text-align:left;font-size:14px;color:var(--ink)}
+.esc-add{border:1px dashed var(--rule);border-radius:14px;padding:12px 14px;margin-top:6px}
+.esc-corr{padding:26px 28px}.esc-par{margin:0 0 14px;font-family:var(--serif);font-size:17px;line-height:1.7;text-indent:1.25cm}.esc-cit{margin:0 0 14px 4cm;font-family:var(--serif);font-size:14.5px;line-height:1.6}
 .a-img{display:block;width:100%;max-height:420px;object-fit:contain;border-radius:10px;background:var(--surface);margin:0 0 14px}
 .a-img.big{max-height:520px}.a-ph{display:grid;place-items:center;text-align:center;padding:12px;height:220px;color:var(--muted);font-size:14px;border:1px dashed var(--rule)}
 .a-imgs{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
@@ -369,8 +382,8 @@ const fmtFull=ts=>new Date(ts).toLocaleDateString("pt-BR",{day:"numeric",month:"
 const brDate=iso=>iso?iso.slice(0,10).split("-").reverse().join("/"):"";
 
 /* ---------- dados ---------- */
-function seed(){return{version:1,concepts:SEED.map((n,i)=>({id:"seed-"+slug(n),name:n,color:PALETTE[i%PALETTE.length],updatedAt:"2026-01-01T00:00:00.000Z"})),refs:[],ideas:[],docs:[],subs:[],chapters:[],symbols:[],plans:[],sends:[],ritmo:[],books:[],marks:[],meta:{}}}
-function loadLocal(){try{const s=localStorage.getItem(KEY);if(s){const d=JSON.parse(s);for(const k of["concepts","refs","ideas","docs","subs","chapters","symbols","plans","sends","ritmo","books","marks"])d[k]=d[k]||[];d.meta=d.meta||{};return d}}catch(e){}return seed()}
+function seed(){return{version:1,concepts:SEED.map((n,i)=>({id:"seed-"+slug(n),name:n,color:PALETTE[i%PALETTE.length],updatedAt:"2026-01-01T00:00:00.000Z"})),refs:[],ideas:[],docs:[],subs:[],chapters:[],symbols:[],plans:[],sends:[],ritmo:[],books:[],marks:[],rascunhos:[],meta:{}}}
+function loadLocal(){try{const s=localStorage.getItem(KEY);if(s){const d=JSON.parse(s);for(const k of["concepts","refs","ideas","docs","subs","chapters","symbols","plans","sends","ritmo","books","marks","rascunhos"])d[k]=d[k]||[];d.meta=d.meta||{};return d}}catch(e){}return seed()}
 let db=loadLocal();
 function saveLocal(){try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){toast("Não foi possível salvar no aparelho.")}}
 const L=k=>db[k].filter(x=>!x.deleted);
@@ -385,7 +398,7 @@ function changed(){saveLocal();setDirty(true);scheduleSync()}
 function merge(a,b){
  const out={version:1,meta:{...(b.meta||{}),...(a.meta||{})}};
  if(((b.meta||{}).lastBackup||"")>((a.meta||{}).lastBackup||""))out.meta.lastBackup=b.meta.lastBackup;
- for(const k of["concepts","refs","ideas","docs","subs","chapters","symbols","plans","sends","ritmo","books","marks"]){const m=new Map();for(const x of(b[k]||[]))m.set(x.id,x);
+ for(const k of["concepts","refs","ideas","docs","subs","chapters","symbols","plans","sends","ritmo","books","marks","rascunhos"]){const m=new Map();for(const x of(b[k]||[]))m.set(x.id,x);
   for(const x of(a[k]||[])){const y=m.get(x.id);if(!y||(x.updatedAt||"")>=(y.updatedAt||""))m.set(x.id,x)}out[k]=[...m.values()]}
  return out}
 function makeConcept(name){name=name.trim();if(!name){toast("Digite o nome do conceito.");return null}
@@ -813,7 +826,7 @@ function subCard(s,x){
   ${cheio(s.objetivo)?`<div class="d-blk"><small>Objetivo</small><p>${esc(s.objetivo).replace(/\n/g,"<br>")}</p></div>`:""}
   ${eixos.length?`<div class="d-blk"><small>Eixos possíveis</small><div class="d-eixos">${eixos.map(t=>`<span>${esc(t)}</span>`).join("")}</div></div>`:""}`
   :`<p class="hint" style="margin:14px 0 4px">Ainda sem pergunta, objetivo e eixos.</p><div class="row" style="margin-top:4px"><button class="secondary d-out" data-a="dsedit" data-id="${s.id}">Escrever pergunta, objetivo e eixos</button></div>`}
-  <div class="row" style="margin:16px 0 6px"><button class="secondary d-acc" data-a="plano" data-k="${esc(s.n)}">${e?"Abrir planejamento":"Planejar este subtítulo"}</button>${docs.length?`<button class="secondary d-wa" data-a="wsopen" data-kind="sub" data-ref="${esc(s.n)}">Enviar à orientadora</button>`:""}</div>
+  <div class="row" style="margin:16px 0 6px"><button class="secondary d-acc" data-a="plano" data-k="${esc(s.n)}">${e?"Abrir planejamento":"Planejar este subtítulo"}</button><button class="secondary" data-a="escrever" data-k="${esc(s.n)}">Escrever</button>${docs.length?`<button class="secondary d-wa" data-a="wsopen" data-kind="sub" data-ref="${esc(s.n)}">Enviar à orientadora</button>`:""}</div>
   ${(()=>{const ls=lastSend("sub",s.n);return ls?`<p class="hint" style="margin:0 0 6px">Último envio à orientadora: ${esc(brDate(ls.dt))}</p>`:""})()}
   ${ws&&ws.kind==="sub"&&ws.ref===s.n?wsPanel():""}
   <p class="d-lab">Documentos</p>
@@ -1435,7 +1448,7 @@ async function actWa(a,el){const d=el?el.dataset:{};
  case "candusar":{const i=db.ideas.find(x=>x.id===d.id),m=(i.subs||[]).find(x=>x.n===d.n);if(m){m.usada=!m.usada;touch(i);changed()}return render()}
  case "canddev":{const i=db.ideas.find(x=>x.id===d.id);i.subs=(i.subs||[]).filter(x=>x.n!==d.n);touch(i);changed();render();return toast("Devolvida às ideias")}
  case "ritper":ritPer=d.p;return render();
- }return actForm(a,el)}
+ }return actMedidor(a,el)}
 let isubOpen=null;
 function ideaActs(i){const subs=i.subs||[],ls=lastSend("idea",i.id),rr=i.refId&&R(i.refId);
  return `${rr&&rr.abnt&&cheio(rr.abnt.autores)?`<p class="ab-cham" style="margin:8px 0 0">${esc(chamada(rr,paginaNum(i.text)))}</p>`:""}${subs.length?`<p class="hint" style="margin:8px 0 0">Material candidato: ${subs.map(x=>esc(x.n)+(x.usada?" ✓":"")).join(", ")}</p>`:""}${ls?`<p class="hint" style="margin:4px 0 0">Enviada à orientadora em ${esc(brDate(ls.dt))}</p>`:""}
@@ -1735,7 +1748,7 @@ async function actLeitor(a,el){const d=el?el.dataset:{};
   db.marks.push(touch(mark));const dest=s.dest,cs=s.cs.length;lsave=null;rd.sel=null;changed();render();
   return toast(dest==="frag"?(cs?"Citação salva como fragmento":"Citação salva em Pendentes, sem conceito"):`Salva no ${mark.n}. Está em Sublinhados deste livro → Abrir no planejamento`)}
  case "lvmdel":{const m=db.marks.find(x=>x.id===d.id);if(!m||!confirm("Apagar este sublinhado? O fragmento ou a passagem que você criou com ele continuam onde estão."))return;m.deleted=true;touch(m);changed();return render()}
- }return actMedidor(a,el)}
+ }return actForm(a,el)}
 
 /* ---------- referências ABNT (NBR 6023:2018) e chamadas (NBR 10520:2023) ---------- */
 let refEdit=null;
@@ -1883,19 +1896,75 @@ async function actMedidor(a,el){const d=el?el.dataset:{};
  case "medet":{const s=db.subs.find(x=>x.id===d.id);s.etapas={...(s.etapas||{}),[d.k]:!(s.etapas||{})[d.k]};touch(s);changed();return render()}
  case "medtom":db.meta.medidor={...medCfg(),ironia:d.v==="1"};changed();return render();
  case "medpis":db.meta.medidor={...medCfg(),pisca:d.v};changed();return render();
- }return actPlano(a,el)}
+ }return actEscrever(a,el)}
+
+/* ---------- escrever: rascunho guiado (CO → NE → PE → CI → LEI → DES → NOINSU) ---------- */
+const RTIPOS={CO:{nome:"Contexto",orient:"De onde o problema parte?",cor:"#4B5A78"},NE:{nome:"Necessidade",orient:"Por que o que já se sabe não basta?",cor:"#8A5600"},
+ PE:{nome:"Pergunta",orient:"O que este trecho vai responder?",cor:"#B35A0E"},CI:{nome:"Citação",orient:"Qual passagem sustenta? Insira do planejamento ou escreva.",cor:"#2B4C9B"},
+ LEI:{nome:"Leitura",orient:"O que a passagem autoriza dizer — e o que ela não autoriza?",cor:"#1C2330"},DES:{nome:"Descoberta",orient:"O que se ganhou com ela?",cor:"#1B7A43"},
+ NOINSU:{nome:"Nova insuficiência",orient:"O que ainda fica em aberto?",cor:"#C0392B"},LIVRE:{nome:"Livre",orient:"Escreva sem etiqueta.",cor:"#6B7280"}};
+let escModo="blocos",escPas=null,escSaveT=null;
+function rascVazio(){return{blocos:["CO","NE","PE","CI","LEI","DES","NOINSU"].map((t,i)=>({id:"b"+i,tipo:t,texto:""}))}}
+function rascOf(n){let r=L("rascunhos").find(x=>x.n===n);if(!r){r={id:"rasc-"+n+"-"+uid("x").slice(-4),n,...rascVazio()};db.rascunhos.push(r)}return r}
+function rascPalavras(r){return r.blocos.reduce((a,b)=>a+(b.texto.trim()?b.texto.trim().split(/\s+/).length:0),0)}
+function vEscrever(){const n=route.k,s=L("subs").find(x=>x.n===n)||{n},p=planRec(n),r=rascOf(n);
+ const eixos=String(s.eixos||"").split("\n").map(t=>t.trim()).filter(Boolean),pas=p?p.demos.flatMap((d,k)=>d.passagens.map((x,j)=>({...x,k,j}))):[];
+ return `<button class="back" data-a="nav" data-to="diss">‹ Dissertação</button>
+ <div class="esc-cab"><div><h1 style="margin:0">Escrever o ${esc(n)}</h1>${s.title?`<p class="esc-tit">${esc(s.title)}</p>`:""}</div><span class="hint" style="margin:0">${rascPalavras(r)} ${rascPalavras(r)===1?"palavra":"palavras"}</span></div>
+ ${(cheio(p&&p.ficha.pergunta)||eixos.length)?`<div class="panel esc-cx">
+  ${p&&cheio(p.ficha.pergunta)?`<div class="d-q" style="margin:0"><small>Pergunta do subtítulo</small><p>${esc(p.ficha.pergunta)}</p></div>`:""}
+  ${eixos.length?`<div class="chips" style="margin-top:${p&&cheio(p.ficha.pergunta)?"12px":"0"}"><span class="hint" style="margin:0 4px 0 0">Eixos</span>${eixos.map(t=>`<span class="chip" style="pointer-events:none">${esc(t)}</span>`).join("")}</div>`:""}</div>`:""}
+ <div class="chips" style="margin:12px 0"><button class="chip" data-a="escmodo" data-v="blocos" aria-pressed="${escModo==="blocos"}">Escrever por blocos</button><button class="chip" data-a="escmodo" data-v="corrido" aria-pressed="${escModo==="corrido"}">Ver como texto corrido</button></div>
+ ${escModo==="blocos"?vEscBlocos(r,pas):vEscCorrido(r)}
+ <div class="row" style="margin-top:16px"><button class="primary" data-a="esclevar" style="width:auto;padding:0 22px">Levar para o Word no Drive</button><button class="secondary" data-a="escred" aria-pressed="${!!(s.etapas&&s.etapas.red)}">${s.etapas&&s.etapas.red?"✓ Marcado como redigido":"Marcar como redigido"}</button></div>
+ <p class="hint">O rascunho se salva sozinho. As palavras escritas entram no ritmo e no medidor.</p>`}
+function vEscBlocos(r,pas){
+ return `<div class="esc-lista">${r.blocos.map((b,i)=>{const t=RTIPOS[b.tipo];
+  return `<div class="esc-b"><div class="esc-bh"><span class="esc-sig" style="background:${t.cor}">${b.tipo==="LIVRE"?"—":b.tipo}</span><span class="esc-nm">${t.nome}</span>
+   <button class="esc-mv" data-a="escmv" data-i="${i}" data-d="-1" aria-label="Subir bloco">↑</button><button class="esc-mv" data-a="escmv" data-i="${i}" data-d="1" aria-label="Descer bloco">↓</button><button class="esc-mv esc-x" data-a="escrm" data-i="${i}" aria-label="Tirar bloco">×</button></div>
+   <textarea class="esc-ta" data-i="${i}" rows="${b.texto.length>220?6:3}" placeholder="${esc(t.orient)}">${esc(b.texto)}</textarea>
+   ${b.tipo==="CI"?`<button class="secondary" data-a="escpas" data-i="${i}">Inserir passagem do planejamento</button>
+    ${escPas===i?`<div class="esc-pas">${pas.length?pas.filter(x=>cheio(x.passagem)).map(x=>`<button class="esc-pasit" data-a="escpasp" data-i="${i}" data-k="${x.k}" data-j="${x.j}">${esc(x.passagem.length>90?x.passagem.slice(0,90)+"…":x.passagem)}${x.pagina?` — ${esc(x.pagina)}`:""}</button>`).join(""):`<p class="hint" style="margin:0">Nenhuma passagem no planejamento deste subtítulo ainda.</p>`}</div>`:""}`:""}
+  </div>`}).join("")}</div>
+ <div class="esc-add"><p class="hint" style="margin:0 0 8px">Acrescentar bloco — nenhum é obrigatório, e a ordem é sua</p><div class="chips">${Object.entries(RTIPOS).map(([k,t])=>`<button class="chip" data-a="escadd" data-t="${k}"><b style="color:${t.cor}">${k==="LIVRE"?"+":k}</b> ${t.nome}</button>`).join("")}</div></div>`}
+function vEscCorrido(r){const esc2=r.blocos.filter(b=>cheio(b.texto));
+ if(!esc2.length)return `<div class="panel"><p class="hint" style="margin:0">Nada escrito ainda. Volte para “Escrever por blocos”.</p></div>`;
+ return `<div class="panel esc-corr">${esc2.map(b=>{const cit=b.tipo==="CI"&&b.texto.length>180;return `<p class="${cit?"esc-cit":"esc-par"}">${esc(b.texto.trim())}</p>`}).join("")}</div>`}
+function bindEscrever(){document.querySelectorAll(".esc-ta").forEach(t=>{
+ t.addEventListener("input",()=>{const r=rascOf(route.k);r.blocos[+t.dataset.i].texto=t.value;touch(r);clearTimeout(escSaveT);escSaveT=setTimeout(changed,900);
+  const w=$(".esc-cab .hint");if(w){const n=rascPalavras(r);w.textContent=n+(n===1?" palavra":" palavras")}})})}
+async function actEscrever(a,el){const d=el?el.dataset:{},n=route.k;
+ switch(a){
+ case "escrever":escModo="blocos";escPas=null;return go({name:"escrever",k:d.k});
+ case "escmodo":escModo=d.v;return render();
+ case "escmv":{const r=rascOf(n),i=+d.i,j=i+ +d.d;if(j<0||j>=r.blocos.length)return;[r.blocos[i],r.blocos[j]]=[r.blocos[j],r.blocos[i]];touch(r);changed();return render()}
+ case "escrm":{const r=rascOf(n);r.blocos.splice(+d.i,1);touch(r);changed();return render()}
+ case "escadd":{const r=rascOf(n);r.blocos.push({id:uid("b"),tipo:d.t,texto:""});touch(r);changed();return render()}
+ case "escpas":escPas=escPas===+d.i?null:+d.i;return render();
+ case "escpasp":{const r=rascOf(n),p=planRec(n),ps=p.demos[+d.k].passagens[+d.j],ch=ps.refId&&R(ps.refId)&&R(ps.refId).abnt?chamada(R(ps.refId),paginaNum(ps.pagina)):(ps.pagina?`(${ps.pagina})`:"");
+  r.blocos[+d.i].texto=`${ps.passagem||""}${ch?" "+ch:""}`.trim();touch(r);escPas=null;changed();return render()}
+ case "esclevar":{toast("Gerando o Word…");await getToken(true);const r=rascOf(n),s=L("subs").find(x=>x.n===n)||{n},P=[{t:s.title||("Subtítulo "+n),s:"title"},{t:"Rascunho gerado pelo Bloco Mágico em "+fmtFull(nowIso()),s:"meta"}];
+  const esc2=r.blocos.filter(b=>cheio(b.texto));if(!esc2.length){toast("Não há nada escrito ainda.");return}
+  esc2.forEach(b=>P.push({t:b.texto.trim(),s:"p"}));
+  try{const m=await upload({name:`${n} — Rascunho — ${todayIso()}.docx`,parents:[await subFolder("Rascunhos")]},await buildDocx(P));
+   const s2=L("subs").find(x=>x.n===n);if(s2){s2.links=[...(s2.links||[]).filter(l=>l.kind!=="rasc"),{id:m.id,name:m.name,link:m.webViewLink,kind:"rasc"}];touch(s2);
+    dscan=dscan||{at:nowIso(),folder:db.meta.dissFolder&&db.meta.dissFolder.id,files:[]};dscan.links=dscan.links||{};dscan.links[m.id]={id:m.id,name:m.name,webViewLink:m.webViewLink,modifiedTime:todayIso()+"T00:00:00Z"}}
+   changed();render();return toast("Word salvo no Drive, em Bloco Mágico / Rascunhos")}
+  catch(e){return toast("Não foi possível salvar no Drive agora.")}}
+ case "escred":{const s=L("subs").find(x=>x.n===n);s.etapas={...(s.etapas||{}),red:!(s.etapas||{}).red};touch(s);changed();return render()}
+ }return actLeitor(a,el)}
 
 /* ---------- desenho geral ---------- */
 const NAV=[["capture","Capturar"],["concepts","Conceitos"],["timeline","Linha do tempo","Tempo"],["pending","Pendentes"],["diss","Dissertação"]];
 function renderNav(){
- const sub=["concept","batch","bib","auto","acervo","aficha","livros","leitor"].includes(route.name),cur=sub?"concepts":["form","plano","ritmo","medidor"].includes(route.name)?"diss":route.name,np=pending().length;
+ const sub=["concept","batch","bib","auto","acervo","aficha","livros","leitor"].includes(route.name),cur=sub?"concepts":["form","plano","ritmo","medidor","escrever"].includes(route.name)?"diss":route.name,np=pending().length;
  $("#tabs").classList.toggle("cinco",NAV.length>4);$("#tabs").innerHTML=NAV.map(([k,l,s])=>`<button data-a="nav" data-to="${k}" aria-current="${cur===k}">${s||l}${k==="pending"&&np?`<span class="badge-n">${np}</span>`:""}</button>`).join("");
  $("#side").innerHTML=`<div class="topb"><span class="mark">${KNOT}</span><span class="brand">Bloco Mágico</span></div><button class="syncbtn" data-a="sync"></button>
  <nav>${NAV.map(([k,l])=>`<button data-a="nav" data-to="${k}" aria-current="${cur===k&&!sub}">${l}${k==="pending"&&np?`<span class="badge-n">${np}</span>`:""}</button>`).join("")}
  <button data-a="nav" data-to="batch" aria-current="${route.name==="batch"}">Organizar pasta do Drive</button><button data-a="nav" data-to="bib" aria-current="${route.name==="bib"}">Bibliografia</button><button data-a="nav" data-to="acervo" aria-current="${route.name==="acervo"||route.name==="aficha"}">Acervo Freud e Lacan</button><button data-a="nav" data-to="form" aria-current="${route.name==="form"}">Formalização</button></nav>
  <p class="sub">Seus conceitos</p><div class="cl">${sortedConcepts().map(c=>`<button data-a="open" data-id="${c.id}" aria-current="${route.name==="concept"&&route.id===c.id}"><span style="width:9px;height:9px;border-radius:50%;background:${c.color};display:inline-block;flex:none"></span>${esc(c.name)}</button>`).join("")}</div>`;
  setSync()}
-function render(){renderNav();$("#main").innerHTML=({capture:vCapture,concepts:vConcepts,concept:vConcept,timeline:vTimeline,pending:vPending,batch:vBatch,bib:vBib,diss:vDiss,auto:vAuto,acervo:vAcervo,aficha:vAficha,form:vForm,plano:vPlano,ritmo:vRitmo,medidor:vMedidor,livros:vLivros,leitor:vLeitor}[route.name]||vConcepts)();bind()}
+function render(){renderNav();$("#main").innerHTML=({capture:vCapture,concepts:vConcepts,concept:vConcept,timeline:vTimeline,pending:vPending,batch:vBatch,bib:vBib,diss:vDiss,auto:vAuto,acervo:vAcervo,aficha:vAficha,form:vForm,plano:vPlano,ritmo:vRitmo,medidor:vMedidor,escrever:vEscrever,livros:vLivros,leitor:vLeitor}[route.name]||vConcepts)();bind()}
 function softRender(){const a=document.activeElement;if(a&&$("#main").contains(a)&&/INPUT|TEXTAREA|SELECT/.test(a.tagName)){renderNav()}else render()}
 function on(sel,ev,fn){const e=$(sel);if(e)e.addEventListener(ev,fn);return e}
 function bind(){
@@ -1913,7 +1982,7 @@ function bind(){
  on("#de-s","change",e=>de.state=e.target.value);
  document.querySelectorAll(".cites").forEach(i=>i.addEventListener("input",e=>de.inc[e.target.dataset.ref]=Math.max(0,parseInt(e.target.value)||0)));
  on("#acvq","input",e=>{acvQ=e.target.value;const pos=e.target.selectionStart;render();const n=$("#acvq");if(n){n.focus();n.setSelectionRange(pos,pos)}});
- bindForm();bindPlano();bindWa();bindCits();bindLeitor();bindMedidor();bindAbnt();bindPsRef();bindDiss()}
+ bindForm();bindPlano();bindWa();bindCits();bindLeitor();bindMedidor();bindEscrever();bindAbnt();bindPsRef();bindDiss()}
 
 /* ---------- ações ---------- */
 function tog(arr,id){const i=arr.indexOf(id);i>=0?arr.splice(i,1):arr.push(id);return arr.includes(id)}
@@ -1996,7 +2065,7 @@ async function act(a,el){
  case "mkbulk":{const type=$("#rbt").value,have=new Set(L("refs").map(r=>fold(r.label)));const lines=$("#rb").value.split("\n").map(s=>s.trim()).filter(s=>s&&!have.has(fold(s)));
   if(!lines.length)return toast("Nenhuma obra nova na lista.");lines.forEach(label=>db.refs.push(touch({id:uid("r"),type,label})));showBulk=false;changed();render();return toast(`${lines.length} ${lines.length===1?"obra cadastrada":"obras cadastradas"}`)}
  case "rdel":{const r=R(id);if(!confirm(`Excluir "${r.label}" da bibliografia?`))return;r.deleted=true;touch(r);changed();render();return toast("Obra excluída")}
- default:return actLeitor(a,el)
+ default:return actPlano(a,el)
  }}catch(e){if(e.message==="auth"){toast("Conecte ao Drive tocando no aviso de sincronização.");render()}else toast(e.message||"Algo deu errado.")}}
 function scrollPanel(){const p=$(".panel");if(p)p.scrollIntoView({block:"start",behavior:"smooth"})}
 document.addEventListener("click",e=>{const el=e.target.closest("[data-a]");if(el&&!el.disabled){e.preventDefault();act(el.dataset.a,el)}});
