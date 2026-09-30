@@ -745,6 +745,23 @@ let dwords={};try{dwords=JSON.parse(localStorage.getItem("bm-diss-words")||"{}")
 const numKey=n=>String(n).split(".").map(x=>String(+x).padStart(3,"0")).join(".");
 const subsSorted=()=>L("subs").sort((a,b)=>numKey(a.n).localeCompare(numKey(b.n)));
 const capOf=n=>String(n).split(".")[0];
+function renumerarSub(s,newN){const old=s.n;if(old===newN)return true;
+ if(L("subs").some(x=>x.id!==s.id&&x.n===newN))return false;
+ s.n=newN;touch(s);
+ const p=db.plans.find(x=>x.n===old);if(p){p.n=newN;touch(p)}
+ const r=db.rascunhos.find(x=>x.n===old);if(r){r.n=newN;touch(r)}
+ db.sends.filter(x=>x.kind==="sub"&&x.ref===old).forEach(x=>{x.ref=newN;touch(x)});
+ db.marks.filter(m=>m.dest==="plan"&&m.n===old).forEach(m=>{m.n=newN;touch(m)});
+ db.ideas.forEach(i=>{if((i.subs||[]).some(x=>x.n===old)){i.subs=i.subs.map(x=>x.n===old?{...x,n:newN}:x);touch(i)}});
+ return true}
+function renumerarCap(oldK,newK){oldK=String(oldK);newK=String(newK);if(oldK===newK)return true;
+ if(!/^[1-9]$/.test(newK))return false;
+ const subs=subsSorted().filter(s=>capOf(s.n)===oldK),mapa=subs.map(s=>[s,newK+"."+s.n.split(".")[1]]);
+ if(mapa.some(([,nn])=>L("subs").some(x=>capOf(x.n)!==oldK&&x.n===nn)))return false;
+ if(L("chapters").some(c=>c.n===newK&&!c.deleted))return false;
+ let c=db.chapters.find(x=>x.n===oldK&&!x.deleted);if(!c){c={id:"cap-"+oldK,n:oldK};db.chapters.push(c)}c.n=newK;touch(c);
+ mapa.forEach(([s,nn])=>renumerarSub(s,nn));
+ return true}
 const capTitle=k=>{const c=L("chapters").find(x=>x.n===k);return c?c.title:""};
 function parseDissName(name){
  const base=name.replace(/\.(docx?|pdf|odt)$/i,""),t=fold(base).replace(/_+/g," ");
@@ -825,7 +842,7 @@ function vDiss(){
  <label class="label" for="dbq" style="margin-top:0">Buscar na dissertação</label>
  <input type="search" id="dbq" value="${esc(dBuscaQ)}" placeholder="Pelo menos três letras">
  <div id="dbres">${dBuscaHTML()}</div>
- <div class="row" style="margin:0 0 12px"><button class="secondary" data-a="nav" data-to="medidor">Medidor</button><button class="secondary" data-a="nav" data-to="leituratextos">Leitura de textos</button><button class="secondary" data-a="nav" data-to="artigos">Artigos</button><button class="secondary" data-a="nav" data-to="dtexto">Texto atual da pesquisa</button><button class="secondary" data-a="nav" data-to="comentarios">Comentários da orientadora</button><button class="secondary" data-a="nav" data-to="regras">Regras e normas</button><button class="secondary" data-a="nav" data-to="form">Formalização</button><button class="secondary" data-a="nav" data-to="ritmo">Ritmo de escrita</button></div>
+ <div class="row" style="margin:0 0 12px"><button class="secondary" data-a="nav" data-to="medidor">Medidor</button><button class="secondary" data-a="nav" data-to="leituratextos">Leitura de textos</button><button class="secondary" data-a="nav" data-to="artigos">Artigos</button><button class="secondary" data-a="nav" data-to="dtexto">Texto atual da pesquisa</button><button class="secondary" data-a="nav" data-to="comentarios">Comentários da orientadora</button><button class="secondary" data-a="nav" data-to="regras">Regras e normas</button><button class="secondary" data-a="nav" data-to="dissbib">Referências bibliográficas</button><button class="secondary" data-a="nav" data-to="form">Formalização</button><button class="secondary" data-a="nav" data-to="ritmo">Ritmo de escrita</button></div>
  <p class="hint" style="margin:0 0 14px">Pasta ${esc(fo.name)} · ${dscanning?"lendo o Drive…":dscan&&dscan.folder===fo.id?"lida "+esc(fmtShort(dscan.at)):"ainda não lida"}</p>
  ${!hasToken()?connectBox("Para ler os documentos da dissertação, conecte o aplicativo ao Drive."):""}
  ${dscanErr?`<p class="warn">${esc(dscanErr)}</p>`:""}
@@ -837,7 +854,7 @@ function vDiss(){
  ${!subs.length&&!novos.length&&dscan?`<div class="empty">Nenhum documento de subtítulo reconhecido nesta pasta. Os nomes precisam trazer o número (por exemplo 1.5 ou 1_5) e o tipo: Redação Consolidada, Mapa Demonstrativo, Demonstração Documental ou Versão ABNT.</div>`:""}
  ${caps.map(k=>{const l=subs.filter(s=>capOf(s.n)===k),t=capTitle(k);
   return `<details class="block" open><summary>Capítulo ${esc(k)}${t?" — "+esc(t):""} <span class="count">${l.length}</span></summary>
-  ${dcapEdit===k?`<div class="inline" style="margin:-4px 0 12px"><input type="text" id="dcap" value="${esc(t)}" placeholder="Título do capítulo ${esc(k)}"><button class="secondary" data-a="dcapsave" data-k="${esc(k)}">Salvar</button></div>`:`<button class="link" style="margin:-4px 0 12px;display:block" data-a="dcapedit" data-k="${esc(k)}">${t?"Renomear capítulo":"Dar título ao capítulo"}</button>`}
+  ${dcapEdit===k?`<div class="inline" style="margin:-4px 0 12px;flex-wrap:wrap"><input type="text" id="dcapn" value="${esc(k)}" placeholder="Número" style="max-width:70px"><input type="text" id="dcap" value="${esc(t)}" placeholder="Título do capítulo ${esc(k)}"><button class="secondary" data-a="dcapsave" data-k="${esc(k)}">Salvar</button></div>`:`<button class="link" style="margin:-4px 0 12px;display:block" data-a="dcapedit" data-k="${esc(k)}">${t?"Renomear capítulo":"Dar título ao capítulo"}</button>`}
   ${(()=>{const c=db.chapters.find(x=>x.n===k&&!x.deleted);
    if(dimgOpen==="cap:"+k)return `<div class="panel esc-imgpick" style="margin:0 0 12px"><label class="label" style="margin-top:0" for="dimq">Procurar a imagem no Drive</label><input type="text" id="dimq" value="${esc(dimgQ)}" placeholder="Parte do nome do arquivo"><div id="dimres">${dimgResHTML()}</div><div class="row"><button class="link" data-a="dimgx">Cancelar</button></div></div>`;
    if(c&&c.img)return `<div class="lt-img" style="margin:0 0 12px">${imgTag({img:c.img.webViewLink,n:"Capítulo "+k},"md")}<div class="row" style="margin-top:6px"><button class="link" data-a="dimgcap" data-k="${esc(k)}">Trocar imagem</button><button class="link" data-a="dimgcapdel" data-k="${esc(k)}">Tirar imagem</button></div></div>`;
@@ -865,6 +882,7 @@ function subCard(s,x){
   <svg class="d-chev" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
  ${aberto?`<div class="d-body">
  ${ed?`<div class="d-ed">
+  <label class="label" for="de-n">Número</label><input type="text" id="de-n" value="${esc(s.n)}" placeholder="Ex.: 2.3" style="max-width:120px">
   <label class="label" for="de-t">Título</label><input type="text" id="de-t" value="${esc(s.title||"")}" placeholder="Título do ${esc(s.n)}">
   <label class="label d-lq" for="de-p">Pergunta — é a mesma do planejamento</label><textarea id="de-p" rows="2">${esc(perg)}</textarea>
   <label class="label" for="de-o">Objetivo</label><textarea id="de-o" rows="4">${esc(s.objetivo||"")}</textarea>
@@ -903,13 +921,33 @@ function vDissFolder(){
 function dFolderList(l){return l.length?l.slice(0,150).map(x=>`<button class="res" data-a="dfolder" data-id="${x.id}"><p class="fname" style="font-family:var(--serif);margin:0">Pasta ${esc(x.name)}</p></button>`).join("")+(l.length>150?`<p class="hint">Mostrando 150 de ${l.length}. Use o filtro.</p>`:""):`<p class="hint">Nenhuma pasta com esse nome.</p>`}
 function dlResHTML(){const d=dlink;if(!d||!d.res)return `<p class="hint">Digite ao menos três letras.</p>`;return d.res.length?d.res.map(f=>`<button class="res" data-a="dlinkpick" data-id="${f.id}"><p class="fname" style="margin:0">${esc(f.name)}</p></button>`).join(""):`<p class="hint">Nenhum documento com esse nome.</p>`}
 function dimgResHTML(){if(!dimgRes)return `<p class="hint">Digite ao menos três letras.</p>`;return dimgRes.length?dimgRes.map(f=>`<button class="res" data-a="dimgpick" data-id="${f.id}" data-n="${esc(f.name)}"><img class="esc-thumb" src="${esc(f.thumbnailLink||"")}" onerror="this.style.display='none'"><p class="fname" style="margin:0">${esc(f.name)}</p></button>`).join(""):`<p class="hint">Nenhuma imagem com esse nome.</p>`}
+let dtxLinking=false,dtxQ="",dtxRes=null,dtxModo=null;
+function docxParagrafos(xml){
+ return [...xml.matchAll(/<w:p[ >][\s\S]*?<\/w:p>/g)].map(m=>esconderXml([...m[0].matchAll(/<w:t[^>]*>([\s\S]*?)<\/w:t>/g)].map(x=>x[1]).join(""))).filter(cheio)}
+async function dtxCarregar(fid,nome){toast("Lendo o Drive…");
+ try{if(!window.JSZip)throw new Error("Componente de Word ainda carregando.");
+  const m=await(await api(`drive/v3/files/${fid}?fields=id,name,mimeType,webViewLink,modifiedTime`)).json();
+  const ab=await(await api(m.mimeType===GDOC?`drive/v3/files/${fid}/export?mimeType=${encodeURIComponent(DOCX)}`:`drive/v3/files/${fid}?alt=media`)).arrayBuffer();
+  const z=await JSZip.loadAsync(ab),xml=await z.file("word/document.xml").async("string"),paras=docxParagrafos(xml);
+  db.meta.dissTextoDoc={id:fid,name:m.name,webViewLink:m.webViewLink,mod:m.modifiedTime};db.meta.dissTextoParas=paras;dtxLinking=false;dtxModo="drive";changed();render();
+  return toast(`${paras.length} parágrafos lidos`)}
+ catch(e){toast(e.message==="auth"?"Conecte ao Drive de novo.":(e.message||"Não foi possível ler o documento."))}}
 function vDissTexto(){const subs=subsSorted();
- const paras=[];subs.forEach(s=>{const r=L("rascunhos").find(x=>x.n===s.n);if(!r)return;r.blocos.filter(b=>cheio(b.texto)).forEach(b=>paras.push({texto:b.texto.trim(),cit:b.tipo==="CI"&&b.texto.length>180,marco:false}))});
- const total=paras.reduce((a,p)=>a+p.texto.split(/\s+/).length,0);
+ const paras=[];subs.forEach(s=>{const r=L("rascunhos").find(x=>x.n===s.n);if(!r)return;r.blocos.filter(b=>cheio(b.texto)).forEach(b=>paras.push({texto:b.texto.trim(),cit:b.tipo==="CI"&&b.texto.length>180}))});
+ const total=paras.reduce((a,p)=>a+p.texto.split(/\s+/).length,0),doc=db.meta.dissTextoDoc,modo=dtxModo||(doc?"drive":"blocos");
+ const docParas=(db.meta.dissTextoParas||[]).map(t=>({texto:t,cit:false}));
  return `<button class="back" data-a="nav" data-to="diss">‹ Dissertação</button><h1>Texto atual da pesquisa</h1>
- <p class="hint" style="margin:-6px 0 16px">Junta, na ordem dos subtítulos, o que já foi escrito em “Escrever” — sem os rótulos dos blocos. ${total.toLocaleString("pt-BR")} palavras.</p>
- ${paras.length?`<div class="panel esc-corr">${paras.map(p=>`<p class="${p.cit?"esc-cit":"esc-par"}">${esc(p.texto)}</p>`).join("")}</div>`:`<div class="empty">Nada escrito ainda em nenhum subtítulo. Escreva em cada subtítulo, na tela “Escrever”.</div>`}`}
+ ${doc?`<p class="hint" style="margin:-6px 0 4px"><a href="${esc(doc.webViewLink||"#")}" target="_blank" rel="noopener">${esc(doc.name)}</a> · ligado do Drive</p><div class="row" style="margin:0 0 10px"><button class="link" data-a="dtxatualizar" data-id="${doc.id}" data-n="${esc(doc.name)}">Atualizar do Drive</button><button class="link" data-a="dtxdesligar">Desligar</button></div>`:""}
+ ${doc?`<div class="chips" style="margin:0 0 14px"><button class="chip" data-a="dtxmodo" data-v="drive" aria-pressed="${modo==="drive"}">Do Drive</button><button class="chip" data-a="dtxmodo" data-v="blocos" aria-pressed="${modo==="blocos"}">Escrito no app</button></div>`:""}
+ ${dtxLinking?`<div class="panel esc-imgpick"><label class="label" style="margin-top:0" for="dtxq">Procurar o Word no Drive</label><input type="text" id="dtxq" value="${esc(dtxQ)}" placeholder="Parte do nome do documento"><div id="dtxres">${dtxResHTML()}</div><div class="row"><button class="link" data-a="dtxligx">Cancelar</button></div></div>`
+ :!doc?`<div class="row" style="margin:0 0 14px"><button class="secondary" data-a="dtxlig">+ Ligar um Word do Drive como texto atual</button></div>`:""}
+ ${modo==="drive"?
+ (docParas.length?`<p class="hint" style="margin:0 0 12px">${docParas.reduce((a,p)=>a+p.texto.split(/\s+/).length,0).toLocaleString("pt-BR")} palavras, lidas do documento.</p><div class="panel esc-corr">${docParas.map(p=>`<p class="esc-par">${esc(p.texto)}</p>`).join("")}</div>`:`<div class="empty">O documento não trouxe parágrafos com texto.</div>`)
+ :`<p class="hint" style="margin:0 0 16px">Junta, na ordem dos subtítulos, o que já foi escrito em “Escrever” — sem os rótulos dos blocos. ${total.toLocaleString("pt-BR")} palavras.</p>
+ ${paras.length?`<div class="panel esc-corr">${paras.map(p=>`<p class="${p.cit?"esc-cit":"esc-par"}">${esc(p.texto)}</p>`).join("")}</div>`:`<div class="empty">Nada escrito ainda em nenhum subtítulo. Escreva em cada subtítulo, na tela “Escrever”.</div>`}`}`}
+function dtxResHTML(){if(!dtxRes)return `<p class="hint">Digite ao menos três letras.</p>`;return dtxRes.length?dtxRes.map(f=>`<button class="res" data-a="dtxpick" data-id="${f.id}" data-n="${esc(f.name)}"><p class="fname" style="margin:0">${esc(f.name)}</p></button>`).join(""):`<p class="hint">Nenhum documento com esse nome.</p>`}
 function bindDiss(){
+ on("#dtxq","input",e=>{dtxQ=e.target.value;clearTimeout(dlTimer);dlTimer=setTimeout(async()=>{const q=dtxQ.trim();if(fold(q).length<3)dtxRes=null;else{try{dtxRes=await listFiles(`trashed=false and ${DOCQ} and name contains '${qesc(q)}'`,"files(id,name,mimeType,webViewLink)")}catch(e){dtxRes=[]}}const el=$("#dtxres");if(el)el.innerHTML=dtxResHTML()},500)});
  on("#dbq","input",e=>{dBuscaQ=e.target.value;const el=$("#dbres");if(el)el.innerHTML=dBuscaHTML()});
  on("#dimq","input",e=>{dimgQ=e.target.value;clearTimeout(dlTimer);dlTimer=setTimeout(async()=>{const q=dimgQ.trim();if(fold(q).length<3)dimgRes=null;else{try{dimgRes=await listFiles(`trashed=false and mimeType contains 'image/' and name contains '${qesc(q)}'`,"files(id,name,thumbnailLink,webViewLink)")}catch(e){dimgRes=[]}}const el=$("#dimres");if(el)el.innerHTML=dimgResHTML()},500)});
  on("#dlq","input",e=>{dlink.q=e.target.value;clearTimeout(dlTimer);dlTimer=setTimeout(async()=>{const q=dlink.q.trim();if(fold(q).length<3)dlink.res=null;else{try{dlink.res=await listFiles(`trashed=false and ${DOCQ} and name contains '${qesc(q)}'`,"files(id,name,mimeType,modifiedTime,createdTime,webViewLink)")}catch(e){dlink.res=[]}}const el=$("#dlres");if(el)el.innerHTML=dlResHTML()},500)});
@@ -956,6 +994,13 @@ async function actDiss(a,el){
  case "regraeditx":regraEdit=null;return render();
  case "regrasave":{const r=db.regras.find(x=>x.id===el.dataset.id),titulo=($("#rgt").value||"").trim(),texto=($("#rgx").value||"").trim();if(!titulo||!texto)return toast("Escreva o título e a regra.");r.titulo=titulo;r.texto=texto;touch(r);regraEdit=null;changed();return render()}
  case "regradel":{if(!confirm("Excluir esta regra?"))return;const r=db.regras.find(x=>x.id===el.dataset.id);r.deleted=true;touch(r);changed();return render()}
+ case "dtxlig":dtxLinking=true;dtxQ="";dtxRes=null;return render();
+ case "dtxligx":dtxLinking=false;return render();
+ case "dtxpick":return dtxCarregar(el.dataset.id,el.dataset.n);
+ case "dtxatualizar":return dtxCarregar(el.dataset.id,el.dataset.n);
+ case "dtxdesligar":delete db.meta.dissTextoDoc;delete db.meta.dissTextoParas;dtxModo="blocos";changed();return render();
+ case "dtxmodo":dtxModo=el.dataset.v;return render();
+ case "dissbibcopy":{const l=dissRefsDe().filter(r=>refABNT(r)).sort(ordemRef);if(!l.length)return toast("Nenhuma obra com ficha ABNT preenchida ainda.");return copiarRefs(l.map(refABNT))}
  case "dnewsave":{const n=($("#dnn").value||"").trim().replace(",",".").replace(/\s+/g,""),t=($("#dnt").value||"").trim();
   if(!/^\d{1,2}\.\d{1,2}$/.test(n))return toast("Escreva o número no formato capítulo.subtítulo, por exemplo 2.3.");
   if(L("subs").some(s=>s.n===`${+n.split(".")[0]}.${+n.split(".")[1]}`))return toast("Esse subtítulo já está no painel.");
@@ -965,7 +1010,9 @@ async function actDiss(a,el){
  case "dprz":dprz=dprz===id?null:id;return render();
  case "dsedit":dedit=id;dmais=null;dopen.add(id);return render();
  case "dsedx":dedit=null;return render();
- case "dssave":{const s=S(),t=($("#de-t").value||"").trim(),pg=($("#de-p").value||"").trim(),ob=($("#de-o").value||"").trim(),ex=($("#de-e").value||"").split("\n").map(x=>x.trim()).filter(Boolean).join("\n");
+ case "dssave":{const s=S(),nn=($("#de-n").value||"").trim().replace(",",".").replace(/\s+/g,""),t=($("#de-t").value||"").trim(),pg=($("#de-p").value||"").trim(),ob=($("#de-o").value||"").trim(),ex=($("#de-e").value||"").split("\n").map(x=>x.trim()).filter(Boolean).join("\n");
+  if(nn&&nn!==s.n){if(!/^\d{1,2}\.\d{1,2}$/.test(nn))return toast("Escreva o número no formato capítulo.subtítulo, por exemplo 2.3.");
+   if(!renumerarSub(s,nn))return toast("Já existe um subtítulo com esse número.")}
   s.title=t;s.objetivo=ob;s.eixos=ex;touch(s);const pl=planRec(s.n);if(pg||pl){const q=planOf(s.n);if((q.ficha.pergunta||"")!==pg){q.ficha.pergunta=pg;touch(q)}}dedit=null;changed();render();return toast("Subtítulo salvo")}
  case "dtira":{const s=S(),f=el.dataset.f,nome=el.dataset.nome;if(el.dataset.m){const l=(s.links||[]).find(x=>x.id===f);s.links=(s.links||[]).filter(x=>x.id!==f);dundo={sid:id,f,nome,link:l}}else{s.ocultos=[...(s.ocultos||[]),f];dundo={sid:id,f,nome}}touch(s);changed();return render()}
  case "dundo":{const s=db.subs.find(x=>x.id===dundo.sid);if(dundo.link)s.links=[...(s.links||[]),dundo.link];else s.ocultos=(s.ocultos||[]).filter(x=>x!==dundo.f);touch(s);dundo=null;changed();return render()}
@@ -980,7 +1027,9 @@ async function actDiss(a,el){
  case "dprazox":{const s=S();s.prazo="";touch(s);changed();render();if(!s.calId)return toast("Prazo removido");const m=await sincronizarPrazo(s);render();return toast(m)}
  case "dsubdel":{const s=S();if(!confirm(`Tirar o ${s.n} do painel? Os documentos no Drive não são tocados.`))return;s.deleted=true;touch(s);dopen.delete(id);changed();render();return toast("Tirado do painel")}
  case "dcapedit":dcapEdit=el.dataset.k;return render();
- case "dcapsave":{const k=el.dataset.k,v=($("#dcap").value||"").trim();let c=db.chapters.find(x=>x.n===k&&!x.deleted);if(!c){c={id:"cap-"+k,n:k};db.chapters.push(c)}c.title=v;touch(c);dcapEdit=null;changed();return render()}
+ case "dcapsave":{const k=el.dataset.k,v=($("#dcap").value||"").trim(),nk=($("#dcapn").value||"").trim();
+  if(nk&&nk!==k){if(!renumerarCap(k,nk))return toast("Não deu para mudar: o número já está em uso, ou não é válido (1 a 9).")}
+  const useK=nk&&nk!==k?nk:k;let c=db.chapters.find(x=>x.n===useK&&!x.deleted);if(!c){c={id:"cap-"+useK,n:useK};db.chapters.push(c)}c.title=v;touch(c);dcapEdit=null;changed();return render()}
  }}
 
 /* ---------- trazer textos que já seguem o padrão Conceito — título — data ---------- */
@@ -1736,6 +1785,8 @@ function vLivros(){const l=L("books").sort((a,b)=>(b.updatedAt||"").localeCompar
  return `<button class="back" data-a="nav" data-to="concepts">‹ Conceitos</button><h1>Ler um PDF</h1>
  <p class="hint" style="margin:-6px 0 16px">Abra um livro do Drive, sublinhe um trecho e leve como citação, com a página impressa.</p><div class="row" style="margin:0 0 14px"><button class="secondary" data-a="dicionario">Meu dicionário</button></div>
  <label class="label" for="lvq" style="margin-top:0">Procurar um PDF no Drive</label><input type="text" id="lvq" value="${esc(lvQ)}" placeholder="Parte do nome, ex.: Obras Completas volume 12"><div id="lvres">${lvResHTML()}</div>
+ <div class="row" style="margin:10px 0 0">${lvUp&&lvUp.loading?`<p class="hint" style="margin:0">Enviando ${esc(lvUp.nome)}…</p>`:`<button class="secondary" data-a="lvupbtn">+ Enviar um PDF deste aparelho</button>`}</div>
+ <input type="file" id="lvupinput" accept="application/pdf" style="display:none">
  ${l.length?`<p class="label">Livros já abertos</p>${l.map(b=>{const n=L("marks").filter(m=>m.bookId===b.id).length;return `<button class="res" data-a="lvgo" data-id="${b.id}"><p class="fname" style="margin:0">${esc(b.name)}</p><p class="hint" style="margin:2px 0 0">${b.lastPage?`parou na página ${b.lastPage} do PDF`:""}${n?` · ${n} ${n===1?"sublinhado":"sublinhados"}`:""}${b.refId&&R(b.refId)?` · ${esc(R(b.refId).label)}`:""}</p></button>`}).join("")}`:""}`}
 function lvResHTML(){if(!lvRes)return `<p class="hint">Digite ao menos três letras.</p>`;return lvRes.length?lvRes.map(f=>`<button class="res" data-a="lvopen" data-id="${f.id}" data-n="${esc(f.name)}"><p class="fname" style="margin:0">${esc(f.name)}</p></button>`).join(""):`<p class="hint">Nenhum PDF com esse nome.</p>`}
 function vLeitor(){const b=book(route.k);if(!b)return vLivros();
@@ -1810,6 +1861,11 @@ function lerSelecao(){const bar=$("#lvsel");if(!bar)return;const s=document.getS
  rd.sel={text:t,rects:rs.slice(0,80)};bar.hidden=false}
 document.addEventListener("selectionchange",()=>{if(route.name==="leitor")lerSelecao()});
 function bindLeitor(){
+ on("#lvupinput","change",async e=>{const f=e.target.files&&e.target.files[0];e.target.value="";if(!f)return;
+  lvUp={loading:true,nome:f.name};render();
+  try{await getToken(true);const ab=await f.arrayBuffer();const m=await upload({name:f.name,parents:[await subFolder("Livros enviados")]},new Blob([ab],{type:"application/pdf"}));
+   const b=touch({id:uid("b"),fileId:m.id,name:m.name,off:null,refId:"",lastPage:1});db.books.push(b);lvUp=null;changed();return go({name:"leitor",k:b.id})}
+  catch(err){lvUp=null;toast(err.message==="auth"?"Conecte ao Drive para enviar o PDF.":"Não foi possível enviar o PDF: "+(err.message||""));return render()}});
  on("#lvq","input",e=>{lvQ=e.target.value;clearTimeout(lvTimer);lvTimer=setTimeout(async()=>{const q=lvQ.trim();if(fold(q).length<3)lvRes=null;else{try{lvRes=await listFiles(`trashed=false and mimeType='application/pdf' and name contains '${qesc(q)}'`,"files(id,name)")}catch(e){lvRes=[]}}const el=$("#lvres");if(el)el.innerHTML=lvResHTML()},500)});
  if(route.name!=="leitor")return;const b=book(route.k);if(!b)return;
  on("#lvref","change",e=>{let v=e.target.value;if(v==="__nova"){const nome=(prompt("Referência da obra (como vai aparecer na citação):",b.name.replace(/\.pdf$/i,""))||"").trim();if(!nome){e.target.value=b.refId||"";return}
@@ -1823,6 +1879,7 @@ function bindLeitor(){
 function irPara(n){const b=book(route.k);if(!rd.doc)return;b.lastPage=Math.min(Math.max(1,n),rd.doc.numPages);touch(b);clearTimeout(saveT);saveT=setTimeout(changed,1500);rd.sel=null;render();window.scrollTo(0,0)}
 async function actLeitor(a,el){const d=el?el.dataset:{};
  switch(a){
+ case "lvupbtn":{const i=$("#lvupinput");if(i)i.click();return}
  case "lvopen":{let b=L("books").find(x=>x.fileId===d.id);if(!b){b=touch({id:uid("b"),fileId:d.id,name:d.n,off:null,refId:"",lastPage:1});db.books.push(b);changed()}lsave=null;return go({name:"leitor",k:b.id})}
  case "lvgo":lsave=null;if(!bIdx||bIdx.bookId!==d.id)bq="";return go({name:"leitor",k:d.id});
  case "lvpg":{const b=book(route.k);return irPara((b.lastPage||1)+ +d.d)}
@@ -1917,7 +1974,7 @@ async function actAbnt(a,el){const d=el?el.dataset:{};
  }return actDef(a,el)}
 
 /* ---------- busca dentro do livro ---------- */
-let bq="",bIdx=null; // bIdx={bookId,raw:[...],fold:[...],done,total}
+let bq="",bIdx=null,lvUp=null; // bIdx={bookId,raw:[...],fold:[...],done,total} · lvUp={loading,nome}
 function idbLivros(){return new Promise((res,rej)=>{const r=indexedDB.open("bm-livros",1);r.onupgradeneeded=()=>r.result.createObjectStore("txt");r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})}
 async function idbGet(k){try{const d=await idbLivros();return await new Promise(res=>{const q=d.transaction("txt").objectStore("txt").get(k);q.onsuccess=()=>res(q.result);q.onerror=()=>res(null)})}catch(e){return null}}
 async function idbSet(k,v){try{const d=await idbLivros();d.transaction("txt","readwrite").objectStore("txt").put(v,k)}catch(e){}}
@@ -2413,17 +2470,29 @@ function regraFormHTML(r){return `<label class="label" style="margin-top:0" for=
  <label class="label" for="rgx">Regra</label><textarea id="rgx" rows="4" placeholder="Escreva a regra ou a norma">${esc(r?r.texto:"")}</textarea>
  <div class="row"><button class="primary" data-a="${r?"regrasave":"regranovosave"}" data-id="${r?r.id:""}">Salvar</button><button class="link" data-a="${r?"regraeditx":"regranovox"}">Cancelar</button></div>`}
 
+
+/* ---------- bibliografia da dissertação: reúne as obras de todos os subtítulos ---------- */
+function dissRefsDe(){const ids=[];subsSorted().forEach(s=>{
+ const p=planRec(s.n);if(p)p.demos.forEach(d=>d.passagens.forEach(x=>{if(x.refId&&!ids.includes(x.refId))ids.push(x.refId)}));
+ (s.refs||[]).forEach(r=>{if(!ids.includes(r))ids.push(r)})});
+ return ids.map(R).filter(Boolean)}
+function vDissBib(){const refs=dissRefsDe().sort(ordemRef);
+ return `<button class="back" data-a="nav" data-to="diss">‹ Dissertação</button><h1>Referências bibliográficas</h1>
+ <p class="hint" style="margin:-6px 0 16px">Reúne, sem repetir, as obras usadas em todos os subtítulos — nos blocos de citação do planejamento e em “Referências em uso”, na tela Escrever.</p>
+ ${refs.length?refs.map(r=>`<p class="ab-ref">${refABNT(r)||esc(r.label)}</p>`).join(""):`<div class="empty">Nenhuma obra ligada a um subtítulo ainda.</div>`}
+ ${refs.length?`<div class="row" style="margin-top:14px"><button class="secondary" data-a="dissbibcopy">Copiar a bibliografia</button></div>`:""}`}
+
 /* ---------- desenho geral ---------- */
 const NAV=[["capture","Capturar"],["concepts","Conceitos"],["timeline","Linha do tempo","Tempo"],["pending","Pendentes"],["diss","Dissertação"]];
 function renderNav(){
- const sub=["concept","batch","bib","auto","acervo","aficha","livros","leitor","dicionario"].includes(route.name),cur=sub?"concepts":["form","plano","ritmo","medidor","escrever","leituratextos","leituracaps","leituracap","artigos","artigo","artsub","artigointeiro","dtexto","comentarios","comentario","regras"].includes(route.name)?"diss":route.name,np=pending().length;
+ const sub=["concept","batch","bib","auto","acervo","aficha","livros","leitor","dicionario"].includes(route.name),cur=sub?"concepts":["form","plano","ritmo","medidor","escrever","leituratextos","leituracaps","leituracap","artigos","artigo","artsub","artigointeiro","dtexto","comentarios","comentario","regras","dissbib"].includes(route.name)?"diss":route.name,np=pending().length;
  $("#tabs").classList.toggle("cinco",NAV.length>4);$("#tabs").innerHTML=NAV.map(([k,l,s])=>`<button data-a="nav" data-to="${k}" aria-current="${cur===k}">${s||l}${k==="pending"&&np?`<span class="badge-n">${np}</span>`:""}</button>`).join("");
  $("#side").innerHTML=`<div class="topb"><span class="mark">${KNOT}</span><span class="brand">Bloco Mágico</span></div><button class="syncbtn" data-a="sync"></button>
  <nav>${NAV.map(([k,l])=>`<button data-a="nav" data-to="${k}" aria-current="${cur===k&&!sub}">${l}${k==="pending"&&np?`<span class="badge-n">${np}</span>`:""}</button>`).join("")}
  <button data-a="nav" data-to="batch" aria-current="${route.name==="batch"}">Organizar pasta do Drive</button><button data-a="nav" data-to="bib" aria-current="${route.name==="bib"}">Bibliografia</button><button data-a="nav" data-to="acervo" aria-current="${route.name==="acervo"||route.name==="aficha"}">Acervo Freud e Lacan</button><button data-a="nav" data-to="form" aria-current="${route.name==="form"}">Formalização</button></nav>
  <p class="sub">Seus conceitos</p><div class="cl">${sortedConcepts().map(c=>`<button data-a="open" data-id="${c.id}" aria-current="${route.name==="concept"&&route.id===c.id}"><span style="width:9px;height:9px;border-radius:50%;background:${c.color};display:inline-block;flex:none"></span>${esc(c.name)}</button>`).join("")}</div>`;
  setSync()}
-function render(){renderNav();$("#main").innerHTML=({capture:vCapture,concepts:vConcepts,concept:vConcept,timeline:vTimeline,pending:vPending,batch:vBatch,bib:vBib,diss:vDiss,auto:vAuto,acervo:vAcervo,aficha:vAficha,form:vForm,plano:vPlano,ritmo:vRitmo,medidor:vMedidor,escrever:vEscrever,livros:vLivros,leitor:vLeitor,dicionario:vDicionario,leituratextos:vLeituraTextos,leituracaps:vLeituraCaps,leituracap:vLeituraCap,artigos:vArtigos,artigo:vArtigo,artsub:vArtSub,artigointeiro:vArtigoInteiro,dtexto:vDissTexto,comentarios:vComentarios,comentario:vComentario,regras:vRegras}[route.name]||vConcepts)();bind()}
+function render(){renderNav();$("#main").innerHTML=({capture:vCapture,concepts:vConcepts,concept:vConcept,timeline:vTimeline,pending:vPending,batch:vBatch,bib:vBib,diss:vDiss,auto:vAuto,acervo:vAcervo,aficha:vAficha,form:vForm,plano:vPlano,ritmo:vRitmo,medidor:vMedidor,escrever:vEscrever,livros:vLivros,leitor:vLeitor,dicionario:vDicionario,leituratextos:vLeituraTextos,leituracaps:vLeituraCaps,leituracap:vLeituraCap,artigos:vArtigos,artigo:vArtigo,artsub:vArtSub,artigointeiro:vArtigoInteiro,dtexto:vDissTexto,comentarios:vComentarios,comentario:vComentario,regras:vRegras,dissbib:vDissBib}[route.name]||vConcepts)();bind()}
 function softRender(){const a=document.activeElement;if(a&&$("#main").contains(a)&&/INPUT|TEXTAREA|SELECT/.test(a.tagName)){renderNav()}else render()}
 function on(sel,ev,fn){const e=$(sel);if(e)e.addEventListener(ev,fn);return e}
 function bind(){
