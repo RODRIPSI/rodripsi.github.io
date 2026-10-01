@@ -329,6 +329,8 @@ a.d-docl span:nth-child(2){text-decoration:underline;text-underline-offset:3px}
 .regra-it{padding:14px 16px}
 .dic-hl{background:rgba(27,122,67,.16);border-bottom:2px dotted #1B7A43;cursor:pointer;border-radius:2px}
 .dic-tap{cursor:text}
+.lv-dicon{background:#1B7A43;border-color:#1B7A43;color:#fff}
+.chip.sm{padding:2px 9px;font-size:12px;border-radius:999px;vertical-align:middle}
 .a-img{display:block;width:100%;max-height:420px;object-fit:contain;border-radius:10px;background:var(--surface);margin:0 0 14px}
 .a-img.big{max-height:520px}.a-img.md{max-height:230px;width:auto;max-width:100%;display:block;margin:0 auto;border-radius:12px}.a-ph.md{height:150px}.a-ph{display:grid;place-items:center;text-align:center;padding:12px;height:220px;color:var(--muted);font-size:14px;border:1px dashed var(--rule)}
 .a-imgs{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
@@ -1799,13 +1801,15 @@ function vLivros(){const l=L("books").sort((a,b)=>(b.updatedAt||"").localeCompar
  <label class="label" for="lvq" style="margin-top:0">Procurar um PDF no Drive</label><input type="text" id="lvq" value="${esc(lvQ)}" placeholder="Parte do nome, ex.: Obras Completas volume 12"><div id="lvres">${lvResHTML()}</div>
  <div class="row" style="margin:10px 0 0">${lvUp&&lvUp.loading?`<p class="hint" style="margin:0">Enviando ${esc(lvUp.nome)}…</p>`:`<button class="secondary" data-a="lvupbtn">+ Enviar um PDF deste aparelho</button>`}</div>
  <input type="file" id="lvupinput" accept="application/pdf" style="display:none">
- ${l.length?`<p class="label">Livros já abertos</p>${l.map(b=>{const n=L("marks").filter(m=>m.bookId===b.id).length;return `<button class="res" data-a="lvgo" data-id="${b.id}"><p class="fname" style="margin:0">${esc(b.name)}</p><p class="hint" style="margin:2px 0 0">${b.lastPage?`parou na página ${b.lastPage} do PDF`:""}${n?` · ${n} ${n===1?"sublinhado":"sublinhados"}`:""}${b.refId&&R(b.refId)?` · ${esc(R(b.refId).label)}`:""}</p></button>`}).join("")}`:""}`}
+ ${l.length?`<p class="label">Livros já abertos</p>${l.map(b=>{const n=L("marks").filter(m=>m.bookId===b.id).length;return `<button class="res" data-a="lvgo" data-id="${b.id}"><p class="fname" style="margin:0">${esc(b.name)}${b.ehDicionario?` <span class="chip sm lv-dicon" style="pointer-events:none">dicionário</span>`:""}</p><p class="hint" style="margin:2px 0 0">${b.lastPage?`parou na página ${b.lastPage} do PDF`:""}${n?` · ${n} ${n===1?"sublinhado":"sublinhados"}`:""}${b.refId&&R(b.refId)?` · ${esc(R(b.refId).label)}`:""}</p></button>`}).join("")}`:""}`}
 function lvResHTML(){if(!lvRes)return `<p class="hint">Digite ao menos três letras.</p>`;return lvRes.length?lvRes.map(f=>`<button class="res" data-a="lvopen" data-id="${f.id}" data-n="${esc(f.name)}"><p class="fname" style="margin:0">${esc(f.name)}</p></button>`).join(""):`<p class="hint">Nenhum PDF com esse nome.</p>`}
 function vLeitor(){const b=book(route.k);if(!b)return vLivros();
  const tot=rd.doc&&rd.bookId===b.id?rd.doc.numPages:0,p=b.lastPage||1,imp=impressa(b,p),ms=L("marks").filter(m=>m.bookId===b.id&&m.dest!=="dic").sort((a,c)=>a.page-c.page);
  const dms=L("marks").filter(m=>m.bookId===b.id&&m.dest==="dic"),dgs=[...new Map(dms.map(m=>[m.glossId,m])).values()].map(m=>({...glossOf(m.glossId),markId:m.id})).filter(g=>g.id);
  return `<button class="back" data-a="nav" data-to="livros">‹ Livros</button><h1 style="font-size:24px;margin-bottom:6px">${esc(b.name.replace(/\.pdf$/i,""))}</h1>
  <div class="row" style="margin:0 0 10px;align-items:center"><span class="hint" style="margin:0">Obra:</span>${refSelect("lvref",b.refId||"").replace("Ideia minha, sem leitura por trás","Escolher na Bibliografia").replace("</select>",`<option value="__nova">+ Nova obra na Bibliografia…</option></select>`)}</div>
+ <div class="row" style="margin:0 0 10px"><button class="secondary ${b.ehDicionario?"lv-dicon":""}" data-a="livrodic" data-id="${b.id}">${b.ehDicionario?"✓ Usado como dicionário":"Usar este livro como dicionário"}</button></div>
+ ${b.ehDicionario?`<p class="hint" style="margin:-4px 0 10px">Quando você tocar numa palavra em qualquer lugar do app, o app procura aqui primeiro.</p>`:""}
  ${dicChipsPainel(dgs.map(g=>g.id),"Dicionário deste livro",Object.fromEntries(dgs.map(g=>[g.id,g.markId])))}
  ${b.off==null&&tot&&!lvDepois.has(b.id)?`<div class="warn lv-pag"><b>Número das páginas.</b> Avance até uma página que tenha número impresso (a capa e o sumário costumam não ter) e escreva aqui esse número. <span class="hint">Você está na página ${p} do PDF.</span><div class="inline" style="margin-top:8px"><input type="text" inputmode="numeric" id="lvimp" placeholder="número impresso"><button class="secondary" data-a="lvoff">Salvar</button></div><p class="hint" style="margin:6px 0 0">Basta uma vez; o app calcula as outras. <button class="link" data-a="lvdepois">Fazer isso depois</button></p></div>`:""}
  ${b.off==null&&tot&&lvDepois.has(b.id)?`<p class="hint" style="margin:0 0 8px">Páginas impressas ainda não informadas. <button class="link" data-a="lvagora">Informar agora</button></p>`:""}
@@ -2180,7 +2184,7 @@ function dicFormHTML(){const d=dicEdit;return `<label class="label" style="margi
  <div class="row"><button class="primary" style="margin-top:8px" data-a="dicsave">Salvar</button><button class="link" data-a="dicx">Cancelar</button></div>`}
 function dicPopHTML(){const g=glossOf(dicPop.gid);if(!g)return "";
  return `<div class="lv-dicpop"><p class="dic-t" style="margin:0">${esc(g.termo)}</p><p class="dic-d" style="margin:6px 0 0">${esc(g.def)}</p>${fonteLabel(g)?`<p class="hint" style="margin:4px 0 0">${esc(fonteLabel(g))}</p>`:""}
- <div class="row" style="margin-top:10px"><button class="link" data-a="dicedit" data-id="${g.id}">Editar significado</button>${dicPop.markId?`<button class="link" data-a="dicunmk" data-id="${dicPop.markId}">Tirar esta marcação</button>`:""}<button class="link" data-a="dicpopx">Fechar</button></div></div>`}
+ <div class="row" style="margin-top:10px"><button class="link" data-a="dicedit" data-id="${g.id}">Editar significado</button>${g.fonte==="livro"&&book(g.livroId)?`<button class="link" data-a="dicverlivro" data-id="${g.livroId}" data-p="${g.livroPage}">Ver no livro</button>`:""}${dicPop.markId?`<button class="link" data-a="dicunmk" data-id="${dicPop.markId}">Tirar esta marcação</button>`:""}<button class="link" data-a="dicpopx">Fechar</button></div></div>`}
 function bindIaLeitura(){}
 function bindDic(){on("#dict","input",()=>{});on("#dicd","input",()=>{})}
 async function actDic(a,el){const d=el?el.dataset:{};
@@ -2204,6 +2208,10 @@ async function actDic(a,el){const d=el?el.dataset:{};
  case "dicmark":{const g=glossOf(d.gid);if(!g)return;dicPop=(dicPop&&dicPop.markId===d.id)?null:{markId:d.id,gid:g.id};return render()}
  case "dicverno":{const m=db.marks.find(x=>x.id===d.id),g=glossOf(d.gid);if(!g)return;if(m)irPara(m.page);dicPop={markId:d.id,gid:g.id};return render()}
  case "dicchip":{const g=glossOf(d.gid);if(!g)return;dicPop=(dicPop&&!dicPop.markId&&dicPop.gid===g.id)?null:{markId:null,gid:g.id};return render()}
+ case "dicverlivro":{const bk=book(d.id);if(!bk)return;dicPop=null;
+  if(route.name==="leitor"&&route.k===d.id){irPara(+d.p);return render()}
+  bk.lastPage=+d.p;touch(bk);changed();return go({name:"leitor",k:d.id})}
+ case "livrodic":{const bk=book(d.id);if(bk){bk.ehDicionario=!bk.ehDicionario;touch(bk);changed()}return render()}
  }return actDicAberto(a,el)}
 
 /* ---------- IA de leitura: explicar/simplificar um trecho selecionado ---------- */
@@ -2565,7 +2573,7 @@ function bindDicTap(){document.querySelectorAll(".dic-tap").forEach(c=>{
 async function pedirSignificadoIA(termo){
  const sys="Você define uma palavra ou expressão para alguém lendo um texto de psicanálise. Responda só com a definição, direto, em até três frases, em português. Se for um termo técnico (de Freud, Lacan ou psicanálise em geral), diga isso brevemente.";
  return (await askAI(sys,termo)).trim()}
-function criarGloss(termo,def,fonte){const ex=glossAcha(termo);if(ex){ex.def=def;ex.fonte=fonte;touch(ex);return ex}const g=touch({id:uid("g"),termo,def,fonte});db.glossario.push(g);return g}
+function criarGloss(termo,def,fonte,extra){const ex=glossAcha(termo);if(ex){ex.def=def;ex.fonte=fonte;Object.assign(ex,extra||{});touch(ex);return ex}const g=touch({id:uid("g"),termo,def,fonte,...(extra||{})});db.glossario.push(g);return g}
 function dicObjDe(storeKey){
  if(storeKey==="disstexto")return db.meta;
  if(storeKey==="abnt")return db.meta;
@@ -2585,6 +2593,8 @@ function dicListaAdd(storeKey,gid){const l=dicListaDe(storeKey);if(!l.includes(g
 async function buscarSignificado(termo,ctx){dicBuscando={termo};render();
  const ex=glossAcha(termo);
  if(ex){aplicarAchado(ex,ctx);dicBuscando=null;render();return}
+ const hit=await buscarEmLivrosDicionario(termo);
+ if(hit){const def=`${hit.verbete} ${citacaoDeLivro(hit.book,hit.page)}`;const g=criarGloss(termo,def,"livro",{livroId:hit.book.id,livroPage:hit.page});aplicarAchado(g,ctx);dicBuscando=null;changed();render();return}
  if(aiKey()){try{const def=await pedirSignificadoIA(termo);const g=criarGloss(termo,def,"ia");aplicarAchado(g,ctx);dicBuscando=null;changed();render();return}catch(e){}}
  const def=await buscarWikcionario(termo);
  if(def){const g=criarGloss(termo,def,"wikcionario");aplicarAchado(g,ctx);dicBuscando=null;changed();render();return}
@@ -2593,7 +2603,7 @@ function aplicarAchado(g,ctx){
  if(ctx.pending){const m=touch({id:uid("m"),bookId:ctx.bookId,page:ctx.pending.page,rects:ctx.pending.rects,text:g.termo,dest:"dic",glossId:g.id});db.marks.push(m);dicPop={markId:m.id,gid:g.id}}
  else if(ctx.storeKey){dicListaAdd(ctx.storeKey,g.id);dicPop={markId:null,gid:g.id}}
  changed()}
-function fonteLabel(g){return g.fonte==="wikcionario"?"Wikcionário":g.fonte==="ia"?"Resposta da IA — confira antes de confiar":""}
+function fonteLabel(g){if(g.fonte==="livro"){const b=book(g.livroId);return b?`Do seu dicionário: ${b.name.replace(/\.pdf$/i,"")}`:"Do seu dicionário"}return g.fonte==="wikcionario"?"Wikcionário":g.fonte==="ia"?"Resposta da IA — confira antes de confiar":""}
 function rectsDoIntervalo(a,b,node){const r=document.createRange();r.setStart(a.n,a.o);r.setEnd(b.n,b.o);const nb=node.getBoundingClientRect(),out=[];
  for(const c of r.getClientRects()){if(c.width<2||c.height<2)continue;out.push([(c.left-nb.left)/nb.width,(c.top-nb.top)/nb.height,c.width/nb.width,c.height/nb.height].map(v=>Math.round(v*10000)/10000))}
  return out}
@@ -2622,6 +2632,27 @@ async function actDicAberto(a,el){const d=el?el.dataset:{};
  case "dicfalhoumanual":{const f=dicFalhou;dicEdit={termo:f.termo,def:"",glossId:null,pending:f.ctx.pending,bookId:f.ctx.bookId,storeKey:f.ctx.storeKey};dicFalhou=null;return render()}
  case "dicfalhoux":dicFalhou=null;return render();
  }return actIaLeitura(a,el)}
+
+/* ---------- dicionário por PDF: um ou mais livros marcados como dicionário ---------- */
+async function indiceDoLivro(b){
+ try{await carregarPdfjs();
+  const ab=await(await api(`drive/v3/files/${b.fileId}?alt=media`)).arrayBuffer();
+  const doc=await pdfLib.getDocument({data:ab}).promise,chave=b.fileId+"|"+doc.numPages;
+  const cached=await idbGet(chave);if(cached)return cached;
+  const raw=[];for(let p=1;p<=doc.numPages;p++){const pg=await doc.getPage(p);raw[p-1]=textoPagina(await pg.getTextContent())}
+  idbSet(chave,raw);return raw}
+ catch(e){return null}}
+async function buscarEmLivrosDicionario(termo){
+ const livros=L("books").filter(b=>b.ehDicionario);if(!livros.length)return null;
+ const f=fold(termo);
+ for(const b of livros){const raw=await indiceDoLivro(b);if(!raw)continue;
+  for(let i=0;i<raw.length;i++){const txt=raw[i]||"";const k=fold(txt).indexOf(f);if(k<0)continue;
+   const ini=Math.max(0,k-60),fim=Math.min(txt.length,k+termo.length+260);
+   return{book:b,page:i+1,verbete:txt.slice(ini,fim).replace(/\s+/g," ").trim()}}}
+ return null}
+function citacaoDeLivro(b,page){const r=b.refId&&R(b.refId),pImp=impressa(b,page);
+ if(r&&r.abnt&&cheio(r.abnt.autores))return pImp?chamada(r,pImp):chamada(r)+` (PDF ${page} — página impressa a conferir)`;
+ return `(${b.name.replace(/\.pdf$/i,"")}${pImp?", p. "+pImp:", PDF "+page+" — página impressa a conferir"})`}
 
 /* ---------- desenho geral ---------- */
 const NAV=[["capture","Capturar"],["concepts","Conceitos"],["timeline","Linha do tempo","Tempo"],["pending","Pendentes"],["diss","Dissertação"]];
