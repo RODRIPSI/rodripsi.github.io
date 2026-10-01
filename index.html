@@ -2190,8 +2190,10 @@ function dicFormHTML(){const d=dicEdit;return `<label class="label" style="margi
  <label class="label" for="dicd">Significado</label><textarea id="dicd" class="small" placeholder="Como você define, ou a tradução/explicação que anotou">${esc(d.def)}</textarea>
  <div class="row"><button class="primary" style="margin-top:8px" data-a="dicsave">Salvar</button><button class="link" data-a="dicx">Cancelar</button></div>`}
 function dicPopHTML(){const g=glossOf(dicPop.gid);if(!g)return "";
+ const livros=L("books").filter(b=>b.ehDicionario).sort((a,b)=>nomeLimpo(a.name).localeCompare(nomeLimpo(b.name),"pt"));
  return `<div class="lv-dicpop"><p class="dic-t" style="margin:0">${esc(g.termo)}</p><p class="dic-d" style="margin:6px 0 0">${esc(g.def)}</p>${fonteLabel(g)?`<p class="hint" style="margin:4px 0 0">${esc(fonteLabel(g))}</p>`:""}
- <div class="row" style="margin-top:10px"><button class="link" data-a="dicedit" data-id="${g.id}">Editar significado</button>${g.fonte==="livro"&&book(g.livroId)?`<button class="link" data-a="dicverlivro" data-id="${g.livroId}" data-p="${g.livroPage}">Ver no livro</button>`:""}${dicPop.markId?`<button class="link" data-a="dicunmk" data-id="${dicPop.markId}">Tirar esta marcação</button>`:""}<button class="link" data-a="dicpopx">Fechar</button></div></div>`}
+ <div class="row" style="margin-top:10px"><button class="link" data-a="dicedit" data-id="${g.id}">Editar significado</button>${g.fonte==="livro"&&book(g.livroId)?`<button class="link" data-a="dicverlivro" data-id="${g.livroId}" data-p="${g.livroPage}">Ver no livro</button>`:""}${dicPop.markId?`<button class="link" data-a="dicunmk" data-id="${dicPop.markId}">Tirar esta marcação</button>`:""}<button class="link" data-a="dicpopx">Fechar</button></div>
+ ${livros.length?`<p class="hint" style="margin:12px 0 4px">Buscar esta palavra num dicionário específico:</p><div class="chips" style="margin:0">${livros.map(b=>`<button class="chip" data-a="dicbuscarlivro" data-gid="${g.id}" data-bookid="${b.id}">${esc(nomeLimpo(b.name))}</button>`).join("")}</div>`:""}</div>`}
 function bindIaLeitura(){}
 function bindDic(){on("#dict","input",()=>{});on("#dicd","input",()=>{})}
 async function actDic(a,el){const d=el?el.dataset:{};
@@ -2215,6 +2217,11 @@ async function actDic(a,el){const d=el?el.dataset:{};
  case "dicmark":{const g=glossOf(d.gid);if(!g)return;dicPop=(dicPop&&dicPop.markId===d.id)?null:{markId:d.id,gid:g.id};return render()}
  case "dicverno":{const m=db.marks.find(x=>x.id===d.id),g=glossOf(d.gid);if(!g)return;if(m)irPara(m.page);dicPop={markId:d.id,gid:g.id};return render()}
  case "dicchip":{const g=glossOf(d.gid);if(!g)return;dicPop=(dicPop&&!dicPop.markId&&dicPop.gid===g.id)?null:{markId:null,gid:g.id};return render()}
+ case "dicbuscarlivro":{const g=glossOf(d.gid),bk=book(d.bookid);if(!g||!bk)return;
+  dicBuscando={termo:g.termo};render();
+  const hit=await buscarNumLivroEspecifico(bk,g.termo);dicBuscando=null;
+  if(hit){const def=`${hit.verbete} ${citacaoDeLivro(bk,hit.page)}`;criarGloss(g.termo,def,"livro",{livroId:bk.id,livroPage:hit.page});changed();return render()}
+  toast(`Não encontrei "${g.termo}" em ${nomeLimpo(bk.name)}.`);return render()}
  case "dicverlivro":{const bk=book(d.id);if(!bk)return;dicPop=null;
   if(route.name==="leitor"&&route.k===d.id){irPara(+d.p);return render()}
   bk.lastPage=+d.p;touch(bk);changed();return go({name:"leitor",k:d.id})}
@@ -2604,9 +2611,9 @@ function dicListaAdd(storeKey,gid){const l=dicListaDe(storeKey);if(!l.includes(g
 async function buscarSignificado(termo,ctx){dicBuscando={termo};render();
  const ex=glossAcha(termo);
  if(ex){aplicarAchado(ex,ctx);dicBuscando=null;render();return}
+ if(aiKey()){try{const def=await pedirSignificadoIA(termo);const g=criarGloss(termo,def,"ia");aplicarAchado(g,ctx);dicBuscando=null;changed();render();return}catch(e){}}
  const hit=await buscarEmLivrosDicionario(termo);
  if(hit){const def=`${hit.verbete} ${citacaoDeLivro(hit.book,hit.page)}`;const g=criarGloss(termo,def,"livro",{livroId:hit.book.id,livroPage:hit.page});aplicarAchado(g,ctx);dicBuscando=null;changed();render();return}
- if(aiKey()){try{const def=await pedirSignificadoIA(termo);const g=criarGloss(termo,def,"ia");aplicarAchado(g,ctx);dicBuscando=null;changed();render();return}catch(e){}}
  const def=await buscarWikcionario(termo);
  if(def){const g=criarGloss(termo,def,"wikcionario");aplicarAchado(g,ctx);dicBuscando=null;changed();render();return}
  dicBuscando=null;dicFalhou={termo,ctx};render()}
@@ -2657,13 +2664,14 @@ async function indiceDoLivro(b){
   const raw=[];for(let p=1;p<=doc.numPages;p++){const pg=await doc.getPage(p);raw[p-1]=textoPagina(await pg.getTextContent())}
   idbSet(chave,raw);return raw}
  catch(e){return null}}
+async function buscarNumLivroEspecifico(b,termo){const raw=await indiceDoLivro(b);if(!raw)return null;const f=fold(termo);
+ for(let i=0;i<raw.length;i++){const txt=raw[i]||"";const k=fold(txt).indexOf(f);if(k<0)continue;
+  const ini=Math.max(0,k-60),fim=Math.min(txt.length,k+termo.length+260);
+  return{page:i+1,verbete:txt.slice(ini,fim).replace(/\s+/g," ").trim()}}
+ return null}
 async function buscarEmLivrosDicionario(termo){
  const livros=L("books").filter(b=>b.ehDicionario);if(!livros.length)return null;
- const f=fold(termo);
- for(const b of livros){const raw=await indiceDoLivro(b);if(!raw)continue;
-  for(let i=0;i<raw.length;i++){const txt=raw[i]||"";const k=fold(txt).indexOf(f);if(k<0)continue;
-   const ini=Math.max(0,k-60),fim=Math.min(txt.length,k+termo.length+260);
-   return{book:b,page:i+1,verbete:txt.slice(ini,fim).replace(/\s+/g," ").trim()}}}
+ for(const b of livros){const hit=await buscarNumLivroEspecifico(b,termo);if(hit)return{book:b,...hit}}
  return null}
 function nomeLimpo(s){return String(s||"").replace(/\.pdf$/i,"").replace(/[_-]+/g," ").replace(/\s+/g," ").trim()}
 function citacaoDeLivro(b,page){const r=b.refId&&R(b.refId),pImp=impressa(b,page);
