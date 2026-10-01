@@ -331,6 +331,9 @@ a.d-docl span:nth-child(2){text-decoration:underline;text-underline-offset:3px}
 .dic-tap{cursor:text}
 .lv-dicon{background:#1B7A43;border-color:#1B7A43;color:#fff}
 .chip.sm{padding:2px 9px;font-size:12px;border-radius:999px;vertical-align:middle}
+.lv-row{display:flex;align-items:stretch;gap:8px;margin-bottom:8px}.lv-row .res{flex:1;margin:0}
+.lv-dictoggle{flex:none;width:44px;border-radius:12px;border:1px solid var(--rule);background:var(--surface);color:var(--muted);font-size:17px}
+.lv-dictoggle.on{background:#1B7A43;border-color:#1B7A43;color:#fff}
 .a-img{display:block;width:100%;max-height:420px;object-fit:contain;border-radius:10px;background:var(--surface);margin:0 0 14px}
 .a-img.big{max-height:520px}.a-img.md{max-height:230px;width:auto;max-width:100%;display:block;margin:0 auto;border-radius:12px}.a-ph.md{height:150px}.a-ph{display:grid;place-items:center;text-align:center;padding:12px;height:220px;color:var(--muted);font-size:14px;border:1px dashed var(--rule)}
 .a-imgs{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
@@ -1801,7 +1804,7 @@ function vLivros(){const l=L("books").sort((a,b)=>(b.updatedAt||"").localeCompar
  <label class="label" for="lvq" style="margin-top:0">Procurar um PDF no Drive</label><input type="text" id="lvq" value="${esc(lvQ)}" placeholder="Parte do nome, ex.: Obras Completas volume 12"><div id="lvres">${lvResHTML()}</div>
  <div class="row" style="margin:10px 0 0">${lvUp&&lvUp.loading?`<p class="hint" style="margin:0">Enviando ${esc(lvUp.nome)}…</p>`:`<button class="secondary" data-a="lvupbtn">+ Enviar um PDF deste aparelho</button>`}</div>
  <input type="file" id="lvupinput" accept="application/pdf" style="display:none">
- ${l.length?`<p class="label">Livros já abertos</p>${l.map(b=>{const n=L("marks").filter(m=>m.bookId===b.id).length;return `<button class="res" data-a="lvgo" data-id="${b.id}"><p class="fname" style="margin:0">${esc(b.name)}${b.ehDicionario?` <span class="chip sm lv-dicon" style="pointer-events:none">dicionário</span>`:""}</p><p class="hint" style="margin:2px 0 0">${b.lastPage?`parou na página ${b.lastPage} do PDF`:""}${n?` · ${n} ${n===1?"sublinhado":"sublinhados"}`:""}${b.refId&&R(b.refId)?` · ${esc(R(b.refId).label)}`:""}</p></button>`}).join("")}`:""}`}
+ ${l.length?`<p class="label">Livros já abertos</p>${l.map(b=>{const n=L("marks").filter(m=>m.bookId===b.id).length;return `<div class="lv-row"><button class="res" data-a="lvgo" data-id="${b.id}"><p class="fname" style="margin:0">${esc(b.name)}${b.ehDicionario?` <span class="chip sm lv-dicon" style="pointer-events:none">dicionário</span>`:""}</p><p class="hint" style="margin:2px 0 0">${b.lastPage?`parou na página ${b.lastPage} do PDF`:""}${n?` · ${n} ${n===1?"sublinhado":"sublinhados"}`:""}${b.refId&&R(b.refId)?` · ${esc(R(b.refId).label)}`:""}</p></button><button class="lv-dictoggle ${b.ehDicionario?"on":""}" data-a="livrodic" data-id="${b.id}" aria-pressed="${!!b.ehDicionario}" title="Usar como dicionário">${b.ehDicionario?"✓":"+"}</button></div>`}).join("")}`:""}`}
 function lvResHTML(){if(!lvRes)return `<p class="hint">Digite ao menos três letras.</p>`;return lvRes.length?lvRes.map(f=>`<button class="res" data-a="lvopen" data-id="${f.id}" data-n="${esc(f.name)}"><p class="fname" style="margin:0">${esc(f.name)}</p></button>`).join(""):`<p class="hint">Nenhum PDF com esse nome.</p>`}
 function vLeitor(){const b=book(route.k);if(!b)return vLivros();
  const tot=rd.doc&&rd.bookId===b.id?rd.doc.numPages:0,p=b.lastPage||1,imp=impressa(b,p),ms=L("marks").filter(m=>m.bookId===b.id&&m.dest!=="dic").sort((a,c)=>a.page-c.page);
