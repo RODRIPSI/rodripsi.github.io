@@ -556,6 +556,7 @@ function ideaCard(i,extra=""){
  const r=i.refId&&R(i.refId);
  return `<article class="idea"><div class="stripe" aria-hidden="true">${stripe}</div>
  <p class="when">${esc(fmtShort(i.ts))}</p>${ideaImg(i)}<p class="txt dic-tap" data-store="idea:${i.id}">${marcarTermos(i.text,"idea:"+i.id).replace(/\n/g,"<br>")}</p>
+ ${(i.dicPalavras||[]).length?dicChipsPainel(i.dicPalavras,"Dicionário"):""}
  ${i.moment?`<p class="moment">${esc(i.moment)}</p>`:""}
  ${r?`<p class="ref">Procedência${r.type==="com"?" (comentador)":""}: ${esc(r.label)}</p>`:""}
  ${cs.length?`<div class="tags">${cs.map(c=>`<span><i style="background:${c.color}"></i>${esc(c.name)}</span>`).join("")}</div>`:""}
@@ -943,7 +944,7 @@ function vDissTexto(){const subs=subsSorted();
  ${doc?`<div class="chips" style="margin:0 0 14px"><button class="chip" data-a="dtxmodo" data-v="drive" aria-pressed="${modo==="drive"}">Do Drive</button><button class="chip" data-a="dtxmodo" data-v="blocos" aria-pressed="${modo==="blocos"}">Escrito no app</button></div>`:""}
  ${dtxLinking?`<div class="panel esc-imgpick"><label class="label" style="margin-top:0" for="dtxq">Procurar o Word no Drive</label><input type="text" id="dtxq" value="${esc(dtxQ)}" placeholder="Parte do nome do documento"><div id="dtxres">${dtxResHTML()}</div><div class="row"><button class="link" data-a="dtxligx">Cancelar</button></div></div>`
  :!doc?`<div class="row" style="margin:0 0 14px"><button class="secondary" data-a="dtxlig">+ Ligar um Word do Drive como texto atual</button></div>`:""}
- ${(()=>{const gs=(db.meta.dissTextoDic||[]).map(glossOf).filter(Boolean);return `<details class="block" ${gs.length?"open":""}><summary>Dicionário deste texto <span class="count">${gs.length}</span></summary>${gs.length?gs.map(g=>`<div class="lv-m"><p class="dic-t" style="margin:0;font-size:16px">${esc(g.termo)}</p><p class="dic-d" style="margin:3px 0 0;font-size:14.5px">${esc(g.def)}</p>${fonteLabel(g)?`<p class="hint" style="margin:2px 0 0">${esc(fonteLabel(g))}</p>`:""}</div>`).join(""):`<p class="hint">Toque numa palavra do texto abaixo para ver o significado.</p>`}</details>`})()}
+ ${dicChipsPainel(db.meta.dissTextoDic||[],"Dicionário deste texto")}
  ${modo==="drive"?
  (docParas.length?`<p class="hint" style="margin:0 0 12px">${docParas.reduce((a,p)=>a+p.texto.split(/\s+/).length,0).toLocaleString("pt-BR")} palavras, lidas do documento.</p><div class="panel esc-corr dic-tap" data-store="disstexto">${docParas.map(p=>`<p class="esc-par">${marcarTermos(p.texto,"disstexto")}</p>`).join("")}</div>`:`<div class="empty">O documento não trouxe parágrafos com texto.</div>`)
  :`<p class="hint" style="margin:0 0 16px">Junta, na ordem dos subtítulos, o que já foi escrito em “Escrever” — sem os rótulos dos blocos. ${total.toLocaleString("pt-BR")} palavras.</p>
@@ -1177,12 +1178,13 @@ function vAficha(){
  return `<button class="back" data-a="nav" data-to="acervo">‹ Acervo</button>
  <div class="chead" style="border-color:${c?c.color:"var(--rule)"}"><h1>${esc(g.nome)}</h1>${c?`<button class="secondary" data-a="open" data-id="${c.id}">Abrir no app</button>`:`<button class="secondary" data-a="acvcriar" data-k="${esc(g.k)}">Usar como conceito do app</button>`}</div>
  ${g.F&&g.L&&driveId(g.F.img)!==driveId(g.L.img)?`<div class="a-imgs">${imgTag(g.F,1)}${imgTag(g.L,1)}</div>`:imgTag(main,1)}
+ ${dicChipsPainel([...dicListaDe("acv:"+g.k+":Freud"),...dicListaDe("acv:"+g.k+":Lacan")],"Dicionário deste conceito")}
  <div class="a-cols">${colAutor(g.F,"Freud",g.k)}${colAutor(g.L,"Lacan",g.k)}</div>
  ${c?"":`<p class="hint">Este conceito ainda não é uma etiqueta do aplicativo. Ele só vira etiqueta, e aparece em Capturar, se você tocar em “Usar como conceito do app”.</p>`}`}
 function acvBloco(c){ // na página do conceito do app
  if(!acv)return "";const g=acvGrupos().find(x=>x.cid===c.id);if(!g)return "";
  return `<details class="block" open><summary>No acervo Freud e Lacan <span class="count">${[g.F?"Freud":"",g.L?"Lacan":""].filter(Boolean).join(" e ")}</span></summary>
- ${imgTag(g.L||g.F,0)}<div class="a-cols">${colAutor(g.F,"Freud",g.k)}${colAutor(g.L,"Lacan",g.k)}</div></details>`}
+ ${imgTag(g.L||g.F,0)}${dicChipsPainel([...dicListaDe("acv:"+g.k+":Freud"),...dicListaDe("acv:"+g.k+":Lacan")],"Dicionário deste conceito")}<div class="a-cols">${colAutor(g.F,"Freud",g.k)}${colAutor(g.L,"Lacan",g.k)}</div></details>`}
 async function actAcervo(a,el){
  switch(a){
  case "acvsync":return syncAcervo(true);
@@ -1804,7 +1806,7 @@ function vLeitor(){const b=book(route.k);if(!b)return vLivros();
  const dms=L("marks").filter(m=>m.bookId===b.id&&m.dest==="dic"),dgs=[...new Map(dms.map(m=>[m.glossId,m])).values()].map(m=>({...glossOf(m.glossId),markId:m.id})).filter(g=>g.id);
  return `<button class="back" data-a="nav" data-to="livros">‹ Livros</button><h1 style="font-size:24px;margin-bottom:6px">${esc(b.name.replace(/\.pdf$/i,""))}</h1>
  <div class="row" style="margin:0 0 10px;align-items:center"><span class="hint" style="margin:0">Obra:</span>${refSelect("lvref",b.refId||"").replace("Ideia minha, sem leitura por trás","Escolher na Bibliografia").replace("</select>",`<option value="__nova">+ Nova obra na Bibliografia…</option></select>`)}</div>
- <details class="block" ${dgs.length?"open":""}><summary>Dicionário deste livro <span class="count">${dgs.length}</span></summary>${dgs.length?dgs.map(g=>`<div class="lv-m"><p class="dic-t" style="margin:0;font-size:16px">${esc(g.termo)}</p><p class="dic-d" style="margin:3px 0 0;font-size:14.5px">${esc(g.def)}</p>${fonteLabel(g)?`<p class="hint" style="margin:2px 0 0">${esc(fonteLabel(g))}</p>`:""}<div class="row"><button class="link" data-a="dicverno" data-id="${g.markId}" data-gid="${g.id}">Ver no texto</button></div></div>`).join(""):`<p class="hint">Toque numa palavra, com a caneta ou o dedo, para ver o significado. Ela entra aqui automaticamente.</p>`}</details>
+ ${dicChipsPainel(dgs.map(g=>g.id),"Dicionário deste livro",Object.fromEntries(dgs.map(g=>[g.id,g.markId])))}
  ${b.off==null&&tot&&!lvDepois.has(b.id)?`<div class="warn lv-pag"><b>Número das páginas.</b> Avance até uma página que tenha número impresso (a capa e o sumário costumam não ter) e escreva aqui esse número. <span class="hint">Você está na página ${p} do PDF.</span><div class="inline" style="margin-top:8px"><input type="text" inputmode="numeric" id="lvimp" placeholder="número impresso"><button class="secondary" data-a="lvoff">Salvar</button></div><p class="hint" style="margin:6px 0 0">Basta uma vez; o app calcula as outras. <button class="link" data-a="lvdepois">Fazer isso depois</button></p></div>`:""}
  ${b.off==null&&tot&&lvDepois.has(b.id)?`<p class="hint" style="margin:0 0 8px">Páginas impressas ainda não informadas. <button class="link" data-a="lvagora">Informar agora</button></p>`:""}
  ${lsave?saveHTML(b):""}
@@ -2201,6 +2203,7 @@ async function actDic(a,el){const d=el?el.dataset:{};
  case "dicunmk":{const m=db.marks.find(x=>x.id===d.id);if(m){m.deleted=true;touch(m)}dicPop=null;changed();return render()}
  case "dicmark":{const g=glossOf(d.gid);if(!g)return;dicPop=(dicPop&&dicPop.markId===d.id)?null:{markId:d.id,gid:g.id};return render()}
  case "dicverno":{const m=db.marks.find(x=>x.id===d.id),g=glossOf(d.gid);if(!g)return;if(m)irPara(m.page);dicPop={markId:d.id,gid:g.id};return render()}
+ case "dicchip":{const g=glossOf(d.gid);if(!g)return;dicPop=(dicPop&&!dicPop.markId&&dicPop.gid===g.id)?null:{markId:null,gid:g.id};return render()}
  }return actDicAberto(a,el)}
 
 /* ---------- IA de leitura: explicar/simplificar um trecho selecionado ---------- */
@@ -2270,8 +2273,8 @@ function vLeituraCap(){const c=capOf2(route.k);if(!c)return vLeituraTextos();con
  ${c.doc?`<a class="lt-word" href="${esc(c.doc.webViewLink||"#")}" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Abrir o Word no Drive<span class="hint" style="margin-left:auto">${esc(c.doc.name)}</span></a>${ltDoc==="c2:"+c.id?ltDocHTML():`<div class="row" style="margin:6px 0 14px"><button class="link" data-a="ltdoc2" data-id="${c.id}">Trocar o Word ligado</button></div>`}`
  :ltDoc==="c2:"+c.id?ltDocHTML():`<div class="row" style="margin:0 0 14px"><button class="secondary" data-a="ltdoc2" data-id="${c.id}">+ Ligar o Word no Drive</button></div>`}
  ${c.doc?`<div class="row" style="margin:0 0 14px">${c.lerParas?`<button class="link" data-a="ltlerde" data-id="${c.id}">Atualizar do Drive</button>`:`<button class="secondary" data-a="ltler" data-id="${c.id}">Ler o texto aqui</button>`}</div>`:""}
- ${c.lerParas?(()=>{const sk="cap:"+c.id,gs=(c.dicPalavras||[]).map(glossOf).filter(Boolean);
-  return `<details class="block" ${gs.length?"open":""}><summary>Dicionário deste texto <span class="count">${gs.length}</span></summary>${gs.length?gs.map(g=>`<div class="lv-m"><p class="dic-t" style="margin:0;font-size:16px">${esc(g.termo)}</p><p class="dic-d" style="margin:3px 0 0;font-size:14.5px">${esc(g.def)}</p>${fonteLabel(g)?`<p class="hint" style="margin:2px 0 0">${esc(fonteLabel(g))}</p>`:""}</div>`).join(""):`<p class="hint">Toque numa palavra do texto lido abaixo para ver o significado.</p>`}</details>
+ ${c.lerParas?(()=>{const sk="cap:"+c.id;
+  return `${dicChipsPainel(c.dicPalavras||[],"Dicionário deste texto")}
   <div class="panel esc-corr dic-tap" data-store="${sk}">${c.lerParas.map(t=>`<p class="esc-par">${marcarTermos(t,sk)}</p>`).join("")}</div>`})():""}
  <label class="label lt-notaslab" for="ltnotas">Resumo / notas deste capítulo</label>
  <textarea id="ltnotas" rows="10" placeholder="Escreva aqui o resumo, ou o que quiser guardar deste capítulo">${esc(c.notas||"")}</textarea>
@@ -2548,6 +2551,8 @@ async function buscarWikcionario(termo){
   t=t.split(/\n\s*\n/).map(x=>x.trim()).filter(cheio).slice(0,2).join(" ");
   return cheio(t)?t.slice(0,600):null}
  catch(e){return null}}
+function dicChipsPainel(ids,titulo,markMap){const gs=[...new Set(ids)].map(glossOf).filter(Boolean).sort((a,b)=>fold(a.termo).localeCompare(fold(b.termo),"pt"));
+ return `<details class="block"><summary>${titulo} <span class="count">${gs.length}</span></summary>${gs.length?`<div class="chips dic-chips">${gs.map(g=>markMap&&markMap[g.id]?`<button class="chip dic-chip" data-a="dicverno" data-id="${markMap[g.id]}" data-gid="${g.id}">${esc(g.termo)}</button>`:`<button class="chip dic-chip" data-a="dicchip" data-gid="${g.id}">${esc(g.termo)}</button>`).join("")}</div>`:`<p class="hint">Toque numa palavra do texto para ver o significado. Ela entra aqui sozinha.</p>`}</details>`}
 function dicPopDiv(){if(!dicPop&&!dicBuscando&&!dicFalhou&&!dicEdit)return "";
  return `<div style="position:fixed;left:16px;right:16px;bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:32;max-width:560px;margin:0 auto;max-height:70vh;overflow-y:auto">${dicEdit?`<div class="panel esc-imgpick">${dicFormHTML()}</div>`:""}${dicPop?dicPopHTML():""}${dicBuscando?dicBuscandoHTML():""}${dicFalhou?dicFalhouHTML():""}</div>`}
 function bindDicTap(){document.querySelectorAll(".dic-tap").forEach(c=>{
