@@ -381,7 +381,7 @@ input[type=date]{width:100%;background:var(--surface);border:1px solid var(--rul
  <aside class="side" id="side"></aside>
  <div>
   <div class="topbar"><span class="mark" data-knot></span><span class="brand">Bloco Mágico</span><button class="syncbtn" data-a="sync"></button></div>
-  <main id="main"></main>
+  <main id="main"></main><div id="dicroot"></div>
  </div>
 </div>
 <nav class="tabs" id="tabs" aria-label="Seções"></nav>
@@ -555,7 +555,7 @@ function ideaCard(i,extra=""){
  const stripe=cs.length?cs.map(c=>`<span style="background:${c.color}"></span>`).join(""):`<span style="background:var(--rule)"></span>`;
  const r=i.refId&&R(i.refId);
  return `<article class="idea"><div class="stripe" aria-hidden="true">${stripe}</div>
- <p class="when">${esc(fmtShort(i.ts))}</p>${ideaImg(i)}<p class="txt">${esc(i.text).replace(/\n/g,"<br>")}</p>
+ <p class="when">${esc(fmtShort(i.ts))}</p>${ideaImg(i)}<p class="txt dic-tap" data-store="idea:${i.id}">${marcarTermos(i.text,"idea:"+i.id).replace(/\n/g,"<br>")}</p>
  ${i.moment?`<p class="moment">${esc(i.moment)}</p>`:""}
  ${r?`<p class="ref">Procedência${r.type==="com"?" (comentador)":""}: ${esc(r.label)}</p>`:""}
  ${cs.length?`<div class="tags">${cs.map(c=>`<span><i style="background:${c.color}"></i>${esc(c.name)}</span>`).join("")}</div>`:""}
@@ -948,10 +948,11 @@ function vDissTexto(){const subs=subsSorted();
  (docParas.length?`<p class="hint" style="margin:0 0 12px">${docParas.reduce((a,p)=>a+p.texto.split(/\s+/).length,0).toLocaleString("pt-BR")} palavras, lidas do documento.</p><div class="panel esc-corr dic-tap" data-store="disstexto">${docParas.map(p=>`<p class="esc-par">${marcarTermos(p.texto,"disstexto")}</p>`).join("")}</div>`:`<div class="empty">O documento não trouxe parágrafos com texto.</div>`)
  :`<p class="hint" style="margin:0 0 16px">Junta, na ordem dos subtítulos, o que já foi escrito em “Escrever” — sem os rótulos dos blocos. ${total.toLocaleString("pt-BR")} palavras.</p>
  ${paras.length?`<div class="panel esc-corr dic-tap" data-store="disstexto">${paras.map(p=>`<p class="${p.cit?"esc-cit":"esc-par"}">${marcarTermos(p.texto,"disstexto")}</p>`).join("")}</div>`:`<div class="empty">Nada escrito ainda em nenhum subtítulo. Escreva em cada subtítulo, na tela “Escrever”.</div>`}`}
- ${dicPopDiv()}`}
+`}
 function dtxResHTML(){if(!dtxRes)return `<p class="hint">Digite ao menos três letras.</p>`;return dtxRes.length?dtxRes.map(f=>`<button class="res" data-a="dtxpick" data-id="${f.id}" data-n="${esc(f.name)}"><p class="fname" style="margin:0">${esc(f.name)}</p></button>`).join(""):`<p class="hint">Nenhum documento com esse nome.</p>`}
 function bindDiss(){
  bindDicTap();
+ on("#rgdq","input",e=>{regraDocQ=e.target.value;clearTimeout(dlTimer);dlTimer=setTimeout(async()=>{const q=regraDocQ.trim();if(fold(q).length<3)regraDocRes=null;else{try{regraDocRes=await listFiles(`trashed=false and (${DOCQ} or mimeType='application/pdf') and name contains '${qesc(q)}'`,"files(id,name,mimeType,webViewLink)")}catch(e){regraDocRes=[]}}const el=$("#rgdres");if(el)el.innerHTML=regraDocResHTML()},500)});
  on("#dtxq","input",e=>{dtxQ=e.target.value;clearTimeout(dlTimer);dlTimer=setTimeout(async()=>{const q=dtxQ.trim();if(fold(q).length<3)dtxRes=null;else{try{dtxRes=await listFiles(`trashed=false and ${DOCQ} and name contains '${qesc(q)}'`,"files(id,name,mimeType,webViewLink)")}catch(e){dtxRes=[]}}const el=$("#dtxres");if(el)el.innerHTML=dtxResHTML()},500)});
  on("#dbq","input",e=>{dBuscaQ=e.target.value;const el=$("#dbres");if(el)el.innerHTML=dBuscaHTML()});
  on("#dimq","input",e=>{dimgQ=e.target.value;clearTimeout(dlTimer);dlTimer=setTimeout(async()=>{const q=dimgQ.trim();if(fold(q).length<3)dimgRes=null;else{try{dimgRes=await listFiles(`trashed=false and mimeType contains 'image/' and name contains '${qesc(q)}'`,"files(id,name,thumbnailLink,webViewLink)")}catch(e){dimgRes=[]}}const el=$("#dimres");if(el)el.innerHTML=dimgResHTML()},500)});
@@ -999,6 +1000,10 @@ async function actDiss(a,el){
  case "regraeditx":regraEdit=null;return render();
  case "regrasave":{const r=db.regras.find(x=>x.id===el.dataset.id),titulo=($("#rgt").value||"").trim(),texto=($("#rgx").value||"").trim();if(!titulo||!texto)return toast("Escreva o título e a regra.");r.titulo=titulo;r.texto=texto;touch(r);regraEdit=null;changed();return render()}
  case "regradel":{if(!confirm("Excluir esta regra?"))return;const r=db.regras.find(x=>x.id===el.dataset.id);r.deleted=true;touch(r);changed();return render()}
+ case "regradoc":regraDocLig=true;regraDocQ="";regraDocRes=null;return render();
+ case "regradocx":regraDocLig=false;return render();
+ case "regradocpick":{const r=touch({id:uid("rg"),titulo:el.dataset.n.replace(/\.(docx?|pdf)$/i,""),texto:"",doc:{id:el.dataset.id,name:el.dataset.n,webViewLink:el.dataset.l}});db.regras.push(r);regraDocLig=false;changed();render();return regraDocCarregar(r)}
+ case "regradocatualizar":{const r=db.regras.find(x=>x.id===el.dataset.id);if(r)return regraDocCarregar(r)}
  case "dtxlig":dtxLinking=true;dtxQ="";dtxRes=null;return render();
  case "dtxligx":dtxLinking=false;return render();
  case "dtxpick":return dtxCarregar(el.dataset.id,el.dataset.n);
@@ -1156,7 +1161,7 @@ function imgTag(r,big){
  if(typeof u==="string"&&u)return `<img class="a-img ${cls}" src="${u}" alt="Sua imagem de ${esc(r.n)}">`;
  if(u&&u.err)return `<div class="a-img a-ph ${cls}"><span>Não consegui carregar a imagem agora.<br><button class="link" data-a="imgretry" data-id="${id}">Tentar de novo</button> · <a class="link" href="${esc(r.img)}" target="_blank" rel="noopener">abrir no Drive</a></span></div>`;
  return `<div class="a-img a-ph ${cls}">Carregando a imagem…</div>`}
-function colAutor(r,aut){
+function colAutor(r,aut,k){
  if(!r)return `<div class="a-col vazio"><p class="a-h">${aut}</p><p class="hint" style="margin:0">Sem compilação deste conceito em ${aut}.</p></div>`;
  return `<div class="a-col"><p class="a-h">${aut}${r.n?` <span>${esc(r.n)}</span>`:""}</p>
  ${r.doc?`<a class="secondary a-doc" href="${esc(r.doc)}" target="_blank" rel="noopener">Abrir a compilação no Drive</a>${driveId(r.doc)?`<button class="link" data-a="aler" data-id="${driveId(r.doc)}" style="display:block;margin-top:8px">${acvLer[driveId(r.doc)]!==undefined?"Fechar o texto":"Ler o texto aqui"}</button>`:""}`:`<p class="err" style="margin:0">Sem documento vinculado na planilha.</p>`}
@@ -1165,19 +1170,19 @@ function colAutor(r,aut){
  <p class="a-l"><b>Status</b>${r.s?esc(r.s):"em branco"}${r.d?" · "+esc(r.d):""}</p>
  ${r.o?`<p class="a-obs">${esc(r.o)}</p>`:""}
  ${r.doc?citBloco(r,aut):""}
- ${r.doc&&acvLer[driveId(r.doc)]!==undefined?`<div class="a-texto">${acvLer[driveId(r.doc)]===null?"Lendo o documento…":esc(acvLer[driveId(r.doc)]||"Não foi possível ler este documento.").replace(/\n/g,"<br>")}</div>`:""}</div>`}
+ ${r.doc&&acvLer[driveId(r.doc)]!==undefined?`<div class="a-texto dic-tap" data-store="acv:${esc(k)}:${aut}">${acvLer[driveId(r.doc)]===null?"Lendo o documento…":marcarTermos(acvLer[driveId(r.doc)]||"Não foi possível ler este documento.","acv:"+k+":"+aut).replace(/\n/g,"<br>")}</div>`:""}</div>`}
 const acvLer={};
 function vAficha(){
  const g=acvGrupos().find(x=>x.k===route.k);if(!g)return vAcervo();const c=g.cid&&C(g.cid),main=g.L||g.F;
  return `<button class="back" data-a="nav" data-to="acervo">‹ Acervo</button>
  <div class="chead" style="border-color:${c?c.color:"var(--rule)"}"><h1>${esc(g.nome)}</h1>${c?`<button class="secondary" data-a="open" data-id="${c.id}">Abrir no app</button>`:`<button class="secondary" data-a="acvcriar" data-k="${esc(g.k)}">Usar como conceito do app</button>`}</div>
  ${g.F&&g.L&&driveId(g.F.img)!==driveId(g.L.img)?`<div class="a-imgs">${imgTag(g.F,1)}${imgTag(g.L,1)}</div>`:imgTag(main,1)}
- <div class="a-cols">${colAutor(g.F,"Freud")}${colAutor(g.L,"Lacan")}</div>
+ <div class="a-cols">${colAutor(g.F,"Freud",g.k)}${colAutor(g.L,"Lacan",g.k)}</div>
  ${c?"":`<p class="hint">Este conceito ainda não é uma etiqueta do aplicativo. Ele só vira etiqueta, e aparece em Capturar, se você tocar em “Usar como conceito do app”.</p>`}`}
 function acvBloco(c){ // na página do conceito do app
  if(!acv)return "";const g=acvGrupos().find(x=>x.cid===c.id);if(!g)return "";
  return `<details class="block" open><summary>No acervo Freud e Lacan <span class="count">${[g.F?"Freud":"",g.L?"Lacan":""].filter(Boolean).join(" e ")}</span></summary>
- ${imgTag(g.L||g.F,0)}<div class="a-cols">${colAutor(g.F,"Freud")}${colAutor(g.L,"Lacan")}</div></details>`}
+ ${imgTag(g.L||g.F,0)}<div class="a-cols">${colAutor(g.F,"Freud",g.k)}${colAutor(g.L,"Lacan",g.k)}</div></details>`}
 async function actAcervo(a,el){
  switch(a){
  case "acvsync":return syncAcervo(true);
@@ -1811,8 +1816,8 @@ function vLeitor(){const b=book(route.k);if(!b)return vLivros();
  ${b.off!=null?`<p class="hint">Página impressa = página do PDF ${b.off>=0?"+ "+b.off:"− "+(-b.off)}. <button class="link" data-a="lvoffx">corrigir</button></p>`:""}
  <details class="block" ${ms.length?"":""}><summary>Sublinhados deste livro <span class="count">${ms.length}</span></summary>${ms.length?ms.map(m=>`<div class="lv-m"><p class="ct-q">“${esc(m.text.length>240?m.text.slice(0,240)+"…":m.text)}”</p><p class="hint" style="margin:3px 0 0">${m.printed?`p. ${esc(m.printed)} · `:""}PDF ${m.page} · ${m.dest==="plan"?`planejamento do ${esc(m.n||"")}`:"fragmento"}</p><div class="row"><button class="link" data-a="lvjump" data-p="${m.page}">Ir à página</button>${m.dest==="plan"&&m.n?`<button class="link" data-a="lvplano" data-n="${esc(m.n)}" data-k="${m.k!=null?m.k:""}">Abrir no planejamento do ${esc(m.n)}</button>`:""}<button class="link" data-a="lvmdel" data-id="${m.id}">Apagar o sublinhado</button></div></div>`).join(""):`<p class="hint">Selecione um trecho no texto e toque em “Levar como citação”.</p>`}</details>
  <div id="lvsel" class="lv-sel" hidden><button class="primary" data-a="lvleva">Levar como citação</button><button class="secondary lv-dicb" data-a="lvdic">Marcar no dicionário</button><button class="secondary lv-dicb" data-a="lvia">Explicar com IA</button></div>
- ${dicEdit?`<div class="panel esc-imgpick" style="position:fixed;left:16px;right:16px;bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:31;max-width:520px;margin:0 auto">${dicFormHTML()}</div>`:""}
- ${dicPop?dicPopHTML():""}${dicBuscando?dicBuscandoHTML():""}${dicFalhou?dicFalhouHTML():""}${iaLeit?`<div style="position:fixed;left:16px;right:16px;bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:32;max-width:560px;margin:0 auto;max-height:70vh;overflow-y:auto">${iaLeitBloco()}</div>`:""}`}
+
+ ${iaLeit?`<div style="position:fixed;left:16px;right:16px;bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:32;max-width:560px;margin:0 auto;max-height:70vh;overflow-y:auto">${iaLeitBloco()}</div>`:""}`}
 function saveHTML(b){const s=lsave,subs=subsSorted(),demos=s.n?(planRec(s.n)||{demos:[]}).demos:[];
  return `<div class="panel lv-save"><p class="label" style="margin-top:0">Citação</p><textarea id="lvtxt" class="small">${esc(s.text)}</textarea>
  <div class="inline" style="margin-top:8px;align-items:center"><label class="hint" for="lvpimp" style="margin:0;white-space:nowrap">Página impressa</label><input type="text" id="lvpimp" value="${esc(s.printed)}" placeholder="ex.: 44" style="max-width:120px"><span class="hint" style="margin:0">PDF ${s.page}</span></div>
@@ -2271,7 +2276,7 @@ function vLeituraCap(){const c=capOf2(route.k);if(!c)return vLeituraTextos();con
  <label class="label lt-notaslab" for="ltnotas">Resumo / notas deste capítulo</label>
  <textarea id="ltnotas" rows="10" placeholder="Escreva aqui o resumo, ou o que quiser guardar deste capítulo">${esc(c.notas||"")}</textarea>
  <p class="hint">Se salva sozinho. A imagem fica fixa no alto sempre que você abrir este capítulo.</p>
- ${dicPopDiv()}`}
+`}
 function ltImgHTML(){return `<div class="panel esc-imgpick"><label class="label" style="margin-top:0" for="ltiq">Procurar a imagem no Drive</label><input type="text" id="ltiq" value="${esc(ltImgQ)}" placeholder="Parte do nome do arquivo"><div id="ltires">${ltImgResHTML()}</div><div class="row"><button class="link" data-a="ltimgx">Cancelar</button></div></div>`}
 function ltImgResHTML(){if(!ltImgRes)return `<p class="hint">Digite ao menos três letras.</p>`;return ltImgRes.length?ltImgRes.map(f=>`<button class="res" data-a="ltimgpick" data-id="${f.id}" data-n="${esc(f.name)}"><img class="esc-thumb" src="${esc(f.thumbnailLink||"")}" onerror="this.style.display='none'"><p class="fname" style="margin:0">${esc(f.name)}</p></button>`).join(""):`<p class="hint">Nenhuma imagem com esse nome.</p>`}
 function ltDocHTML(){return `<div class="panel esc-imgpick"><label class="label" style="margin-top:0" for="ltdq">Procurar o Word no Drive</label><input type="text" id="ltdq" value="${esc(ltDocQ)}" placeholder="Parte do nome do documento"><div id="ltdres">${ltDocResHTML()}</div><div class="row"><button class="link" data-a="ltdocx">Cancelar</button></div></div>`}
@@ -2481,11 +2486,24 @@ function dBuscaHTML(){const r=dBuscaResultados();
  return `<div class="dbusca-res">${cab}${r.map(dBuscaItemHTML).join("")}</div>`}
 
 /* ---------- Regras e normas: ABNT atualizada + regras que você mesmo acrescenta ---------- */
-let regraNovo=false,regraEdit=null;
+let regraNovo=false,regraEdit=null,regraDocQ="",regraDocRes=null,regraDocLig=false;
+async function regraDocCarregar(r){toast("Lendo o Drive…");
+ try{const m=await(await api(`drive/v3/files/${r.doc.id}?fields=mimeType,modifiedTime`)).json();
+  let texto="";
+  if(m.mimeType==="application/pdf"){await carregarPdfjs();const ab=await(await api(`drive/v3/files/${r.doc.id}?alt=media`)).arrayBuffer();
+   const doc=await pdfLib.getDocument({data:ab}).promise,partes=[];
+   for(let p=1;p<=doc.numPages;p++){const pg=await doc.getPage(p);partes.push(textoPagina(await pg.getTextContent()))}
+   texto=partes.join("\n\n")}
+  else{if(!window.JSZip)throw new Error("Componente de Word ainda carregando.");
+   const ab=await(await api(m.mimeType===GDOC?`drive/v3/files/${r.doc.id}/export?mimeType=${encodeURIComponent(DOCX)}`:`drive/v3/files/${r.doc.id}?alt=media`)).arrayBuffer();
+   const z=await JSZip.loadAsync(ab),xml=await z.file("word/document.xml").async("string");
+   texto=docxParagrafos(xml).join("\n\n")}
+  r.texto=texto;r.doc.mod=m.modifiedTime;touch(r);changed();render();return toast("Documento lido")}
+ catch(e){toast(e.message==="auth"?"Conecte ao Drive de novo.":(e.message||"Não foi possível ler o documento."))}}
 function vRegras(){const l=L("regras");
  return `<button class="back" data-a="nav" data-to="diss">‹ Dissertação</button><h1>Regras e normas</h1>
  <details class="block" open><summary>ABNT — pontos gerais de formatação <span class="count">ref.</span></summary>
- <div class="regra-abnt">
+ <div class="regra-abnt dic-tap" data-store="abnt">
  <p><b>Margens e papel</b> — folha A4; margem esquerda e superior 3 cm; direita e inferior 2 cm.</p>
  <p><b>Fonte do texto</b> — tamanho 12 no corpo inteiro, inclusive a capa; tamanho 10 em notas de rodapé, legendas, citações longas e paginação.</p>
  <p><b>Espaçamento</b> — 1,5 entre linhas no texto principal; espaço simples em citações longas, notas de rodapé e legendas.</p>
@@ -2495,9 +2513,12 @@ function vRegras(){const l=L("regras");
  <p class="hint" style="margin-top:10px">Baseado na NBR 14724:2024 (4ª edição, publicada em 16/12/2024). Alinhamento do texto, uso de maiúsculas e outros detalhes variam pelo manual do seu programa — confirme com a UERJ e com a orientadora antes de fechar a versão final.</p>
  </div></details>
  <p class="med-h" style="margin:20px 0 10px">Suas regras <span class="count">${l.length}</span></p>
- <p class="hint" style="margin:-4px 0 12px">Normas do programa, pedidos da orientadora, ou qualquer regra de escrita e formatação que você queira ter sempre à mão.</p>
- ${l.length?l.map(r=>`<div class="doc regra-it">${regraEdit===r.id?regraFormHTML(r):`<p class="fname" style="margin:0">${esc(r.titulo)}</p><p style="margin:6px 0 0;white-space:pre-wrap">${esc(r.texto)}</p><div class="row" style="margin-top:8px"><button class="link" data-a="regraedit" data-id="${r.id}">Editar</button><button class="link" data-a="regradel" data-id="${r.id}">Excluir</button></div>`}</div>`).join(""):`<p class="hint">Nenhuma regra acrescentada ainda.</p>`}
- ${regraNovo?`<div class="panel">${regraFormHTML(null)}</div>`:`<div class="row"><button class="secondary" data-a="regranovo">+ Acrescentar regra</button></div>`}`}
+ <p class="hint" style="margin:-4px 0 12px">Normas do programa, pedidos da orientadora, ou qualquer regra de escrita e formatação que você queira ter sempre à mão — escrita por você, ou lida de um documento do Drive.</p>
+ ${l.length?l.map(r=>`<div class="doc regra-it">${regraEdit===r.id?regraFormHTML(r):`<p class="fname" style="margin:0">${esc(r.titulo)}</p>${r.doc?`<p class="hint" style="margin:4px 0 0"><a href="${esc(r.doc.webViewLink||"#")}" target="_blank" rel="noopener">${esc(r.doc.name)}</a> · lido do Drive · <button class="link" data-a="regradocatualizar" data-id="${r.id}">Atualizar</button></p>`:""}<div class="dic-tap" data-store="regra:${r.id}"><p style="margin:6px 0 0;white-space:pre-wrap">${marcarTermos(r.texto,"regra:"+r.id)}</p></div><div class="row" style="margin-top:8px"><button class="link" data-a="regraedit" data-id="${r.id}">Editar</button><button class="link" data-a="regradel" data-id="${r.id}">Excluir</button></div>`}</div>`).join(""):`<p class="hint">Nenhuma regra acrescentada ainda.</p>`}
+ ${regraDocLig?`<div class="panel esc-imgpick"><label class="label" style="margin-top:0" for="rgdq">Procurar no Drive (Word ou PDF)</label><input type="text" id="rgdq" value="${esc(regraDocQ)}" placeholder="Parte do nome do documento"><div id="rgdres">${regraDocResHTML()}</div><div class="row"><button class="link" data-a="regradocx">Cancelar</button></div></div>`:""}
+ ${regraNovo?`<div class="panel">${regraFormHTML(null)}</div>`:`<div class="row"><button class="secondary" data-a="regranovo">+ Acrescentar regra</button><button class="secondary" data-a="regradoc">+ Ligar um documento do Drive</button></div>`}
+`}
+function regraDocResHTML(){if(!regraDocRes)return `<p class="hint">Digite ao menos três letras.</p>`;return regraDocRes.length?regraDocRes.map(f=>`<button class="res" data-a="regradocpick" data-id="${f.id}" data-n="${esc(f.name)}" data-l="${esc(f.webViewLink||"")}"><p class="fname" style="margin:0">${esc(f.name)}</p></button>`).join(""):`<p class="hint">Nenhum documento com esse nome.</p>`}
 function regraFormHTML(r){return `<label class="label" style="margin-top:0" for="rgt">Título</label><input type="text" id="rgt" value="${esc(r?r.titulo:"")}" placeholder="Ex.: Formatação exigida pelo PPG">
  <label class="label" for="rgx">Regra</label><textarea id="rgx" rows="4" placeholder="Escreva a regra ou a norma">${esc(r?r.texto:"")}</textarea>
  <div class="row"><button class="primary" data-a="${r?"regrasave":"regranovosave"}" data-id="${r?r.id:""}">Salvar</button><button class="link" data-a="${r?"regraeditx":"regranovox"}">Cancelar</button></div>`}
@@ -2516,12 +2537,16 @@ function vDissBib(){const refs=dissRefsDe().sort(ordemRef);
 
 /* ---------- dicionário automático: Dicionário Aberto + IA, com toque numa palavra ---------- */
 let dicBuscando=null,dicFalhou=null;
-async function buscarDicionario(termo){
- try{const r=await fetch(`https://api.dicionario-aberto.net/word/${encodeURIComponent(fold(termo))}`);if(!r.ok)return null;
-  const j=await r.json();const l=Array.isArray(j)?j:j?[j]:[];if(!l.length)return null;
-  const camposTexto=["definition","def","html","xml","text","body","meaning"];
-  for(const entrada of l){for(const campo of camposTexto){if(entrada&&typeof entrada[campo]==="string"&&cheio(entrada[campo])){const t=esconderXml(entrada[campo]);if(cheio(t))return t}}}
-  return null}
+async function buscarWikcionario(termo){
+ try{const u=`https://pt.wiktionary.org/w/api.php?action=query&titles=${encodeURIComponent(termo)}&prop=extracts&explaintext=1&format=json&origin=*`;
+  const r=await fetch(u);if(!r.ok)return null;const j=await r.json();
+  const pages=j&&j.query&&j.query.pages;if(!pages)return null;
+  const pg=Object.values(pages)[0];if(!pg||pg.missing!==undefined||!cheio(pg.extract))return null;
+  let t=pg.extract;
+  const mPt=t.match(/(?:^|\n)\s*(?:==\s*)?Português\s*(?:==)?\s*\n([\s\S]*?)(?:\n\s*==[^=]|$)/i);
+  if(mPt)t=mPt[1];
+  t=t.split(/\n\s*\n/).map(x=>x.trim()).filter(cheio).slice(0,2).join(" ");
+  return cheio(t)?t.slice(0,600):null}
  catch(e){return null}}
 function dicPopDiv(){if(!dicPop&&!dicBuscando&&!dicFalhou&&!dicEdit)return "";
  return `<div style="position:fixed;left:16px;right:16px;bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:32;max-width:560px;margin:0 auto;max-height:70vh;overflow-y:auto">${dicEdit?`<div class="panel esc-imgpick">${dicFormHTML()}</div>`:""}${dicPop?dicPopHTML():""}${dicBuscando?dicBuscandoHTML():""}${dicFalhou?dicFalhouHTML():""}</div>`}
@@ -2536,22 +2561,34 @@ async function pedirSignificadoIA(termo){
  const sys="Você define uma palavra ou expressão para alguém lendo um texto de psicanálise. Responda só com a definição, direto, em até três frases, em português. Se for um termo técnico (de Freud, Lacan ou psicanálise em geral), diga isso brevemente.";
  return (await askAI(sys,termo)).trim()}
 function criarGloss(termo,def,fonte){const ex=glossAcha(termo);if(ex){ex.def=def;ex.fonte=fonte;touch(ex);return ex}const g=touch({id:uid("g"),termo,def,fonte});db.glossario.push(g);return g}
-function dicListaDe(storeKey){if(storeKey==="disstexto")return db.meta.dissTextoDic||(db.meta.dissTextoDic=[]);
- if(storeKey.startsWith("cap:")){const c=capOf2(storeKey.slice(4));if(c)return c.dicPalavras||(c.dicPalavras=[])}
- return[]}
+function dicObjDe(storeKey){
+ if(storeKey==="disstexto")return db.meta;
+ if(storeKey==="abnt")return db.meta;
+ if(storeKey.startsWith("cap:"))return capOf2(storeKey.slice(4));
+ if(storeKey.startsWith("idea:"))return db.ideas.find(i=>i.id===storeKey.slice(5));
+ if(storeKey.startsWith("concept:"))return C(storeKey.slice(8));
+ if(storeKey.startsWith("regra:"))return db.regras.find(r=>r.id===storeKey.slice(6));
+ if(storeKey.startsWith("artsub:"))return artsubOf(storeKey.slice(7));
+ return null}
+function dicCampoDe(storeKey){return storeKey==="disstexto"?"dissTextoDic":storeKey==="abnt"?"regrasAbntDic":"dicPalavras"}
+function dicListaDe(storeKey){
+ if(storeKey.startsWith("acv:")){const m=db.meta.acvDic||(db.meta.acvDic={});return m[storeKey.slice(4)]||(m[storeKey.slice(4)]=[])}
+ const o=dicObjDe(storeKey);if(!o)return[];const f=dicCampoDe(storeKey);return o[f]||(o[f]=[])}
 function dicListaAdd(storeKey,gid){const l=dicListaDe(storeKey);if(!l.includes(gid))l.push(gid);
- if(storeKey.startsWith("cap:")){const c=capOf2(storeKey.slice(4));if(c)touch(c)}else{touch({id:"meta"})}changed()}
+ if(storeKey.startsWith("acv:")){changed();return}
+ const o=dicObjDe(storeKey);if(o)touch(o);changed()}
 async function buscarSignificado(termo,ctx){dicBuscando={termo};render();
  const ex=glossAcha(termo);
  if(ex){aplicarAchado(ex,ctx);dicBuscando=null;render();return}
- const def=await buscarDicionario(termo);
- if(def){const g=criarGloss(termo,def,"dicionario-aberto");aplicarAchado(g,ctx);dicBuscando=null;changed();render();return}
+ if(aiKey()){try{const def=await pedirSignificadoIA(termo);const g=criarGloss(termo,def,"ia");aplicarAchado(g,ctx);dicBuscando=null;changed();render();return}catch(e){}}
+ const def=await buscarWikcionario(termo);
+ if(def){const g=criarGloss(termo,def,"wikcionario");aplicarAchado(g,ctx);dicBuscando=null;changed();render();return}
  dicBuscando=null;dicFalhou={termo,ctx};render()}
 function aplicarAchado(g,ctx){
  if(ctx.pending){const m=touch({id:uid("m"),bookId:ctx.bookId,page:ctx.pending.page,rects:ctx.pending.rects,text:g.termo,dest:"dic",glossId:g.id});db.marks.push(m);dicPop={markId:m.id,gid:g.id}}
  else if(ctx.storeKey){dicListaAdd(ctx.storeKey,g.id);dicPop={markId:null,gid:g.id}}
  changed()}
-function fonteLabel(g){return g.fonte==="dicionario-aberto"?"Dicionário Aberto (1913, domínio público)":g.fonte==="ia"?"Resposta da IA — confira antes de confiar":""}
+function fonteLabel(g){return g.fonte==="wikcionario"?"Wikcionário":g.fonte==="ia"?"Resposta da IA — confira antes de confiar":""}
 function rectsDoIntervalo(a,b,node){const r=document.createRange();r.setStart(a.n,a.o);r.setEnd(b.n,b.o);const nb=node.getBoundingClientRect(),out=[];
  for(const c of r.getClientRects()){if(c.width<2||c.height<2)continue;out.push([(c.left-nb.left)/nb.width,(c.top-nb.top)/nb.height,c.width/nb.width,c.height/nb.height].map(v=>Math.round(v*10000)/10000))}
  return out}
@@ -2567,8 +2604,8 @@ function marcarTermos(texto,storeKey){const ids=dicListaDe(storeKey);if(!ids.len
   h=h.replace(re,(m0,pre,hit)=>`${pre}<mark class="dic-hl" data-a="dictap" data-termo="${esc(hit)}">${hit}</mark>`)});
  return h}
 function dicFalhouHTML(){const f=dicFalhou;
- return `<div class="panel lv-ia"><p class="label" style="margin-top:0">"${esc(f.termo)}"</p><p class="hint" style="margin:0 0 10px">Não encontrei no Dicionário Aberto. Ele é de 1913 e de domínio público — não tem todos os termos técnicos ou atuais.</p>
- <div class="row"><button class="secondary" data-a="dicia">Perguntar à IA</button><button class="secondary" data-a="dicfalhoumanual">Escrever eu mesmo</button><button class="link" data-a="dicfalhoux">Cancelar</button></div></div>`}
+ return `<div class="panel lv-ia"><p class="label" style="margin-top:0">"${esc(f.termo)}"</p><p class="hint" style="margin:0 0 10px">${aiKey()?"Não encontrei um significado — nem com a IA, nem no Wikcionário.":"Não encontrei no Wikcionário. Configure a chave da IA (em Formalização) para ela responder primeiro."}</p>
+ <div class="row"><button class="secondary" data-a="dicia">${aiKey()?"Tentar a IA de novo":"Perguntar à IA"}</button><button class="secondary" data-a="dicfalhoumanual">Escrever eu mesmo</button><button class="link" data-a="dicfalhoux">Cancelar</button></div></div>`}
 function dicBuscandoHTML(){return `<div class="panel lv-ia"><p class="hint" style="margin:0">Procurando "${esc(dicBuscando.termo)}"…</p></div>`}
 async function actDicAberto(a,el){const d=el?el.dataset:{};
  switch(a){
@@ -2591,7 +2628,7 @@ function renderNav(){
  <button data-a="nav" data-to="batch" aria-current="${route.name==="batch"}">Organizar pasta do Drive</button><button data-a="nav" data-to="bib" aria-current="${route.name==="bib"}">Bibliografia</button><button data-a="nav" data-to="acervo" aria-current="${route.name==="acervo"||route.name==="aficha"}">Acervo Freud e Lacan</button><button data-a="nav" data-to="form" aria-current="${route.name==="form"}">Formalização</button></nav>
  <p class="sub">Seus conceitos</p><div class="cl">${sortedConcepts().map(c=>`<button data-a="open" data-id="${c.id}" aria-current="${route.name==="concept"&&route.id===c.id}"><span style="width:9px;height:9px;border-radius:50%;background:${c.color};display:inline-block;flex:none"></span>${esc(c.name)}</button>`).join("")}</div>`;
  setSync()}
-function render(){renderNav();$("#main").innerHTML=({capture:vCapture,concepts:vConcepts,concept:vConcept,timeline:vTimeline,pending:vPending,batch:vBatch,bib:vBib,diss:vDiss,auto:vAuto,acervo:vAcervo,aficha:vAficha,form:vForm,plano:vPlano,ritmo:vRitmo,medidor:vMedidor,escrever:vEscrever,livros:vLivros,leitor:vLeitor,dicionario:vDicionario,leituratextos:vLeituraTextos,leituracaps:vLeituraCaps,leituracap:vLeituraCap,artigos:vArtigos,artigo:vArtigo,artsub:vArtSub,artigointeiro:vArtigoInteiro,dtexto:vDissTexto,comentarios:vComentarios,comentario:vComentario,regras:vRegras,dissbib:vDissBib}[route.name]||vConcepts)();bind()}
+function render(){renderNav();$("#main").innerHTML=({capture:vCapture,concepts:vConcepts,concept:vConcept,timeline:vTimeline,pending:vPending,batch:vBatch,bib:vBib,diss:vDiss,auto:vAuto,acervo:vAcervo,aficha:vAficha,form:vForm,plano:vPlano,ritmo:vRitmo,medidor:vMedidor,escrever:vEscrever,livros:vLivros,leitor:vLeitor,dicionario:vDicionario,leituratextos:vLeituraTextos,leituracaps:vLeituraCaps,leituracap:vLeituraCap,artigos:vArtigos,artigo:vArtigo,artsub:vArtSub,artigointeiro:vArtigoInteiro,dtexto:vDissTexto,comentarios:vComentarios,comentario:vComentario,regras:vRegras,dissbib:vDissBib}[route.name]||vConcepts)();bind();$("#dicroot").innerHTML=dicPopDiv()}
 function softRender(){const a=document.activeElement;if(a&&$("#main").contains(a)&&/INPUT|TEXTAREA|SELECT/.test(a.tagName)){renderNav()}else render()}
 function on(sel,ev,fn){const e=$(sel);if(e)e.addEventListener(ev,fn);return e}
 function bind(){
