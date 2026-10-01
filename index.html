@@ -403,7 +403,7 @@ const DOCX="application/vnd.openxmlformats-officedocument.wordprocessingml.docum
 const DOCQ=`(mimeType='${DOCX}' or mimeType='application/msword' or mimeType='${GDOC}')`;
 const PALETTE=["#2A8C82","#7A4E8C","#4A6FA5","#B8862B","#A4563A","#5E7F3A","#9A4668","#3F7F99","#8C6A3F","#5B5FA8","#A13D3D","#3E8A63"];
 const STATES={sem:"Sem fundamentação",parcial:"Parcialmente fundamentado",fund:"Fundamentado",concl:"Concluído"};
-const TYPES={prim:"Fontes primárias",com:"Comentadores contemporâneos"};
+const TYPES={prim:"Fontes primárias",com:"Comentadores contemporâneos",dic:"Dicionários"};
 const SEED=["Sujeito","Outro","Constituição do sujeito","Transferência","Repetição","Sujeito suposto saber","Posição do analista","Desejo do analista","Manejo","Demanda","Desejo","Sugestão","Pulsão","Afeto","Juízo","Disposição","Desamparo","Eu","Id","Supereu","Complexo de Édipo","Aparelho psíquico","Real","Simbólico","Imaginário","Fantasia","Saber","Interpretação","Interpretação da cena","Sintoma","Histeria","Psicose","Ética"];
 
 const $=s=>document.querySelector(s);
@@ -661,7 +661,7 @@ function vBib(){
   return `<details class="block" open><summary>${TYPES[k]} <span class="count">${l.length}</span></summary>${l.map(r=>{
    const ni=L("ideas").filter(i=>i.refId===r.id).length,nd=L("docs").filter(d=>d.incorporated.some(x=>x.ref===r.id)).length,np=L("docs").filter(d=>d.intended.includes(r.id)).length;
    return `<div class="doc"><p class="fname">${esc(r.label)}</p><p class="hint" style="margin:0">${ni} ${ni===1?"ideia nascida da leitura":"ideias nascidas da leitura"}, citado em ${nd} ${nd===1?"texto":"textos"}${np?`, a buscar em ${np}`:""}</p>${refEdit===r.id?"":""}${refCard(r)}${refEdit===r.id?"":`<div class="row"><button class="link" data-a="rdel" data-id="${r.id}">Excluir</button></div>`}</div>`}).join("")||`<div class="empty">Nenhuma obra cadastrada ainda.</div>`}</details>`};
- const typeSel=id=>`<select id="${id}"><option value="prim">Fonte primária</option><option value="com">Comentador contemporâneo</option></select>`;
+ const typeSel=id=>`<select id="${id}"><option value="prim">Fonte primária</option><option value="com">Comentador contemporâneo</option><option value="dic">Dicionário</option></select>`;
  return `<button class="back" data-a="nav" data-to="concepts">‹ Conceitos</button><h1>Bibliografia</h1>
  <div class="row" style="margin:-6px 0 18px"><button class="secondary" data-a="newref">+ Cadastrar obra</button><button class="secondary" data-a="bulkref">Colar lista de obras</button><button class="secondary" data-a="abcopyall">Copiar a lista completa (ABNT)</button></div>
  <div class="panel ab-cfg"><p style="margin:0 0 8px"><b>Autor nas chamadas</b></p><div class="chips"><button class="chip" data-a="abcaps" data-v="0" aria-pressed="${!caixaAlta()}">(Freud, 1912/2010, p. 44)</button><button class="chip" data-a="abcaps" data-v="1" aria-pressed="${caixaAlta()}">(FREUD, 1912/2010, p. 44)</button></div><p class="hint" style="margin:8px 0 0">A NBR 10520:2023 usa maiúsculas e minúsculas. A forma em caixa alta é a da norma anterior; use-a se o programa ainda a exigir. As referências no fim (NBR 6023:2018) têm o sobrenome sempre em maiúsculas.</p></div>
@@ -1804,7 +1804,7 @@ function vLivros(){const l=L("books").sort((a,b)=>(b.updatedAt||"").localeCompar
  <label class="label" for="lvq" style="margin-top:0">Procurar um PDF no Drive</label><input type="text" id="lvq" value="${esc(lvQ)}" placeholder="Parte do nome, ex.: Obras Completas volume 12"><div id="lvres">${lvResHTML()}</div>
  <div class="row" style="margin:10px 0 0">${lvUp&&lvUp.loading?`<p class="hint" style="margin:0">Enviando ${esc(lvUp.nome)}…</p>`:`<button class="secondary" data-a="lvupbtn">+ Enviar um PDF deste aparelho</button>`}</div>
  <input type="file" id="lvupinput" accept="application/pdf" style="display:none">
- ${l.length?`<p class="label">Livros já abertos</p>${l.map(b=>{const n=L("marks").filter(m=>m.bookId===b.id).length;return `<div class="lv-row"><button class="res" data-a="lvgo" data-id="${b.id}"><p class="fname" style="margin:0">${esc(b.name)}${b.ehDicionario?` <span class="chip sm lv-dicon" style="pointer-events:none">dicionário</span>`:""}</p><p class="hint" style="margin:2px 0 0">${b.lastPage?`parou na página ${b.lastPage} do PDF`:""}${n?` · ${n} ${n===1?"sublinhado":"sublinhados"}`:""}${b.refId&&R(b.refId)?` · ${esc(R(b.refId).label)}`:""}</p></button><button class="lv-dictoggle ${b.ehDicionario?"on":""}" data-a="livrodic" data-id="${b.id}" aria-pressed="${!!b.ehDicionario}" title="Usar como dicionário">${b.ehDicionario?"✓":"+"}</button></div>`}).join("")}`:""}`}
+ ${l.length?`<p class="label">Livros já abertos</p>${l.map(b=>{const n=L("marks").filter(m=>m.bookId===b.id).length;return `<div class="lv-row"><button class="res" data-a="lvgo" data-id="${b.id}"><p class="fname" style="margin:0">${esc(b.name)}${b.ehDicionario?` <span class="chip sm lv-dicon" style="pointer-events:none">dicionário</span>`:""}${indexando[b.id]?` <span class="chip sm" style="pointer-events:none">lendo…</span>`:""}</p><p class="hint" style="margin:2px 0 0">${b.lastPage?`parou na página ${b.lastPage} do PDF`:""}${n?` · ${n} ${n===1?"sublinhado":"sublinhados"}`:""}${b.refId&&R(b.refId)?` · ${esc(R(b.refId).label)}`:""}</p></button><button class="lv-dictoggle ${b.ehDicionario?"on":""}" data-a="livrodic" data-id="${b.id}" aria-pressed="${!!b.ehDicionario}" title="Usar como dicionário">${b.ehDicionario?"✓":"+"}</button><button class="lv-dictoggle" data-a="livrodel" data-id="${b.id}" title="Tirar da lista">×</button></div>`}).join("")}`:""}`}
 function lvResHTML(){if(!lvRes)return `<p class="hint">Digite ao menos três letras.</p>`;return lvRes.length?lvRes.map(f=>`<button class="res" data-a="lvopen" data-id="${f.id}" data-n="${esc(f.name)}"><p class="fname" style="margin:0">${esc(f.name)}</p></button>`).join(""):`<p class="hint">Nenhum PDF com esse nome.</p>`}
 function vLeitor(){const b=book(route.k);if(!b)return vLivros();
  const tot=rd.doc&&rd.bookId===b.id?rd.doc.numPages:0,p=b.lastPage||1,imp=impressa(b,p),ms=L("marks").filter(m=>m.bookId===b.id&&m.dest!=="dic").sort((a,c)=>a.page-c.page);
@@ -1812,7 +1812,7 @@ function vLeitor(){const b=book(route.k);if(!b)return vLivros();
  return `<button class="back" data-a="nav" data-to="livros">‹ Livros</button><h1 style="font-size:24px;margin-bottom:6px">${esc(b.name.replace(/\.pdf$/i,""))}</h1>
  <div class="row" style="margin:0 0 10px;align-items:center"><span class="hint" style="margin:0">Obra:</span>${refSelect("lvref",b.refId||"").replace("Ideia minha, sem leitura por trás","Escolher na Bibliografia").replace("</select>",`<option value="__nova">+ Nova obra na Bibliografia…</option></select>`)}</div>
  <div class="row" style="margin:0 0 10px"><button class="secondary ${b.ehDicionario?"lv-dicon":""}" data-a="livrodic" data-id="${b.id}">${b.ehDicionario?"✓ Usado como dicionário":"Usar este livro como dicionário"}</button></div>
- ${b.ehDicionario?`<p class="hint" style="margin:-4px 0 10px">Quando você tocar numa palavra em qualquer lugar do app, o app procura aqui primeiro.</p>`:""}
+ ${indexando[b.id]?`<p class="hint" style="margin:-4px 0 10px">Lendo o livro inteiro pela primeira vez, para as próximas buscas ficarem rápidas…</p>`:b.ehDicionario?`<p class="hint" style="margin:-4px 0 10px">Quando você tocar numa palavra em qualquer lugar do app, o app procura aqui primeiro.</p>`:""}
  ${dicChipsPainel(dgs.map(g=>g.id),"Dicionário deste livro",Object.fromEntries(dgs.map(g=>[g.id,g.markId])))}
  ${b.off==null&&tot&&!lvDepois.has(b.id)?`<div class="warn lv-pag"><b>Número das páginas.</b> Avance até uma página que tenha número impresso (a capa e o sumário costumam não ter) e escreva aqui esse número. <span class="hint">Você está na página ${p} do PDF.</span><div class="inline" style="margin-top:8px"><input type="text" inputmode="numeric" id="lvimp" placeholder="número impresso"><button class="secondary" data-a="lvoff">Salvar</button></div><p class="hint" style="margin:6px 0 0">Basta uma vez; o app calcula as outras. <button class="link" data-a="lvdepois">Fazer isso depois</button></p></div>`:""}
  ${b.off==null&&tot&&lvDepois.has(b.id)?`<p class="hint" style="margin:0 0 8px">Páginas impressas ainda não informadas. <button class="link" data-a="lvagora">Informar agora</button></p>`:""}
@@ -1899,7 +1899,7 @@ function bindLeitor(){
  on("#lvq","input",e=>{lvQ=e.target.value;clearTimeout(lvTimer);lvTimer=setTimeout(async()=>{const q=lvQ.trim();if(fold(q).length<3)lvRes=null;else{try{lvRes=await listFiles(`trashed=false and mimeType='application/pdf' and name contains '${qesc(q)}'`,"files(id,name)")}catch(e){lvRes=[]}}const el=$("#lvres");if(el)el.innerHTML=lvResHTML()},500)});
  if(route.name!=="leitor")return;const b=book(route.k);if(!b)return;
  on("#lvref","change",e=>{let v=e.target.value;if(v==="__nova"){const nome=(prompt("Referência da obra (como vai aparecer na citação):",b.name.replace(/\.pdf$/i,""))||"").trim();if(!nome){e.target.value=b.refId||"";return}
-  const tipo=confirm("É fonte primária (Freud, Lacan)? Toque em Cancelar se for comentador.")?"prim":"com";const r=touch({id:uid("r"),type:tipo,label:nome});db.refs.push(r);v=r.id;toast("Obra acrescentada à Bibliografia")}
+  const tipo=confirm("É fonte primária (Freud, Lacan)? Toque em Cancelar para mais opções.")?"prim":confirm("É um dicionário? Toque em Cancelar se for comentador.")?"dic":"com";const r=touch({id:uid("r"),type:tipo,label:nome});db.refs.push(r);v=r.id;toast("Obra acrescentada à Bibliografia")}
  b.refId=v;touch(b);changed();render()});
  on("#lvir","keydown",e=>{if(e.key==="Enter"){const n=parseInt(e.target.value,10);if(n>0)irPara(n)}});
  on("#lvtxt","input",e=>{lsave.text=e.target.value});on("#lvpimp","input",e=>{lsave.printed=e.target.value.trim()});
@@ -1984,8 +1984,8 @@ function refCard(r){const h=refABNT(r),f=faltasRef(r),ed=refEdit===r.id,a=r.abnt
   ${fld("url","Endereço na internet (se for on-line)")}${cheio(a.url)?fld("acesso","Acesso em","26 set. 2026"):""}
   <div class="panel ab-prev"><p class="label" style="margin-top:0">Como fica</p><p id="abprev">${refABNT({abnt:{...a,tipo:t}})||"<span class='hint'>Preencha ao menos o título.</span>"}</p></div>
   <div class="row"><button class="primary" data-a="absave" data-id="${r.id}">Salvar</button></div><div class="row"><button class="link" data-a="abx">Cancelar</button></div></div>`}
- return h?`<p class="ab-ref">${h}</p>${f.length?`<p class="warn" style="margin:4px 0 0">Falta: ${f.join(", ")}.</p>`:""}<div class="row"><button class="link" data-a="abcopy" data-id="${r.id}">Copiar a referência</button><button class="link" data-a="abedit" data-id="${r.id}">Editar a ficha ABNT</button></div>`
- :`<div class="row"><button class="secondary" data-a="abedit" data-id="${r.id}">Preencher a ficha ABNT</button></div>`}
+ return h?`<p class="ab-ref">${h}</p>${f.length?`<p class="warn" style="margin:4px 0 0">Falta: ${f.join(", ")}.</p>`:""}<div class="row"><button class="link" data-a="abcopy" data-id="${r.id}">Copiar a referência</button><button class="link" data-a="abedit" data-id="${r.id}">Editar a ficha ABNT</button><button class="link" data-a="refdel" data-id="${r.id}">Excluir</button></div>`
+ :`<div class="row"><button class="secondary" data-a="abedit" data-id="${r.id}">Preencher a ficha ABNT</button><button class="link" data-a="refdel" data-id="${r.id}">Excluir</button></div>`}
 let abDraft=null;
 function bindPsRef(){document.querySelectorAll("[data-psr]").forEach(sl=>sl.addEventListener("change",()=>{const [k,j]=sl.dataset.psr.split(".").map(Number),p=planOf(route.k);p.demos[k].passagens[j].refId=sl.value;touch(p);changed();render()}))}
 function bindAbnt(){document.querySelectorAll("[data-ab]").forEach(i=>i.addEventListener("input",()=>{abDraft=abDraft||{};abDraft[i.dataset.ab]=i.value;const r=db.refs.find(x=>x.id===refEdit),p=$("#abprev");if(r&&p)p.innerHTML=refABNT({abnt:{...(r.abnt||{}),...abDraft}})||"<span class='hint'>Preencha ao menos o título.</span>"}))}
@@ -1993,6 +1993,10 @@ function refsDoPlano(p){const ids=[];(p?p.demos:[]).forEach(d=>d.passagens.forEa
 function ordemRef(a,b){return semTags(refABNT(a)||a.label).localeCompare(semTags(refABNT(b)||b.label),"pt")}
 async function actAbnt(a,el){const d=el?el.dataset:{};
  switch(a){
+ case "refdel":{const r=R(d.id);if(!r)return;
+  const nb=L("books").filter(x=>x.refId===r.id).length;
+  if(!confirm(`Excluir "${r.label}" da Bibliografia?${nb?` ${nb} livro${nb===1?"":"s"} ligado${nb===1?"":"s"} a ela ${nb===1?"fica":"ficam"} sem obra vinculada, mas continua${nb===1?"":"m"} salvo${nb===1?"":"s"}.`:""}`))return;
+  r.deleted=true;touch(r);changed();return render()}
  case "abedit":refEdit=d.id;abDraft={};return render();
  case "abx":refEdit=null;abDraft=null;return render();
  case "abtipo":{const r=db.refs.find(x=>x.id===refEdit);abDraft=abDraft||{};abDraft.tipo=d.t;r.abnt={...(r.abnt||{}),...abDraft};abDraft={};return render()}
@@ -2214,7 +2218,11 @@ async function actDic(a,el){const d=el?el.dataset:{};
  case "dicverlivro":{const bk=book(d.id);if(!bk)return;dicPop=null;
   if(route.name==="leitor"&&route.k===d.id){irPara(+d.p);return render()}
   bk.lastPage=+d.p;touch(bk);changed();return go({name:"leitor",k:d.id})}
- case "livrodic":{const bk=book(d.id);if(bk){bk.ehDicionario=!bk.ehDicionario;touch(bk);changed()}return render()}
+ case "livrodic":{const bk=book(d.id);if(bk){bk.ehDicionario=!bk.ehDicionario;touch(bk);changed();if(bk.ehDicionario)indexarEmSegundoPlano(bk)}return render()}
+ case "livrodel":{const bk=book(d.id);if(!bk)return;
+  const n=L("marks").filter(m=>m.bookId===bk.id).length;
+  if(!confirm(`Tirar "${bk.name}" da lista?${n?` ${n} marcação${n===1?"":"ões"} de leitura ${n===1?"fica":"ficam"} perdida${n===1?"":"s"}.`:""} O arquivo continua no seu Drive.`))return;
+  bk.deleted=true;touch(bk);changed();return render()}
  }return actDicAberto(a,el)}
 
 /* ---------- IA de leitura: explicar/simplificar um trecho selecionado ---------- */
@@ -2637,6 +2645,10 @@ async function actDicAberto(a,el){const d=el?el.dataset:{};
  }return actIaLeitura(a,el)}
 
 /* ---------- dicionário por PDF: um ou mais livros marcados como dicionário ---------- */
+let indexando={};
+async function indexarEmSegundoPlano(b){if(indexando[b.id])return;indexando[b.id]=true;render();
+ try{await indiceDoLivro(b)}catch(e){}
+ indexando[b.id]=false;render();toast(`"${nomeLimpo(b.name)}" pronto para busca rápida`)}
 async function indiceDoLivro(b){
  try{await carregarPdfjs();
   const ab=await(await api(`drive/v3/files/${b.fileId}?alt=media`)).arrayBuffer();
