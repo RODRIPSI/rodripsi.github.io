@@ -2723,7 +2723,8 @@ function elPararGravacao(){if(elRecorder&&elRecorder.state!=="inactive")elRecord
 async function elEnviarVoz(){if(!elGravando.blob)return;elEnviando=true;render();
  try{const fd=new FormData();fd.append("name","Minha voz — Bloco Mágico");fd.append("files",elGravando.blob,"voz.webm");
   const r=await fetch("https://api.elevenlabs.io/v1/voices/add",{method:"POST",headers:{"xi-api-key":elKey()},body:fd});
-  if(!r.ok)throw new Error("A ElevenLabs recusou o envio (confira a chave e o plano).");
+  if(!r.ok){let motivo="";try{const j=await r.json();motivo=(j&&j.detail&&(j.detail.message||j.detail))||""}catch(e){}
+   throw new Error(`A ElevenLabs recusou o envio (código ${r.status})${motivo?": "+motivo:""}. Confira a permissão "Vozes" (precisa ser Escrita) e o plano.`)}
   const j=await r.json();if(!j.voice_id)throw new Error("Resposta sem voice_id.");
   localStorage.setItem("bm-el-voice-id",j.voice_id);localStorage.setItem("bm-el-voice-name","Minha voz — Bloco Mágico");
   elGravando={ativo:false,blob:null,url:null};elEnviando=false;render();return toast("Voz clonada com sucesso")}
@@ -2735,7 +2736,8 @@ async function elFalar(texto,pagina){
  try{const r=await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${elVoiceId()}`,{method:"POST",
    headers:{"xi-api-key":elKey(),"Content-Type":"application/json"},
    body:JSON.stringify({text:texto.slice(0,4500),model_id:"eleven_multilingual_v2"})});
-  if(!r.ok)throw new Error("A ElevenLabs não conseguiu gerar o áudio.");
+  if(!r.ok){let motivo="";try{const j=await r.json();motivo=(j&&j.detail&&(j.detail.message||j.detail))||""}catch(e){}
+   throw new Error(`A ElevenLabs não conseguiu gerar o áudio (código ${r.status})${motivo?": "+motivo:""}.`)}
   const blob=await r.blob(),url=URL.createObjectURL(blob);
   elAudio={carregando:false,tocando:true,url,pagina,el:null};render();
   const a=$("#el-audio-player");if(a){elAudio.el=a;a.play().catch(()=>{})}}
