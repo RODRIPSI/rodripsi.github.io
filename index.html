@@ -334,6 +334,7 @@ a.d-docl span:nth-child(2){text-decoration:underline;text-underline-offset:3px}
 .lv-row{display:flex;align-items:stretch;gap:8px;margin-bottom:8px}.lv-row .res{flex:1;margin:0}
 .lv-dictoggle{flex:none;width:44px;border-radius:12px;border:1px solid var(--rule);background:var(--surface);color:var(--muted);font-size:17px}
 .lv-dictoggle.on{background:#1B7A43;border-color:#1B7A43;color:#fff}
+.lv-audiobar{position:fixed;left:16px;right:16px;bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:30;max-width:560px;margin:0 auto;background:var(--surface);border:1px solid var(--rule);border-radius:12px;padding:8px 12px;box-shadow:0 2px 10px rgba(0,0,0,.12)}
 .a-img{display:block;width:100%;max-height:420px;object-fit:contain;border-radius:10px;background:var(--surface);margin:0 0 14px}
 .a-img.big{max-height:520px}.a-img.md{max-height:230px;width:auto;max-width:100%;display:block;margin:0 auto;border-radius:12px}.a-ph.md{height:150px}.a-ph{display:grid;place-items:center;text-align:center;padding:12px;height:220px;color:var(--muted);font-size:14px;border:1px dashed var(--rule)}
 .a-imgs{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
@@ -386,7 +387,7 @@ input[type=date]{width:100%;background:var(--surface);border:1px solid var(--rul
  <aside class="side" id="side"></aside>
  <div>
   <div class="topbar"><span class="mark" data-knot></span><span class="brand">Bloco Mágico</span><button class="syncbtn" data-a="sync"></button></div>
-  <main id="main"></main><div id="dicroot"></div>
+  <main id="main"></main><div id="dicroot"></div><div id="elaudioroot"></div>
  </div>
 </div>
 <nav class="tabs" id="tabs" aria-label="Seções"></nav>
@@ -1833,7 +1834,7 @@ function vLeitor(){const b=book(route.k);if(!b)return vLivros();
  <div class="lv-bar"><button class="secondary" data-a="lvpg" data-d="-1" aria-label="Página anterior">‹</button><span class="lv-pn">${tot?`PDF ${p} de ${tot}${imp?` · <b>p. ${esc(imp)}</b>`:""}`:"…"}</span><button class="secondary" data-a="lvpg" data-d="1" aria-label="Próxima página">›</button>
   <button class="secondary lv-mk" data-a="lvmk" aria-pressed="${!!rd.marker}" title="Passar a caneta ou o dedo sobre o texto para marcar">✎ ${rd.marker?"Marcando":"Marcar"}</button><input type="text" inputmode="numeric" id="lvir" placeholder="ir para" aria-label="Ir para a página do PDF"><button class="secondary" data-a="lvz" data-d="-1" aria-label="Diminuir">−</button><button class="secondary" data-a="lvz" data-d="1" aria-label="Aumentar">+</button>
   ${elAudio.carregando&&elAudio.pagina===p?`<button class="secondary" disabled>Preparando a leitura…</button>`:elAudio.tocando&&elAudio.pagina===p?`<button class="secondary" data-a="elpararfala">⏸ Parar a leitura</button>`:`<button class="secondary" data-a="elouvir" data-p="${p}">🔊 Ouvir esta página</button>`}</div>
- ${elAudio.tocando&&elAudio.pagina===p?`<audio id="el-audio-player" src="${elAudio.url}" autoplay controls style="width:100%;margin:8px 0"></audio>`:""}
+
  ${rd.err&&rd.bookId===b.id?`<p class="err">${esc(rd.err)}</p>`:""}
  <div id="lvwrap"><div class="lv-load">${rd.loading?"Abrindo o livro…":""}</div></div>
  ${b.off!=null?`<p class="hint">Página impressa = página do PDF ${b.off>=0?"+ "+b.off:"− "+(-b.off)}. <button class="link" data-a="lvoffx">corrigir</button></p>`:""}
@@ -2759,10 +2760,16 @@ async function elFalar(texto,pagina){
   if(!r.ok){let motivo="";try{const j=await r.json();motivo=(j&&j.detail&&(j.detail.message||j.detail))||""}catch(e){}
    throw new Error(`A ElevenLabs não conseguiu gerar o áudio (código ${r.status})${motivo?": "+motivo:""}.`)}
   const blob=await r.blob(),url=URL.createObjectURL(blob);
-  elAudio={carregando:false,tocando:true,url,pagina,el:null};render();
-  const a=$("#el-audio-player");if(a){elAudio.el=a;a.play().catch(()=>{})}}
+  elAudio={carregando:false,tocando:true,url,pagina,el:null};return render()}
  catch(e){elAudio={carregando:false,tocando:false,url:null,pagina:null,el:null};render();return toast(e.message||"Não foi possível ouvir esta página.")}}
 function elPararFala(){if(elAudio.el)elAudio.el.pause();elAudio={carregando:false,tocando:false,url:null,pagina:null,el:null};render()}
+let elAudioLastUrl=null;
+function elAudioSync(){const root=$("#elaudioroot");if(!root)return;
+ if(elAudio.tocando&&elAudio.url){
+  if(elAudioLastUrl!==elAudio.url){
+   root.innerHTML=`<div class="lv-audiobar"><audio id="el-audio-player" src="${elAudio.url}" autoplay controls style="width:100%"></audio></div>`;
+   elAudioLastUrl=elAudio.url;const a=$("#el-audio-player");if(a){elAudio.el=a;a.play().catch(()=>{})}}}
+ else if(elAudioLastUrl!==null){root.innerHTML="";elAudioLastUrl=null}}
 
 /* ---------- desenho geral ---------- */
 const NAV=[["capture","Capturar"],["concepts","Conceitos"],["timeline","Linha do tempo","Tempo"],["pending","Pendentes"],["diss","Dissertação"]];
@@ -2774,7 +2781,7 @@ function renderNav(){
  <button data-a="nav" data-to="batch" aria-current="${route.name==="batch"}">Organizar pasta do Drive</button><button data-a="nav" data-to="bib" aria-current="${route.name==="bib"}">Bibliografia</button><button data-a="nav" data-to="acervo" aria-current="${route.name==="acervo"||route.name==="aficha"}">Acervo Freud e Lacan</button><button data-a="nav" data-to="form" aria-current="${route.name==="form"}">Formalização</button></nav>
  <p class="sub">Seus conceitos</p><div class="cl">${sortedConcepts().map(c=>`<button data-a="open" data-id="${c.id}" aria-current="${route.name==="concept"&&route.id===c.id}"><span style="width:9px;height:9px;border-radius:50%;background:${c.color};display:inline-block;flex:none"></span>${esc(c.name)}</button>`).join("")}</div>`;
  setSync()}
-function render(){renderNav();$("#main").innerHTML=({capture:vCapture,concepts:vConcepts,concept:vConcept,timeline:vTimeline,pending:vPending,batch:vBatch,bib:vBib,diss:vDiss,auto:vAuto,acervo:vAcervo,aficha:vAficha,form:vForm,plano:vPlano,ritmo:vRitmo,medidor:vMedidor,escrever:vEscrever,livros:vLivros,leitor:vLeitor,dicionario:vDicionario,leituratextos:vLeituraTextos,leituracaps:vLeituraCaps,leituracap:vLeituraCap,artigos:vArtigos,artigo:vArtigo,artsub:vArtSub,artigointeiro:vArtigoInteiro,dtexto:vDissTexto,comentarios:vComentarios,comentario:vComentario,regras:vRegras,dissbib:vDissBib}[route.name]||vConcepts)();bind();$("#dicroot").innerHTML=dicPopDiv()}
+function render(){renderNav();$("#main").innerHTML=({capture:vCapture,concepts:vConcepts,concept:vConcept,timeline:vTimeline,pending:vPending,batch:vBatch,bib:vBib,diss:vDiss,auto:vAuto,acervo:vAcervo,aficha:vAficha,form:vForm,plano:vPlano,ritmo:vRitmo,medidor:vMedidor,escrever:vEscrever,livros:vLivros,leitor:vLeitor,dicionario:vDicionario,leituratextos:vLeituraTextos,leituracaps:vLeituraCaps,leituracap:vLeituraCap,artigos:vArtigos,artigo:vArtigo,artsub:vArtSub,artigointeiro:vArtigoInteiro,dtexto:vDissTexto,comentarios:vComentarios,comentario:vComentario,regras:vRegras,dissbib:vDissBib}[route.name]||vConcepts)();bind();$("#dicroot").innerHTML=dicPopDiv();elAudioSync()}
 function softRender(){const a=document.activeElement;if(a&&$("#main").contains(a)&&/INPUT|TEXTAREA|SELECT/.test(a.tagName)){renderNav()}else render()}
 function on(sel,ev,fn){const e=$(sel);if(e)e.addEventListener(ev,fn);return e}
 function bind(){
