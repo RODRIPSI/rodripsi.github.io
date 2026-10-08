@@ -1935,7 +1935,7 @@ async function actLeitor(a,el){const d=el?el.dataset:{};
  case "elouvir":{const pn=+d.p;let texto="";
   if(rd.doc&&rd.bookId===route.k){try{const pg=await rd.doc.getPage(pn);texto=textoPagina(await pg.getTextContent())}catch(e){}}
   if(!cheio(texto))return toast("Não consegui ler o texto desta página.");
-  return elFalar(texto,pn)}
+  return elFalar(texto,pn,route.k)}
  case "elpararfala":return elPararFala();
  case "lvhit":{irPara(+d.p);return}
  case "lvplano":{plOpen=new Set(d.k!==""?[+d.k]:[0]);plImp=null;return go({name:"plano",k:d.n})}
@@ -2750,25 +2750,44 @@ async function elEnviarVoz(){if(!elGravando.blob)return;elEnviando=true;render()
   localStorage.setItem("bm-el-voice-id",j.voice_id);localStorage.setItem("bm-el-voice-name","Minha voz — Bloco Mágico");
   elGravando={ativo:false,blob:null,url:null};elEnviando=false;render();return toast("Voz clonada com sucesso")}
  catch(e){elEnviando=false;render();return toast(e.message||"Não foi possível enviar a gravação.")}}
-async function elFalar(texto,pagina){
+function elAudioCacheName(bookId,pagina){return `audio-${bookId}-p${pagina}-${elVoiceId()||"semvoz"}.mp3`}
+async function elAudioCacheBuscar(bookId,pagina){
+ try{const folder=await subFolder("Áudios gerados"),name=elAudioCacheName(bookId,pagina);
+  const f=await listFiles(`name='${qesc(name)}' and '${folder}' in parents and trashed=false`,"files(id)");
+  if(!f.length)return null;
+  return await(await api(`drive/v3/files/${f[0].id}?alt=media`)).blob()}
+ catch(e){return null}}
+async function elAudioCacheSalvar(bookId,pagina,blob){
+ try{const folder=await subFolder("Áudios gerados"),name=elAudioCacheName(bookId,pagina);
+  await upload({name,parents:[folder]},blob)}
+ catch(e){}}
+async function elFalar(texto,pagina,bookId){
  if(!elKey())return toast("Configure a chave da ElevenLabs em Formalização.");
  if(!elVoiceId())return toast("Grave a sua voz primeiro, em Formalização.");
- elAudio={carregando:true,tocando:false,url:null,pagina,el:null};render();
- try{const r=await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${elVoiceId()}`,{method:"POST",
+ elAudio={carregando:true,tocando:false,url:null,pagina,el:null,cache:false};render();
+ try{
+  if(bookId){const cached=await elAudioCacheBuscar(bookId,pagina);
+   if(cached){const url=URL.createObjectURL(cached);elAudio={carregando:false,tocando:true,url,pagina,el:null,cache:true};return render()}}
+  const r=await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${elVoiceId()}`,{method:"POST",
    headers:{"xi-api-key":elKey(),"Content-Type":"application/json"},
    body:JSON.stringify({text:texto.slice(0,4500),model_id:"eleven_multilingual_v2"})});
   if(!r.ok){let motivo="";try{const j=await r.json();motivo=(j&&j.detail&&(j.detail.message||j.detail))||""}catch(e){}
    throw new Error(`A ElevenLabs não conseguiu gerar o áudio (código ${r.status})${motivo?": "+motivo:""}.`)}
   const blob=await r.blob(),url=URL.createObjectURL(blob);
-  elAudio={carregando:false,tocando:true,url,pagina,el:null};return render()}
- catch(e){elAudio={carregando:false,tocando:false,url:null,pagina:null,el:null};render();return toast(e.message||"Não foi possível ouvir esta página.")}}
-function elPararFala(){if(elAudio.el)elAudio.el.pause();elAudio={carregando:false,tocando:false,url:null,pagina:null,el:null};render()}
+  elAudio={carregando:false,tocando:true,url,pagina,el:null,cache:false};render();
+  if(bookId)elAudioCacheSalvar(bookId,pagina,blob);
+  return}
+ catch(e){elAudio={carregando:false,tocando:false,url:null,pagina:null,el:null,cache:false};render();return toast(e.message||"Não foi possível ouvir esta página.")}}
+function elPararFala(){if(elAudio.el)elAudio.el.pause();elAudio={carregando:false,tocando:false,url:null,pagina:null,el:null,cache:false};render()}
 let elAudioLastUrl=null;
 function elAudioSync(){const root=$("#elaudioroot");if(!root)return;
  if(elAudio.tocando&&elAudio.url){
   if(elAudioLastUrl!==elAudio.url){
-   root.innerHTML=`<div class="lv-audiobar"><audio id="el-audio-player" src="${elAudio.url}" autoplay controls style="width:100%"></audio></div>`;
-   elAudioLastUrl=elAudio.url;const a=$("#el-audio-player");if(a){elAudio.el=a;a.play().catch(()=>{})}}}
+   root.innerHTML=`<div class="lv-audiobar"><p class="hint" style="margin:0 0 4px">${elAudio.cache?"🔊 do seu Drive — sem gastar créditos":"🔊 gerado agora e salvo no seu Drive"}</p><audio id="el-audio-player" src="${elAudio.url}" autoplay controls style="width:100%"></audio></div>`;
+   elAudioLastUrl=elAudio.url;const a=$("#el-audio-player");if(a){elAudio.el=a;a.addEventListener("ended",()=>{elAudio={carregando:false,tocando:false,url:null,pagina:null,el:null,cache:false};render()});a.play().catch(()=>{})}}
+  // o áudio continua tocando ao navegar para outras telas; a barrinha só aparece
+  // de volta enquanto você estiver no leitor, para não "seguir" você pelo app.
+  root.style.display=route.name==="leitor"?"":"none"}
  else if(elAudioLastUrl!==null){root.innerHTML="";elAudioLastUrl=null}}
 
 /* ---------- desenho geral ---------- */
