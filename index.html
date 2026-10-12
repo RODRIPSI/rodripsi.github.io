@@ -1833,7 +1833,7 @@ function vLeitor(){const b=book(route.k);if(!b)return vLivros();
  <details class="lv-busca" ${bq?"open":""}><summary>Buscar no livro</summary><input type="search" id="lvbq" value="${esc(bq)}" placeholder="Palavra ou frase, ex.: desejo do analista"><div id="lvbres">${buscaHTML()}</div></details>
  <div class="lv-bar"><button class="secondary" data-a="lvpg" data-d="-1" aria-label="Página anterior">‹</button><span class="lv-pn">${tot?`PDF ${p} de ${tot}${imp?` · <b>p. ${esc(imp)}</b>`:""}`:"…"}</span><button class="secondary" data-a="lvpg" data-d="1" aria-label="Próxima página">›</button>
   <button class="secondary lv-mk" data-a="lvmk" aria-pressed="${!!rd.marker}" title="Passar a caneta ou o dedo sobre o texto para marcar">✎ ${rd.marker?"Marcando":"Marcar"}</button><input type="text" inputmode="numeric" id="lvir" placeholder="ir para" aria-label="Ir para a página do PDF"><button class="secondary" data-a="lvz" data-d="-1" aria-label="Diminuir">−</button><button class="secondary" data-a="lvz" data-d="1" aria-label="Aumentar">+</button>
-  ${elAudio.carregando&&elAudio.pagina===p?`<button class="secondary" disabled>Preparando a leitura…</button>`:elAudio.tocando&&elAudio.pagina===p?`<button class="secondary" data-a="elpararfala">⏸ Parar a leitura</button>`:`<button class="secondary" data-a="elouvir" data-p="${p}">🔊 Ouvir esta página</button>`}</div>
+  ${elAudio.carregando&&elAudio.ctx===b.id&&elAudio.pagina===p?`<button class="secondary" disabled>Preparando a leitura…</button>`:elAudio.tocando&&elAudio.ctx===b.id&&elAudio.pagina===p?`<button class="secondary" data-a="elpararfala">⏸ Parar a leitura</button>`:`<button class="secondary" data-a="elouvir" data-p="${p}">🔊 Ouvir esta página</button>`}</div>
 
  ${rd.err&&rd.bookId===b.id?`<p class="err">${esc(rd.err)}</p>`:""}
  <div id="lvwrap"><div class="lv-load">${rd.loading?"Abrindo o livro…":""}</div></div>
@@ -2289,7 +2289,10 @@ async function actIaLeitura(a,el){const d=el?el.dataset:{};
  }return actLeituraTextos(a,el)}
 
 /* ---------- Leitura de textos: comentadores por capítulo, com imagem e Word ---------- */
-let ltNovo=false,ltCapNovo=false,ltImg=null,ltImgQ="",ltImgRes=null,ltDoc=null,ltDocQ="",ltDocRes=null,ltSaveT=null;
+let ltNovo=false,ltCapNovo=false,ltImg=null,ltImgQ="",ltImgRes=null,ltDoc=null,ltDocQ="",ltDocRes=null,ltSaveT=null,ltAudioPg={};
+function ltTrechos(c){const paras=c.lerParas||[];const out=[];let cur="";
+ for(const p of paras){if(cur&&(cur.length+p.length+2)>3500){out.push(cur);cur=p}else cur=cur?cur+"\n\n"+p:p}
+ if(cur)out.push(cur);return out.length?out:[""]}
 async function ltLerCarregar(c){toast("Lendo o Drive…");
  try{if(!window.JSZip)throw new Error("Componente de Word ainda carregando.");
   const m=await(await api(`drive/v3/files/${c.doc.id}?fields=mimeType,modifiedTime`)).json();
@@ -2319,8 +2322,13 @@ function vLeituraCap(){const c=capOf2(route.k);if(!c)return vLeituraTextos();con
  ${c.doc?`<a class="lt-word" href="${esc(c.doc.webViewLink||"#")}" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Abrir o Word no Drive<span class="hint" style="margin-left:auto">${esc(c.doc.name)}</span></a>${ltDoc==="c2:"+c.id?ltDocHTML():`<div class="row" style="margin:6px 0 14px"><button class="link" data-a="ltdoc2" data-id="${c.id}">Trocar o Word ligado</button></div>`}`
  :ltDoc==="c2:"+c.id?ltDocHTML():`<div class="row" style="margin:0 0 14px"><button class="secondary" data-a="ltdoc2" data-id="${c.id}">+ Ligar o Word no Drive</button></div>`}
  ${c.doc?`<div class="row" style="margin:0 0 14px">${c.lerParas?`<button class="link" data-a="ltlerde" data-id="${c.id}">Atualizar do Drive</button>`:`<button class="secondary" data-a="ltler" data-id="${c.id}">Ler o texto aqui</button>`}</div>`:""}
- ${c.lerParas?(()=>{const sk="cap:"+c.id;
+ ${c.lerParas?(()=>{const sk="cap:"+c.id,ctx=sk,trechos=ltTrechos(c),tot=trechos.length,p=Math.min(ltAudioPg[c.id]||0,tot-1);
   return `${dicChipsPainel(c.dicPalavras||[],"Dicionário deste texto")}
+  <div class="row" style="align-items:center;gap:8px;margin:0 0 10px">
+  ${tot>1?`<button class="secondary" data-a="ltaudiopg" data-id="${c.id}" data-d="-1" ${p<=0?"disabled":""} aria-label="Trecho anterior">‹</button>`:""}
+  ${elAudio.carregando&&elAudio.ctx===ctx&&elAudio.pagina===p?`<button class="secondary" disabled>Preparando a leitura…</button>`:elAudio.tocando&&elAudio.ctx===ctx&&elAudio.pagina===p?`<button class="secondary" data-a="elpararfala">⏸ Parar a leitura</button>`:`<button class="secondary" data-a="ltouvir" data-id="${c.id}" data-p="${p}">🔊 Ouvir${tot>1?" este trecho":" o capítulo"}</button>`}
+  ${tot>1?`<button class="secondary" data-a="ltaudiopg" data-id="${c.id}" data-d="1" ${p>=tot-1?"disabled":""} aria-label="Próximo trecho">›</button><span class="hint" style="margin:0">trecho ${p+1} de ${tot}</span>`:""}
+  </div>
   <div class="panel esc-corr dic-tap" data-store="${sk}">${c.lerParas.map(t=>`<p class="esc-par">${marcarTermos(t,sk)}</p>`).join("")}</div>`})():""}
  <label class="label lt-notaslab" for="ltnotas">Resumo / notas deste capítulo</label>
  <textarea id="ltnotas" rows="10" placeholder="Escreva aqui o resumo, ou o que quiser guardar deste capítulo">${esc(c.notas||"")}</textarea>
@@ -2360,6 +2368,8 @@ async function actLeituraTextos(a,el){const d=el?el.dataset:{};
  case "ltler":case "ltlerde":{const c=capOf2(d.id);if(c)return ltLerCarregar(c)}
  case "ltdocx":ltDoc=null;return render();
  case "ltdocpick":{const cid=ltDoc.startsWith("c2:")?ltDoc.slice(3):ltDoc,c=capOf2(cid);c.doc={id:d.id,name:d.n,webViewLink:d.l};touch(c);ltDoc=null;changed();return render()}
+ case "ltaudiopg":{const c=capOf2(d.id);if(!c)return;const tot=ltTrechos(c).length,p=Math.min(Math.max(0,(ltAudioPg[d.id]||0)+(+d.d)),tot-1);ltAudioPg[d.id]=p;return render()}
+ case "ltouvir":{const c=capOf2(d.id);if(!c)return;const p=+d.p,texto=ltTrechos(c)[p]||"";if(!cheio(texto))return toast("Não há texto para ouvir aqui.");return elFalar(texto,p,"cap:"+c.id)}
  }return actArtigos(a,el)}
 
 /* ---------- Artigos: mesmo modelo da dissertação, com limite de páginas e bibliografia ---------- */
@@ -2709,7 +2719,7 @@ async function elListarVozes(){elEscolher={carregando:true,vozes:null};render();
   const j=await r.json();elEscolher={carregando:false,vozes:(j.voices||[]).map(v=>({id:v.voice_id,name:v.name}))};return render()}
  catch(e){elEscolher=null;return toast(e.message||"Não consegui buscar as vozes.")}}
 function elEscolherVoz(id,name){localStorage.setItem("bm-el-voice-id",id);localStorage.setItem("bm-el-voice-name",name||"Voz escolhida");elEscolher=null;render();return toast("Voz selecionada: "+(name||id))}
-let elAudio={carregando:false,tocando:false,url:null,pagina:null,el:null};
+let elAudio={carregando:false,tocando:false,url:null,pagina:null,ctx:null,el:null};
 function elCfg(){const key=elKey();
  return `<label class="label" style="margin-top:0" for="elk">Chave da ElevenLabs</label><input type="password" id="elk" value="${esc(key)}" placeholder="sk_..." autocomplete="off">
  <div class="row"><button class="secondary" data-a="elsave">Salvar</button>${key?`<button class="link" data-a="eldel">Apagar a chave deste aparelho</button>`:""}</div>
@@ -2764,27 +2774,27 @@ async function elAudioCacheSalvar(bookId,pagina,blob){
 async function elFalar(texto,pagina,bookId){
  if(!elKey())return toast("Configure a chave da ElevenLabs em Formalização.");
  if(!elVoiceId())return toast("Grave a sua voz primeiro, em Formalização.");
- elAudio={carregando:true,tocando:false,url:null,pagina,el:null,cache:false};render();
+ elAudio={carregando:true,tocando:false,url:null,pagina,ctx:bookId||null,el:null,cache:false};render();
  try{
   if(bookId){const cached=await elAudioCacheBuscar(bookId,pagina);
-   if(cached){const url=URL.createObjectURL(cached);elAudio={carregando:false,tocando:true,url,pagina,el:null,cache:true};return render()}}
+   if(cached){const url=URL.createObjectURL(cached);elAudio={carregando:false,tocando:true,url,pagina,ctx:bookId,el:null,cache:true};return render()}}
   const r=await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${elVoiceId()}`,{method:"POST",
    headers:{"xi-api-key":elKey(),"Content-Type":"application/json"},
    body:JSON.stringify({text:texto.slice(0,4500),model_id:"eleven_multilingual_v2"})});
   if(!r.ok){let motivo="";try{const j=await r.json();motivo=(j&&j.detail&&(j.detail.message||j.detail))||""}catch(e){}
    throw new Error(`A ElevenLabs não conseguiu gerar o áudio (código ${r.status})${motivo?": "+motivo:""}.`)}
   const blob=await r.blob(),url=URL.createObjectURL(blob);
-  elAudio={carregando:false,tocando:true,url,pagina,el:null,cache:false};render();
+  elAudio={carregando:false,tocando:true,url,pagina,ctx:bookId||null,el:null,cache:false};render();
   if(bookId)elAudioCacheSalvar(bookId,pagina,blob);
   return}
- catch(e){elAudio={carregando:false,tocando:false,url:null,pagina:null,el:null,cache:false};render();return toast(e.message||"Não foi possível ouvir esta página.")}}
-function elPararFala(){if(elAudio.el)elAudio.el.pause();elAudio={carregando:false,tocando:false,url:null,pagina:null,el:null,cache:false};render()}
+ catch(e){elAudio={carregando:false,tocando:false,url:null,pagina:null,ctx:null,el:null,cache:false};render();return toast(e.message||"Não foi possível ouvir esta página.")}}
+function elPararFala(){if(elAudio.el)elAudio.el.pause();elAudio={carregando:false,tocando:false,url:null,pagina:null,ctx:null,el:null,cache:false};render()}
 let elAudioLastUrl=null;
 function elAudioSync(){const root=$("#elaudioroot");if(!root)return;
  if(elAudio.tocando&&elAudio.url){
   if(elAudioLastUrl!==elAudio.url){
    root.innerHTML=`<div class="lv-audiobar"><p class="hint" style="margin:0 0 4px">${elAudio.cache?"🔊 do seu Drive — sem gastar créditos":"🔊 gerado agora e salvo no seu Drive"}</p><audio id="el-audio-player" src="${elAudio.url}" autoplay controls style="width:100%"></audio></div>`;
-   elAudioLastUrl=elAudio.url;const a=$("#el-audio-player");if(a){elAudio.el=a;a.addEventListener("ended",()=>{elAudio={carregando:false,tocando:false,url:null,pagina:null,el:null,cache:false};render()});a.play().catch(()=>{})}}
+   elAudioLastUrl=elAudio.url;const a=$("#el-audio-player");if(a){elAudio.el=a;a.addEventListener("ended",()=>{elAudio={carregando:false,tocando:false,url:null,pagina:null,ctx:null,el:null,cache:false};render()});a.play().catch(()=>{})}}
   // o áudio continua tocando ao navegar para outras telas; a barrinha só aparece
   // de volta enquanto você estiver no leitor, para não "seguir" você pelo app.
   root.style.display=route.name==="leitor"?"":"none"}
