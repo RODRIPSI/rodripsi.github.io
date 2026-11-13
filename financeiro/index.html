@@ -10,9 +10,19 @@
 <link rel="icon" href="icone-192.png">
 <link rel="apple-touch-icon" href="icone-192.png">
 <title>Meu Financeiro</title>
+<script>try{var t=(JSON.parse(localStorage.getItem('mf_set')||'{}')).tema;if(t&&t!=='auto')document.documentElement.setAttribute('data-tema',t)}catch(e){}</script>
 <style>
 :root{--bg:#f6f7f9;--card:#fff;--tx:#1d2330;--mut:#6b7385;--bd:#e3e6ec;--pri:#2457c5;--ok:#1f8a4c;--warn:#c76a00;--bad:#c0392b;--pur:#6b3fb5}
 @media(prefers-color-scheme:dark){:root{--bg:#12151c;--card:#1b202a;--tx:#e8ebf2;--mut:#98a1b5;--bd:#2a3140;--pri:#6b95f0;--ok:#4cc27e;--warn:#f0a040;--bad:#ef7766;--pur:#a98be0}}
+html[data-tema=claro]{--bg:#f6f7f9;--card:#fff;--tx:#1d2330;--mut:#6b7385;--bd:#e3e6ec;--pri:#2457c5;--onpri:#fff;--ok:#1f8a4c;--warn:#c76a00;--bad:#c0392b;--pur:#6b3fb5}
+html[data-tema=escuro]{--bg:#12151c;--card:#1b202a;--tx:#e8ebf2;--mut:#98a1b5;--bd:#2a3140;--pri:#6b95f0;--onpri:#0b0f18;--ok:#4cc27e;--warn:#f0a040;--bad:#ef7766;--pur:#a98be0}
+html[data-tema=verde]{--bg:#06241a;--card:#0d3a2b;--tx:#f6edcf;--mut:#b7ae88;--bd:#1f5a45;--pri:#d4a62a;--onpri:#1a1405;--ok:#7bd88f;--warn:#f0b43c;--bad:#f08a78;--pur:#c9a6f0}
+html[data-tema=noite]{--bg:#0c1428;--card:#141f3a;--tx:#eef0f7;--mut:#9aa6c4;--bd:#26335a;--pri:#d4a62a;--onpri:#1a1405;--ok:#6fd49a;--warn:#f0b43c;--bad:#f08a78;--pur:#b9a0f0}
+html[data-tema=lavanda]{--bg:#f6f2fb;--card:#fff;--tx:#2a2140;--mut:#7a6f93;--bd:#e4dcf2;--pri:#6b3fb5;--onpri:#fff;--ok:#1f8a4c;--warn:#c76a00;--bad:#c0392b;--pur:#9b59b6}
+.sw{display:inline-flex;align-items:center;gap:8px;border:2px solid var(--bd);background:none;color:var(--tx);border-radius:12px;padding:8px 10px;font-size:13px;margin:0 6px 8px 0}
+.sw.on{border-color:var(--pri);font-weight:700}
+.sw span{width:34px;height:24px;border-radius:7px;border:1px solid #8884;display:inline-flex;align-items:flex-end;justify-content:flex-end;padding:3px}
+.sw i{width:12px;height:12px;border-radius:50%}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.4 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;padding-bottom:84px}
 header{padding:14px 16px 6px;display:flex;justify-content:space-between;align-items:center}
@@ -29,7 +39,7 @@ nav button.on{color:var(--pri);font-weight:700}
 .in{color:var(--ok)}.out{color:var(--bad)}.pend{color:var(--warn)}.transfer{color:var(--mut)}
 .mnav{display:flex;align-items:center;justify-content:space-between;margin:6px 0}
 .mnav b:first-letter{text-transform:uppercase}
-button.b,label.b{border:1px solid var(--pri);background:var(--pri);color:#fff;border-radius:9px;padding:9px 13px;font-size:14px;display:inline-block}
+button.b,label.b{border:1px solid var(--pri);background:var(--pri);color:var(--onpri,#fff);border-radius:9px;padding:9px 13px;font-size:14px;display:inline-block}
 button.g,label.g{background:none;color:var(--pri)}
 button.s,a.s{border:1px solid var(--bd);background:none;color:var(--tx);border-radius:8px;padding:6px 9px;font-size:12px;margin:2px 2px 0 0}
 button.s.d,a.s.d{color:var(--bad)}
@@ -47,7 +57,7 @@ label.f{font-size:12px;color:var(--mut);display:block}
 .alert{border-left:4px solid var(--bad);background:var(--card);padding:8px 12px;border-radius:6px;font-size:13px;margin:8px 0}
 .tabs{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
 .tabs button{border:1px solid var(--bd);background:none;color:var(--tx);padding:7px 11px;border-radius:20px;font-size:13px}
-.tabs button.on{background:var(--pri);color:#fff;border-color:var(--pri)}
+.tabs button.on{background:var(--pri);color:var(--onpri,#fff);border-color:var(--pri)}
 table{width:100%;border-collapse:collapse;font-size:14px}td,th{padding:6px 4px;border-bottom:1px solid var(--bd);text-align:left}th{color:var(--mut);font-weight:600;font-size:12px}
 td.n,th.n{text-align:right}
 .chip{font-size:11px;padding:2px 7px;border-radius:10px;border:1px solid var(--bd);color:var(--mut)}
@@ -90,6 +100,8 @@ const LS={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}
 let STORE=LS.get('mf_store',{});COLS.forEach(c=>{STORE[c]=STORE[c]||{}});
 const SET=LS.get('mf_set',{});
 const saveSet=()=>LS.set('mf_set',SET);
+const TEMAS=[['auto','Automático','#f6f7f9','#2457c5'],['claro','Claro','#ffffff','#2457c5'],['escuro','Escuro','#12151c','#6b95f0'],['verde','Verde e ouro','#06241a','#d4a62a'],['noite','Noite e ouro','#0c1428','#d4a62a'],['lavanda','Lavanda','#f6f2fb','#6b3fb5']];
+function aplicarTema(){const t=SET.tema||'auto';if(t==='auto')document.documentElement.removeAttribute('data-tema');else document.documentElement.setAttribute('data-tema',t);const m=document.querySelector('meta[name=theme-color]');const x=TEMAS.find(a=>a[0]===t);if(m&&x&&t!=='auto')m.setAttribute('content',x[2])}
 const persist=()=>LS.set('mf_store',STORE);
 function loadState(){COLS.forEach(c=>{state[c]=Object.values(STORE[c]).filter(x=>!x._d)})}
 async function save(col,obj){
@@ -190,7 +202,7 @@ function importarBackup(txt){
 }
 function toast(m){const d=document.createElement('div');d.textContent=m;d.style.cssText='position:fixed;top:14px;left:50%;transform:translateX(-50%);background:#222;color:#fff;padding:9px 14px;border-radius:9px;z-index:50;font-size:14px';document.body.appendChild(d);setTimeout(()=>d.remove(),3500)}
 async function boot(){
-  loadState();render();setStatus();
+  aplicarTema();loadState();render();setStatus();
   if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
   if(syncPronto()&&LS.get('mf_gconn',0))syncNow(false);
   setInterval(()=>{if(!document.hidden)syncNow(false)},60000);
@@ -369,8 +381,10 @@ function vMais(){
 }
 
 function vCfg(){
+  const tm=SET.tema||'auto';
   const st=!syncPronto()?'Ainda não conectado: os dados ficam só neste aparelho.':SYNC.err?'Problema: '+esc(SYNC.err):SYNC.last?'Sincronizado às '+new Date(SYNC.last).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):'Pronto. Toque em Sincronizar agora.';
-  return`<div class="card"><b>Quem é você neste aparelho?</b><p class="note">Define de quem são os recados e qual cofre abre aqui.</p>${NAMES.map(n=>`<button class="b ${ME===n?'':'g'}" data-a="iam" data-n="${n}">${n}</button>`).join(' ')}</div>
+  return`<div class="card"><b>Cores do app</b><p class="note">Vale só para este aparelho. Cada um escolhe a sua.</p>${TEMAS.map(([k,n,bg,pr])=>`<button class="sw ${tm===k?'on':''}" data-a="tema" data-k="${k}"><span style="background:${bg}"><i style="background:${pr}"></i></span>${n}</button>`).join('')}</div>
+  <div class="card"><b>Quem é você neste aparelho?</b><p class="note">Define de quem são os recados e qual cofre abre aqui.</p>${NAMES.map(n=>`<button class="b ${ME===n?'':'g'}" data-a="iam" data-n="${n}">${n}</button>`).join(' ')}</div>
   <div class="card"><b>Sincronizar com o Google Drive</b>
   <p class="note">${st}</p>
   <label class="f">Chave do Google (ID do cliente, termina em .apps.googleusercontent.com)</label><input id="cfgCid" value="${esc(SET.clientId||'')}" autocomplete="off">
@@ -665,6 +679,7 @@ const A={
     $('#fOk').onclick=async()=>{const v=num($('#fV').value);if(!v)return toast('Informe o valor');
       await save('tx',{kind:'out',desc:'Fatura '+c.name,amount:v,date:$('#fT').value,status:$('#fS').value,category:'Cartão',cardId:c.id,origin:'cartao',createdAt:new Date().toISOString()});closeModal();render()}},
   delCard:d=>confirmBox('Excluir este cartão? As faturas dele continuam nos lançamentos.',async()=>{await remove('cards',d.id);render()}),
+  tema:d=>{SET.tema=d.k;saveSet();aplicarTema();render()},
   syncAgora:()=>{if(!syncPronto()){state.tab='mais';state.sub='cfg';render();return toast('Preencha a chave do Google e a pasta')}syncNow(true)},
   cfgSalvar:()=>{SET.clientId=($('#cfgCid').value||'').trim();SET.pasta=($('#cfgPasta').value||'').trim();saveSet();TOKEN=null;if(!syncPronto())return toast('Falta a chave ou o link da pasta');syncNow(true);render()},
   cfgIA:()=>{SET.openai=($('#cfgOpenai').value||'').trim();SET.model=($('#cfgModel').value||'').trim()||'gpt-4o';saveSet();toast('Salvo neste aparelho')},
