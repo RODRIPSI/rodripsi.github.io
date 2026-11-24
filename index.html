@@ -493,6 +493,24 @@ input[type=date]{width:100%;background:var(--surface);border:1px solid var(--rul
 .busca-res .tag{display:inline-block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);border:1px solid var(--rule);border-radius:6px;padding:1px 6px;margin-right:4px}
 #bq{width:100%;border-radius:12px;padding:12px 14px;font-size:16px}
 @media (max-width:599px){.tabs.oito{overflow-x:auto;justify-content:flex-start}.tabs.oito button{flex:0 0 23%;min-width:78px;font-size:11.5px}}
+
+/* ---------- Etapa 2: Entrelaçar ---------- */
+#entrfab{position:fixed;right:14px;bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:40;width:52px;height:52px;border-radius:50%;padding:0;border:1px solid var(--gold,#E8BC52);background:#050B10;box-shadow:0 0 16px rgba(232,188,82,.45),0 4px 14px rgba(0,0,0,.5);overflow:hidden}
+#entrfab img{width:100%;height:100%;display:block;border-radius:50%}
+#entrfab[hidden]{display:none}
+@media (min-width:600px){#entrfab{bottom:22px;right:22px}}
+.entr-bd{position:fixed;inset:0;z-index:58;background:rgba(0,0,0,.45)}
+.entr-sheet{position:fixed;z-index:60;left:0;right:0;bottom:0;max-height:88vh;overflow-y:auto;background:var(--surface);border:1px solid var(--rule);border-radius:18px 18px 0 0;padding:16px 16px calc(24px + env(safe-area-inset-bottom,0px));box-shadow:0 -10px 40px rgba(0,0,0,.6)}
+@media (min-width:900px){.entr-bd{background:transparent}.entr-sheet{left:auto;top:12px;right:12px;bottom:12px;width:min(480px,45vw);max-height:none;border-radius:18px}}
+.entr-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:6px}
+.entr-k{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold,var(--muted))}
+.entr-t{font-size:17px;line-height:1.35;margin-top:2px}
+.entr-h{font-size:15px;margin:18px 0 8px;color:var(--muted);font-weight:600}
+.entr-item{border-bottom:1px solid var(--rule);padding-bottom:10px;margin-bottom:6px}
+.entr-mot{margin:2px 2px 8px;font-size:14px;color:var(--muted);line-height:1.45}
+.entr-acoes button{font-size:13px;padding:8px 12px}
+.entr-inline{margin-top:22px;background:var(--surface);border:1px solid var(--rule);border-radius:14px;padding:16px}
+#entrq{width:100%;border-radius:12px;padding:12px 14px;font-size:16px}
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js" defer></script>
@@ -537,8 +555,8 @@ const fmtFull=ts=>new Date(ts).toLocaleDateString("pt-BR",{day:"numeric",month:"
 const brDate=iso=>iso?iso.slice(0,10).split("-").reverse().join("/"):"";
 
 /* ---------- dados ---------- */
-function seed(){return{version:1,concepts:SEED.map((n,i)=>({id:"seed-"+slug(n),name:n,color:PALETTE[i%PALETTE.length],updatedAt:"2026-01-01T00:00:00.000Z"})),refs:[],ideas:[],docs:[],subs:[],chapters:[],symbols:[],plans:[],sends:[],ritmo:[],books:[],marks:[],rascunhos:[],glossario:[],textos:[],capitulos:[],artigos:[],artsubs:[],comdocs:[],regras:[],meta:{}}}
-function loadLocal(){try{const s=localStorage.getItem(KEY);if(s){const d=JSON.parse(s);for(const k of["concepts","refs","ideas","docs","subs","chapters","symbols","plans","sends","ritmo","books","marks","rascunhos","glossario","textos","capitulos","artigos","artsubs","comdocs","regras"])d[k]=d[k]||[];d.meta=d.meta||{};return d}if(localStorage.getItem(KEY+"-idb")){dbPronto=false}}catch(e){}return seed()}
+function seed(){return{version:1,concepts:SEED.map((n,i)=>({id:"seed-"+slug(n),name:n,color:PALETTE[i%PALETTE.length],updatedAt:"2026-01-01T00:00:00.000Z"})),refs:[],ideas:[],docs:[],subs:[],chapters:[],symbols:[],plans:[],sends:[],ritmo:[],books:[],marks:[],rascunhos:[],glossario:[],textos:[],capitulos:[],artigos:[],artsubs:[],comdocs:[],regras:[],links:[],meta:{}}}
+function loadLocal(){try{const s=localStorage.getItem(KEY);if(s){const d=JSON.parse(s);for(const k of["concepts","refs","ideas","docs","subs","chapters","symbols","plans","sends","ritmo","books","marks","rascunhos","glossario","textos","capitulos","artigos","artsubs","comdocs","regras","links"])d[k]=d[k]||[];d.meta=d.meta||{};return d}if(localStorage.getItem(KEY+"-idb")){dbPronto=false}}catch(e){}return seed()}
 var dbPronto=true;let db=loadLocal();
 function idbDados(){return new Promise((res,rej)=>{const r=indexedDB.open("bm-dados",1);r.onupgradeneeded=()=>r.result.createObjectStore("kv");r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})}
 async function idbPutDados(txt){const d=await idbDados();return new Promise((res,rej)=>{const t=d.transaction("kv","readwrite");t.objectStore("kv").put(txt,"db");t.oncomplete=()=>{d.close();res(true)};t.onerror=()=>{d.close();rej(t.error)}})}
@@ -552,7 +570,7 @@ function saveLocal(){
    .catch(()=>{if(!lsOk)toast("Não foi possível salvar no aparelho.")})
    .finally(()=>{salvandoIdb=false;if(salvarDeNovo){salvarDeNovo=false;grava()}})};
  grava()}
-function normalizaDb(d){for(const k of["concepts","refs","ideas","docs","subs","chapters","symbols","plans","sends","ritmo","books","marks","rascunhos","glossario","textos","capitulos","artigos","artsubs","comdocs","regras"])d[k]=d[k]||[];d.meta=d.meta||{};return d}
+function normalizaDb(d){for(const k of["concepts","refs","ideas","docs","subs","chapters","symbols","plans","sends","ritmo","books","marks","rascunhos","glossario","textos","capitulos","artigos","artsubs","comdocs","regras","links"])d[k]=d[k]||[];d.meta=d.meta||{};return d}
 const L=k=>db[k].filter(x=>!x.deleted);
 const C=id=>db.concepts.find(c=>c.id===id&&!c.deleted);
 const R=id=>db.refs.find(r=>r.id===id&&!r.deleted);
@@ -566,7 +584,7 @@ if(!dbPronto)idbGetDados().then(t=>{if(t){db=normalizaDb(JSON.parse(t))}dbPronto
 function merge(a,b){
  const out={version:1,meta:{...(b.meta||{}),...(a.meta||{})}};
  if(((b.meta||{}).lastBackup||"")>((a.meta||{}).lastBackup||""))out.meta.lastBackup=b.meta.lastBackup;
- for(const k of["concepts","refs","ideas","docs","subs","chapters","symbols","plans","sends","ritmo","books","marks","rascunhos","glossario","textos","capitulos","artigos","artsubs","comdocs","regras"]){const m=new Map();for(const x of(b[k]||[]))m.set(x.id,x);
+ for(const k of["concepts","refs","ideas","docs","subs","chapters","symbols","plans","sends","ritmo","books","marks","rascunhos","glossario","textos","capitulos","artigos","artsubs","comdocs","regras","links"]){const m=new Map();for(const x of(b[k]||[]))m.set(x.id,x);
   for(const x of(a[k]||[])){const y=m.get(x.id);if(!y||(x.updatedAt||"")>=(y.updatedAt||""))m.set(x.id,x)}out[k]=[...m.values()]}
  return out}
 function makeConcept(name){name=name.trim();if(!name){toast("Digite o nome do conceito.");return null}
@@ -3139,6 +3157,70 @@ function copiaAgora(){const hoje=todayIso(),blob=new Blob([JSON.stringify(db)],{
  a.href=URL.createObjectURL(blob);a.download=`entrelacos-copia-${hoje}.json`;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},2000);
  db.meta.ultCopia=hoje;changed();toast("Cópia de segurança baixada.");render()}
 
+/* ============ Entrelaços 2.0, Etapa 2: Entrelaçar ============ */
+const cutT=(t,n)=>{t=String(t||"").replace(/\s+/g," ").trim();return t.length>n?t.slice(0,n)+"…":t};
+const ENT={
+ concepts:{r:"Conceito",g:"Conceitos",lista:()=>L("concepts"),tit:x=>x.name,rota:x=>({name:"concept",id:x.id})},
+ ideas:{r:"Ideia",g:"Ideias",lista:()=>L("ideas"),tit:x=>cutT(x.text,100),rota:x=>{const c=(x.concepts||[]).find(id=>C(id));return c?{name:"concept",id:c}:{name:"pending"}}},
+ books:{r:"Livro",g:"Livros",lista:()=>L("books"),tit:x=>String(x.name||"").replace(/\.pdf$/i,""),rota:x=>({name:"leitor",k:x.id})},
+ textos:{r:"Texto",g:"Textos",lista:()=>L("textos"),tit:x=>x.nome,rota:x=>({name:"leituracaps",k:x.id})},
+ capitulos:{r:"Capítulo",g:"Capítulos",lista:()=>L("capitulos"),tit:x=>{const t=db.textos.find(y=>y.id===x.textoId&&!y.deleted);return(t?t.nome+" · ":"")+x.nome},rota:x=>({name:"leituracap",k:x.id})},
+ refs:{r:"Obra",g:"Obras",lista:()=>L("refs"),tit:x=>x.label,rota:()=>({name:"bib"})},
+ artigos:{r:"Artigo",g:"Artigos",lista:()=>L("artigos"),tit:x=>x.nome,rota:x=>({name:"artigo",k:x.id})},
+ subs:{r:"Dissertação",g:"Dissertação",lista:()=>L("subs"),tit:x=>`${x.n}${x.title?" · "+x.title:""}`,rota:x=>({name:"plano",k:x.n})},
+ docs:{r:"Documento",g:"Documentos",lista:()=>L("docs"),tit:x=>x.title||x.name,rota:x=>({name:"concept",id:x.main})}
+};
+let entr={aberto:false,ctx:null,q:"",tipo:"",sel:null,motivo:"",editId:null};
+const mesmoEnt=(a,b)=>!!a&&!!b&&a.t===b.t&&a.id===b.id;
+function entObj(e){const d=e&&ENT[e.t];if(!d)return null;const x=(db[e.t]||[]).find(y=>y.id===e.id&&!y.deleted);return x?{x,d}:null}
+function vinculosDe(ctx){const out=[];for(const l of L("links")){let o=null;if(mesmoEnt(l.a,ctx))o=l.b;else if(mesmoEnt(l.b,ctx))o=l.a;if(!o)continue;const r=entObj(o);if(r)out.push({l,o,x:r.x,d:r.d})}
+ return out.sort((a,b)=>(b.l.updatedAt||"").localeCompare(a.l.updatedAt||""))}
+function entrelacar(a,b,motivo){if(!a||!b||mesmoEnt(a,b))return null;
+ const ex=db.links.find(l=>(mesmoEnt(l.a,a)&&mesmoEnt(l.b,b))||(mesmoEnt(l.a,b)&&mesmoEnt(l.b,a)));
+ if(ex){ex.deleted=false;if(motivo)ex.motivo=motivo;touch(ex);changed();return ex}
+ const l=touch({id:uid("l"),a:{t:a.t,id:a.id},b:{t:b.t,id:b.id},motivo:(motivo||"").trim(),criado:nowIso()});db.links.push(l);changed();return l}
+function ctxRota(){const n=route.name;let c=null;
+ if(n==="concept")c={t:"concepts",id:route.id};
+ else if(n==="leitor")c={t:"books",id:route.k};
+ else if(n==="leituracaps")c={t:"textos",id:route.k};
+ else if(n==="leituracap")c={t:"capitulos",id:route.k};
+ else if(n==="artigo"||n==="artigointeiro")c={t:"artigos",id:route.k};
+ else if(n==="plano"||n==="escrever"){const sb=L("subs").find(x=>x.n===route.k);if(sb)c={t:"subs",id:sb.id}}
+ return c&&entObj(c)?c:null}
+const ROTAS_ENTR_INLINE=["concept","leituracaps","leituracap","artigo","artigointeiro","plano","escrever"];
+const rotaAttr=r=>esc(JSON.stringify(r));
+function entrInline(){const c=ctxRota();if(!c)return"";const v=vinculosDe(c);
+ return `<section class="entr-inline"><h2 class="ini-h">Entrelaçado com${v.length?` (${v.length})`:""}</h2>${v.length?v.map(i=>`<button class="ini-link" data-a="irrota" data-r="${rotaAttr(i.d.rota(i.x))}"><span class="il-t"><span class="tag">${esc(i.d.r)}</span> ${esc(i.d.tit(i.x))}</span>${i.l.motivo?`<span class="il-s">${esc(i.l.motivo)}</span>`:""}</button>`).join(""):`<p class="hint">Nada entrelaçado ainda. Toque no botão ∞ para relacionar este conteúdo a outros.</p>`}</section>`}
+function entrInlineAtualiza(){const e=$(".entr-inline");if(e)e.outerHTML=entrInline()}
+function entrItem(i){const ed=entr.editId===i.l.id;
+ return `<div class="entr-item"><button class="ini-link" data-a="entrir" data-r="${rotaAttr(i.d.rota(i.x))}"><span class="il-t"><span class="tag">${esc(i.d.r)}</span> ${esc(i.d.tit(i.x))}</span></button>
+ ${ed?`<textarea id="entrmoted" rows="2" placeholder="Por que estes conteúdos estão relacionados?">${esc(i.l.motivo||"")}</textarea><div class="row"><button class="primary" data-a="entreditsave" data-id="${i.l.id}">Salvar motivo</button><button class="secondary" data-a="entreditcanc">Cancelar</button></div>`
+ :`${i.l.motivo?`<p class="entr-mot">${esc(i.l.motivo)}</p>`:""}<div class="row entr-acoes"><button class="secondary" data-a="entredit" data-id="${i.l.id}">${i.l.motivo?"Editar motivo":"Registrar motivo"}</button><button class="secondary" data-a="entrdesf" data-id="${i.l.id}">Desfazer</button></div>`}</div>`}
+function entrResHTML(){const c=entr.ctx,ja=new Set(vinculosDe(c).map(i=>i.o.t+":"+i.o.id)),f=fold(entr.q.trim()),tipos=entr.tipo?[entr.tipo]:Object.keys(ENT);
+ if(!f&&!entr.tipo)return `<p class="hint">Digite para buscar ou escolha um tipo acima.</p>`;
+ let r=[];for(const t of tipos){const d=ENT[t];for(const x of d.lista()){const e={t,id:x.id};if(mesmoEnt(e,c)||ja.has(t+":"+x.id))continue;const tt=d.tit(x)||"";if(f&&!fold(tt).includes(f))continue;r.push({t,x,d,tt,u:x.updatedAt||x.ts||""})}}
+ r.sort((a,b)=>b.u.localeCompare(a.u));const tot=r.length;r=r.slice(0,30);
+ return r.length?r.map(i=>`<button class="ini-link" data-a="entrsel" data-t="${i.t}" data-id="${i.x.id}"><span class="il-t"><span class="tag">${esc(i.d.r)}</span> ${esc(i.tt)}</span></button>`).join("")+(tot>30?`<p class="hint">Mostrando 30 de ${tot}. Refine a busca.</p>`:""):`<p class="hint">Nada encontrado.</p>`}
+function entrForm(){const o=entObj(entr.sel);if(!o){entr.sel=null;return""}
+ return `<div class="panel"><p style="margin:0 0 8px"><span class="tag">${esc(o.d.r)}</span> ${esc(o.d.tit(o.x))}</p><label class="label" for="entrmot" style="margin-top:0">Motivo (opcional)</label><textarea id="entrmot" rows="3" placeholder="Por que estes conteúdos estão relacionados?">${esc(entr.motivo)}</textarea><div class="row" style="margin-top:10px"><button class="primary" data-a="entrsave">Entrelaçar</button><button class="secondary" data-a="entrcanc">Voltar</button></div></div>`}
+function entrSheet(){const c=entr.ctx,o=entObj(c);if(!o)return"";const v=vinculosDe(c);
+ const tipos=[["","Tudo"],...Object.entries(ENT).map(([k,d])=>[k,d.g])];
+ return `<div class="entr-bd" data-a="entrclose"></div><div class="entr-sheet" role="dialog" aria-label="Entrelaçar">
+ <div class="entr-top"><div><div class="entr-k">Entrelaçar</div><div class="entr-t"><span class="tag">${esc(o.d.r)}</span> ${esc(cutT(o.d.tit(o.x),90))}</div></div><button class="secondary" data-a="entrclose">Fechar</button></div>
+ <h3 class="entr-h">Já entrelaçado (${v.length})</h3>${v.length?v.map(entrItem).join(""):`<p class="hint">Ainda nada. Escolha abaixo o que quer relacionar a este conteúdo.</p>`}
+ <h3 class="entr-h">Entrelaçar com…</h3>
+ ${entr.sel?entrForm():`<input type="search" id="entrq" placeholder="Buscar conceito, ideia, livro, capítulo…" value="${esc(entr.q)}" autocomplete="off"><div class="chips" style="margin:10px 0">${tipos.map(([k,l])=>`<button class="chip" data-a="entrtipo" data-id="${k}" aria-pressed="${entr.tipo===k}">${esc(l)}</button>`).join("")}</div><div id="entrres">${entrResHTML()}</div>`}</div>`}
+function entrDesenhar(){const r=$("#entrroot");if(!r)return;const a=r.querySelector(".entr-sheet"),top=a?a.scrollTop:0;r.innerHTML=entr.aberto?entrSheet():"";const n=r.querySelector(".entr-sheet");if(n)n.scrollTop=top}
+function entrFechar(){entr.aberto=false;entr.sel=null;entr.editId=null;entr.motivo="";entrDesenhar()}
+function entrPosRender(){
+ const c=ctxRota(),fab=$("#entrfab");if(fab)fab.hidden=!c;
+ if(entr.aberto&&!mesmoEnt(c,entr.ctx))entrFechar();
+ if(c&&ROTAS_ENTR_INLINE.includes(route.name))$("#main").insertAdjacentHTML("beforeend",entrInline())}
+(function(){const f=document.createElement("button");f.id="entrfab";f.hidden=true;f.setAttribute("data-a","entropen");f.setAttribute("aria-label","Entrelaçar este conteúdo");f.title="Entrelaçar";f.innerHTML=KNOT;document.body.appendChild(f);
+ const r=document.createElement("div");r.id="entrroot";document.body.appendChild(r)})();
+document.addEventListener("input",e=>{const t=e.target;if(!t)return;if(t.id==="entrq"){entr.q=t.value;const r=$("#entrres");if(r)r.innerHTML=entrResHTML()}else if(t.id==="entrmot")entr.motivo=t.value});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&entr.aberto)entrFechar()});
+
 function espacoDe(n){
  if(["inicio","busca","timeline"].includes(n))return"inicio";
  if(["capture","pending"].includes(n))return"capture";
@@ -3158,7 +3240,7 @@ function renderNav(){
  <button data-a="nav" data-to="timeline" aria-current="${route.name==="timeline"}">Linha do tempo</button></nav>
  <p class="sub">Seus conceitos</p><div class="cl">${sortedConcepts().map(c=>`<button data-a="open" data-id="${c.id}" aria-current="${route.name==="concept"&&route.id===c.id}"><span style="width:9px;height:9px;border-radius:50%;background:${c.color};display:inline-block;flex:none"></span>${esc(c.name)}</button>`).join("")}</div>`;
  setSync()}
-function render(){renderNav();$("#main").innerHTML=({inicio:vInicio,busca:vBusca,biblioteca:vBiblioteca,escrita:vEscrita,vida:vVida,agenda:vAgenda,arquivos:vArquivos,capture:vCapture,concepts:vConcepts,concept:vConcept,timeline:vTimeline,pending:vPending,batch:vBatch,bib:vBib,diss:vDiss,auto:vAuto,acervo:vAcervo,aficha:vAficha,form:vForm,plano:vPlano,ritmo:vRitmo,medidor:vMedidor,escrever:vEscrever,livros:vLivros,leitor:vLeitor,dicionario:vDicionario,leituratextos:vLeituraTextos,leituracaps:vLeituraCaps,leituracap:vLeituraCap,artigos:vArtigos,artigo:vArtigo,artsub:vArtSub,artigointeiro:vArtigoInteiro,dtexto:vDissTexto,comentarios:vComentarios,comentario:vComentario,regras:vRegras,dissbib:vDissBib}[route.name]||vInicio)();bind();$("#dicroot").innerHTML=dicPopDiv();elAudioSync()}
+function render(){renderNav();$("#main").innerHTML=({inicio:vInicio,busca:vBusca,biblioteca:vBiblioteca,escrita:vEscrita,vida:vVida,agenda:vAgenda,arquivos:vArquivos,capture:vCapture,concepts:vConcepts,concept:vConcept,timeline:vTimeline,pending:vPending,batch:vBatch,bib:vBib,diss:vDiss,auto:vAuto,acervo:vAcervo,aficha:vAficha,form:vForm,plano:vPlano,ritmo:vRitmo,medidor:vMedidor,escrever:vEscrever,livros:vLivros,leitor:vLeitor,dicionario:vDicionario,leituratextos:vLeituraTextos,leituracaps:vLeituraCaps,leituracap:vLeituraCap,artigos:vArtigos,artigo:vArtigo,artsub:vArtSub,artigointeiro:vArtigoInteiro,dtexto:vDissTexto,comentarios:vComentarios,comentario:vComentario,regras:vRegras,dissbib:vDissBib}[route.name]||vInicio)();bind();$("#dicroot").innerHTML=dicPopDiv();entrPosRender();elAudioSync()}
 function softRender(){const a=document.activeElement;if(a&&$("#main").contains(a)&&/INPUT|TEXTAREA|SELECT/.test(a.tagName)){renderNav()}else render()}
 function on(sel,ev,fn){const e=$(sel);if(e)e.addEventListener(ev,fn);return e}
 function bind(){
@@ -3185,6 +3267,17 @@ async function act(a,el){
  try{switch(a){
  case "nav":if(el.dataset.to==="auto")auto=null;if(el.dataset.to==="batch"&&(!batch||batch.step==="classify"&&batch.idx>=batch.queue.length))batch={step:"folders",folders:null,filter:"",queue:[],idx:0,skipped:[],done:0,sel:[],title:"",state:"sem",text:null};return go({name:el.dataset.to});
  case "open":return go({name:"concept",id});
+  case "entropen":{const c=ctxRota();if(!c)return;entr={aberto:true,ctx:c,q:"",tipo:"",sel:null,motivo:"",editId:null};return entrDesenhar()}
+  case "entrclose":return entrFechar();
+  case "entrtipo":entr.tipo=id||"";return entrDesenhar();
+  case "entrsel":entr.sel={t:el.dataset.t,id};entr.motivo="";return entrDesenhar();
+  case "entrcanc":entr.sel=null;entr.motivo="";return entrDesenhar();
+  case "entrsave":{const l=entrelacar(entr.ctx,entr.sel,entr.motivo);entr.sel=null;entr.motivo="";entr.q="";entrDesenhar();entrInlineAtualiza();return toast(l?"Entrelaçado":"Não foi possível entrelaçar")}
+  case "entredit":entr.editId=id;return entrDesenhar();
+  case "entreditcanc":entr.editId=null;return entrDesenhar();
+  case "entreditsave":{const l=db.links.find(x=>x.id===id);if(l){l.motivo=($("#entrmoted").value||"").trim();touch(l);changed()}entr.editId=null;entrDesenhar();entrInlineAtualiza();return toast("Motivo salvo")}
+  case "entrdesf":{const l=db.links.find(x=>x.id===id);if(l){l.deleted=true;touch(l);changed()}entrDesenhar();entrInlineAtualiza();return toast("Entrelaçamento desfeito. Os conteúdos continuam como estavam.")}
+  case "entrir":{const r=rotaDe(el);entrFechar();if(r)return go(r);return}
   case "irrota":{const r=rotaDe(el);if(r)return go(r);return}
   case "inicap":{const t=($("#ic").value||"").trim();if(!t){toast("Escreva a ideia antes de guardar.");return}db.ideas.push(touch({id:uid("i"),text:t,moment:"",refId:"",concepts:[],ts:nowIso()}));changed();render();return toast("Ideia guardada na Caixa de entrada")}
   case "inipers":inicioPers=!inicioPers;return render();
