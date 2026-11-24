@@ -477,6 +477,22 @@ input[type=date]{width:100%;background:var(--surface);border:1px solid var(--rul
 :root[data-theme="dark"] .lt-texto::before{color:var(--gold);text-shadow:0 0 10px rgba(232,188,82,.6)}
 @media (max-width:599px){:root[data-theme="dark"] .brandsub{display:none}}:root[data-theme="dark"] .side .brandsub{display:none}
 :root[data-theme="dark"] .brandsub{text-shadow:0 1px 6px #000,0 0 3px #000;color:#F3D88A}:root[data-theme="dark"] .brand{filter:drop-shadow(0 1px 5px #000)}
+
+/* ---------- Etapa 1: espaços, início e telas-hub ---------- */
+.hub-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+.hub-card{display:flex;flex-direction:column;gap:6px;text-align:left;border:1px solid var(--rule);background:var(--surface);color:var(--ink);border-radius:14px;padding:16px;min-height:96px}
+.hub-card .hc-t{font-size:18px;font-weight:600}.hub-card .hc-d{font-size:14px;color:var(--muted);line-height:1.4}.hub-card .hc-x{font-size:13px;color:var(--accent,var(--ink));margin-top:auto}
+.ini-grid{display:grid;grid-template-columns:1fr;gap:14px}
+@media (min-width:900px){.ini-grid{grid-template-columns:1fr 1fr}.ini-bloco.bl-busca,.ini-bloco.bl-captura{grid-column:1/-1}}
+.ini-bloco{background:var(--surface);border:1px solid var(--rule);border-radius:14px;padding:16px}
+.ini-bloco.oculto{opacity:.45}
+.ini-h{font-size:17px;margin:0 0 10px;font-weight:600}
+.ini-link{display:flex;flex-direction:column;gap:2px;width:100%;text-align:left;border:0;border-bottom:1px solid var(--rule);background:none;color:var(--ink);padding:12px 2px;text-decoration:none}
+.ini-link:last-child{border-bottom:0}.il-t{font-size:16px;line-height:1.4}.il-s{font-size:13px;color:var(--muted)}
+.ini-tog{display:flex;gap:8px;align-items:center;font-size:14px;color:var(--muted);margin-bottom:8px}
+.busca-res .tag{display:inline-block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);border:1px solid var(--rule);border-radius:6px;padding:1px 6px;margin-right:4px}
+#bq{width:100%;border-radius:12px;padding:12px 14px;font-size:16px}
+@media (max-width:599px){.tabs.oito{overflow-x:auto;justify-content:flex-start}.tabs.oito button{flex:0 0 23%;min-width:78px;font-size:11.5px}}
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js" defer></script>
@@ -522,9 +538,21 @@ const brDate=iso=>iso?iso.slice(0,10).split("-").reverse().join("/"):"";
 
 /* ---------- dados ---------- */
 function seed(){return{version:1,concepts:SEED.map((n,i)=>({id:"seed-"+slug(n),name:n,color:PALETTE[i%PALETTE.length],updatedAt:"2026-01-01T00:00:00.000Z"})),refs:[],ideas:[],docs:[],subs:[],chapters:[],symbols:[],plans:[],sends:[],ritmo:[],books:[],marks:[],rascunhos:[],glossario:[],textos:[],capitulos:[],artigos:[],artsubs:[],comdocs:[],regras:[],meta:{}}}
-function loadLocal(){try{const s=localStorage.getItem(KEY);if(s){const d=JSON.parse(s);for(const k of["concepts","refs","ideas","docs","subs","chapters","symbols","plans","sends","ritmo","books","marks","rascunhos","glossario","textos","capitulos","artigos","artsubs","comdocs","regras"])d[k]=d[k]||[];d.meta=d.meta||{};return d}}catch(e){}return seed()}
-let db=loadLocal();
-function saveLocal(){try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){toast("Não foi possível salvar no aparelho.")}}
+function loadLocal(){try{const s=localStorage.getItem(KEY);if(s){const d=JSON.parse(s);for(const k of["concepts","refs","ideas","docs","subs","chapters","symbols","plans","sends","ritmo","books","marks","rascunhos","glossario","textos","capitulos","artigos","artsubs","comdocs","regras"])d[k]=d[k]||[];d.meta=d.meta||{};return d}if(localStorage.getItem(KEY+"-idb")){dbPronto=false}}catch(e){}return seed()}
+var dbPronto=true;let db=loadLocal();
+function idbDados(){return new Promise((res,rej)=>{const r=indexedDB.open("bm-dados",1);r.onupgradeneeded=()=>r.result.createObjectStore("kv");r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})}
+async function idbPutDados(txt){const d=await idbDados();return new Promise((res,rej)=>{const t=d.transaction("kv","readwrite");t.objectStore("kv").put(txt,"db");t.oncomplete=()=>{d.close();res(true)};t.onerror=()=>{d.close();rej(t.error)}})}
+async function idbGetDados(){const d=await idbDados();return new Promise((res,rej)=>{const q=d.transaction("kv").objectStore("kv").get("db");q.onsuccess=()=>{d.close();res(q.result||null)};q.onerror=()=>{d.close();rej(q.error)}})}
+let salvandoIdb=false,salvarDeNovo=false;
+function saveLocal(){
+ const txt=JSON.stringify(db);let lsOk=true;
+ try{localStorage.setItem(KEY,txt);localStorage.removeItem(KEY+"-idb")}catch(e){lsOk=false}
+ const grava=()=>{if(salvandoIdb){salvarDeNovo=true;return}salvandoIdb=true;
+  idbPutDados(JSON.stringify(db)).then(()=>{if(!lsOk){try{localStorage.setItem(KEY+"-idb","1");localStorage.removeItem(KEY)}catch(e){}}})
+   .catch(()=>{if(!lsOk)toast("Não foi possível salvar no aparelho.")})
+   .finally(()=>{salvandoIdb=false;if(salvarDeNovo){salvarDeNovo=false;grava()}})};
+ grava()}
+function normalizaDb(d){for(const k of["concepts","refs","ideas","docs","subs","chapters","symbols","plans","sends","ritmo","books","marks","rascunhos","glossario","textos","capitulos","artigos","artsubs","comdocs","regras"])d[k]=d[k]||[];d.meta=d.meta||{};return d}
 const L=k=>db[k].filter(x=>!x.deleted);
 const C=id=>db.concepts.find(c=>c.id===id&&!c.deleted);
 const R=id=>db.refs.find(r=>r.id===id&&!r.deleted);
@@ -533,7 +561,8 @@ const usage=id=>L("ideas").filter(i=>i.concepts.includes(id)).length;
 const sortedConcepts=()=>L("concepts").sort((a,b)=>usage(b.id)-usage(a.id)||a.name.localeCompare(b.name,"pt"));
 const pending=()=>L("ideas").filter(i=>!i.concepts.some(id=>C(id)));
 const docsOf=id=>L("docs").filter(d=>d.concepts.includes(id));
-function changed(){saveLocal();setDirty(true);scheduleSync()}
+function changed(){if(!dbPronto)return;saveLocal();setDirty(true);scheduleSync()}
+if(!dbPronto)idbGetDados().then(t=>{if(t){db=normalizaDb(JSON.parse(t))}dbPronto=true;render()}).catch(()=>{dbPronto=true;toast("Não foi possível abrir os dados do aparelho. Conecte ao Drive para recuperá-los.")});
 function merge(a,b){
  const out={version:1,meta:{...(b.meta||{}),...(a.meta||{})}};
  if(((b.meta||{}).lastBackup||"")>((a.meta||{}).lastBackup||""))out.meta.lastBackup=b.meta.lastBackup;
@@ -617,7 +646,7 @@ function aplicarTema(t){document.documentElement.setAttribute("data-theme",t);co
 function alternarTema(){const t=temaAtual()==="dark"?"light":"dark";try{localStorage.setItem("bm-theme",t)}catch(e){}aplicarTema(t)}
 function setSync(){aplicarTema(temaAtual());document.querySelectorAll(".syncbtn").forEach(b=>b.textContent=syncText())}
 async function sync(interactive){
- if(syncing)return;
+ if(syncing||!dbPronto)return;
  if(!navigator.onLine){setSync();if(interactive)toast("Sem internet. Tudo continua salvo no aparelho.");return}
  if(!interactive&&!hasToken()){setSync();return}
  syncing=true;syncErr=false;setSync();
@@ -632,6 +661,7 @@ async function sync(interactive){
   const today=todayIso();
   if(remote&&(!merged.meta.lastBackup||(new Date(today)-new Date(merged.meta.lastBackup))/864e5>=7)){
    await upload({name:`backup-${today}.json`,parents:[folder]},new Blob([JSON.stringify(remote)],{type:"application/json"}));merged.meta.lastBackup=today}
+  if(remote&&!merged.meta.bkp20){await upload({name:`backup-${today}-antes-da-versao-2.0.json`,parents:[folder]},new Blob([JSON.stringify(remote)],{type:"application/json"}));merged.meta.bkp20=today}
   const blob=new Blob([JSON.stringify(merged)],{type:"application/json"});
   if(fileId)await upload({},blob,fileId);else await upload({name:DATA_NAME,parents:[folder]},blob);
   const editedMeanwhile=JSON.stringify(db)!==before;
@@ -645,12 +675,12 @@ async function sync(interactive){
 
 /* ---------- estado da tela ---------- */
 const wide=()=>matchMedia("(min-width:768px)").matches;
-let route={name:wide()?"concepts":"capture"};
+let route={name:"inicio"};
 let draft={text:"",moment:"",refId:"",concepts:new Set()};
 let psel={},err="",showNew=false,showNew2=false,showAll=false,showNewRef=false,showBulk=false;
 let editIdea=null,ieSel=[],editDoc=null,de=null,link=null,batch=null,searchTimer=null;
 const exportLinks={},checked=new Set();
-function go(r){route=r;err="";showNew=showNew2=showNewRef=showBulk=false;editIdea=null;editDoc=null;link=null;render();window.scrollTo(0,0);if(r.name==="concept"){checkDocs(r.id);if(!acv&&hasToken())syncAcervo(false)}if(["concept","acervo","aficha"].includes(r.name))checkPlanilha();if(r.name==="diss"&&db.meta.dissFolder&&(!dscan||dscan.folder!==db.meta.dissFolder.id||Date.now()-new Date(dscan.at)>6e5))scanDiss(false)}
+function go(r){route=r;lembrarRota(r);err="";showNew=showNew2=showNewRef=showBulk=false;editIdea=null;editDoc=null;link=null;render();window.scrollTo(0,0);if(r.name==="concept"){checkDocs(r.id);if(!acv&&hasToken())syncAcervo(false)}if(["concept","acervo","aficha"].includes(r.name))checkPlanilha();if(r.name==="diss"&&db.meta.dissFolder&&(!dscan||dscan.folder!==db.meta.dissFolder.id||Date.now()-new Date(dscan.at)>6e5))scanDiss(false)}
 function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("on");clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove("on"),3200)}
 
 /* ---------- componentes ---------- */
@@ -721,7 +751,7 @@ function vCapture(){
  ${showNew?`<div class="inline"><input type="text" id="nc" placeholder="Nome do conceito" aria-label="Nome do novo conceito"><button class="secondary" data-a="mkc">Criar</button></div>`:""}
  <label class="label" for="m">Momento</label><input type="text" id="m" value="${esc(draft.moment)}" placeholder="Ex.: lendo no café, depois da sessão">
  <label class="label" for="r">Procedência</label>${refSelect("r",draft.refId)}
- <button class="primary" data-a="save">Salvar ideia</button><p class="hint">Data e hora são registradas sozinhas. Sem conceito marcado, a ideia vai para Pendentes.</p>`}
+ <button class="primary" data-a="save">Salvar ideia</button>${pending().length?`<button class="secondary" data-a="nav" data-to="pending" style="margin-top:10px">Caixa de entrada (${pending().length})</button>`:""}<p class="hint">Data e hora são registradas sozinhas. Sem conceito marcado, a ideia fica na Caixa de entrada, sem pressa.</p>`}
 function vConcepts(){
  return `<h1>Conceitos</h1><div class="row" style="margin:-6px 0 18px"><button class="secondary" data-a="nav" data-to="acervo">Acervo Freud e Lacan</button><button class="secondary" data-a="nav" data-to="livros">Ler um PDF</button><button class="secondary" data-a="nav" data-to="auto">Trazer textos já nomeados</button><button class="secondary" data-a="nav" data-to="batch">Organizar pasta do Drive</button><button class="secondary" data-a="nav" data-to="bib">Bibliografia</button><button class="secondary" data-a="newc2">+ Novo conceito</button></div>
  ${showNew2?`<div class="inline" style="margin:-6px 0 18px"><input type="text" id="nc2" placeholder="Nome do conceito" aria-label="Nome do novo conceito"><button class="secondary" data-a="mkc2">Criar</button></div>`:""}
@@ -743,7 +773,7 @@ function vConcept(){
  <div class="row" style="margin-top:8px"><button class="link" data-a="crename" data-id="${c.id}">Renomear conceito</button><button class="link" data-a="cdel" data-id="${c.id}">Excluir conceito</button></div>`}
 function weekStart(){const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-(d.getDay()+6)%7);return d}
 function dayGroups(list){let out="",last="";list.forEach(i=>{const d=fmtDay(i.ts);if(d!==last){out+=`<h2 class="day">${esc(d)}</h2>`;last=d}out+=ideaCard(i)});return out}
-function vTimeline(){
+function vTimeline(){/* História do pensamento: cronologia (as trajetórias entram na Etapa 5) */
  const ws=weekStart(),all=L("ideas").sort((a,b)=>b.ts.localeCompare(a.ts));
  const week=all.filter(i=>new Date(i.ts)>=ws),older=all.filter(i=>new Date(i.ts)<ws),months={};
  older.forEach(i=>{const d=new Date(i.ts),k=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");(months[k]=months[k]||[]).push(i)});
@@ -753,8 +783,8 @@ function vTimeline(){
  ${keys.length?`<p class="label">Semanas anteriores, por mês</p>`:""}${keys.map(k=>`<details class="block"><summary>${mname(k)} <span class="count">${months[k].length}</span></summary>${dayGroups(months[k])}</details>`).join("")}`}
 function vPending(){
  const p=pending().sort((a,b)=>b.ts.localeCompare(a.ts));
- if(!p.length)return `<h1>Pendentes</h1><div class="empty">Nenhuma ideia esperando conceito.</div>`;
- return `<h1>Pendentes</h1><p class="hint" style="margin:-8px 0 18px">As sugestões vêm das palavras que você já usou em cada conceito. Você decide.</p>`+p.map(i=>{
+ if(!p.length)return `<h1>Caixa de entrada</h1><div class="empty">Tudo classificado por enquanto. Não há ideia aguardando conceito.</div>`;
+ return `<button class="back" data-a="nav" data-to="capture">‹ Capturar</button><h1>Caixa de entrada</h1><p class="hint" style="margin:-8px 0 18px">Ideias ainda sem conceito. Não há pressa: elas ficam aqui até você querer organizá-las. As sugestões vêm das palavras que você já usou em cada conceito, e quem decide é você.</p>`+p.map(i=>{
   const sug=suggestFor(i.text),sel=psel[i.id]||(psel[i.id]=new Set());
   const order=[...sug.map(C),...sortedConcepts().filter(c=>!sug.includes(c.id))];
   return ideaCard(i,`<span class="label">${sug.length?"Sugestões primeiro, com borda tracejada":"Escolha os conceitos"}</span><div class="chips">${order.map(c=>chip(c,"ptog",sel.has(c.id),sug.includes(c.id)?"sug":"",`data-i="${i.id}"`)).join("")}</div><div class="row"><button class="secondary" data-a="classify" data-i="${i.id}">Classificar</button><button class="link" data-a="iedit" data-id="${i.id}">Editar</button></div>`)}).join("")}
@@ -1247,7 +1277,7 @@ function acvGrupos(){const g={};(acv?acv.rows:[]).forEach(r=>{const k=akey(r.n);
  Object.values(g).forEach(x=>{if(x.F&&x.L)x.nome=x.L.n.length<=x.F.n.length?x.L.n:x.F.n;x.cid=(L("concepts").find(c=>akey(c.name)===x.k)||{}).id});return Object.values(g)}
 const acvPend=r=>r&&(!r.s||!r.doc||/pend|apag|ausente|n[ãa]o recuperad|duplicat/i.test(r.o));
 function vAcervo(){
- const back=`<button class="back" data-a="nav" data-to="concepts">‹ Conceitos</button><h1>Acervo Freud e Lacan</h1>`;
+ const back=`<button class="back" data-a="nav" data-to="biblioteca">‹ Biblioteca</button><h1>Acervo Freud e Lacan</h1>`;
  if(!acv){if(hasToken()&&!acvBusy&&!acvErr)syncAcervo(false);
   return back+(acvErr?`<p class="warn">${esc(acvErr)}</p>`:"")+(hasToken()?`<p class="hint">${acvBusy?"Lendo a planilha de conceitos no Drive…":""}</p>${acvBusy?"":`<button class="secondary" data-a="acvsync">Ler a planilha</button>`}`:connectBox("Para trazer a planilha de conceitos, conecte o aplicativo ao Drive."))}
  let gs=acvGrupos();const cont={todos:gs.length,app:gs.filter(g=>g.cid).length,F:gs.filter(g=>g.F).length,L:gs.filter(g=>g.L).length,ambos:gs.filter(g=>g.F&&g.L).length,pend:gs.filter(g=>acvPend(g.F)||acvPend(g.L)).length};
@@ -1430,7 +1460,7 @@ function vForm(){
  if(!d.imgs)return head+`<p class="hint">Lendo ${esc(d.file.name)}…</p>`;
  const n=d.imgs.filter(x=>x.sel).length;
  return head+`<button class="back" data-a="fdback">‹ Outro documento</button><p class="fname" style="font-family:var(--serif);font-size:17px;margin:6px 0">${esc(d.file.name)}</p>
-  <p class="hint">${d.imgs.length} ${d.imgs.length===1?"desenho encontrado":"desenhos encontrados"}${d.pulados?`; ${d.pulados} em formato que não dá para mostrar (desenho feito com formas do Word ou imagem vetorial)`:""}. Cada um vira uma ideia com a legenda como texto e vai para Pendentes, onde você marca os conceitos.</p>
+  <p class="hint">${d.imgs.length} ${d.imgs.length===1?"desenho encontrado":"desenhos encontrados"}${d.pulados?`; ${d.pulados} em formato que não dá para mostrar (desenho feito com formas do Word ou imagem vetorial)`:""}. Cada um vira uma ideia com a legenda como texto e vai para a Caixa de entrada, onde você marca os conceitos.</p>
   <div class="f-grid">${d.imgs.map((x,i)=>`<button class="f-img" data-a="fdtog" data-i="${i}" aria-pressed="${x.sel}"><img src="${x.url}" alt=""><span>${esc(x.cap||"Sem legenda")}</span><i>${x.sel?"✓":""}</i></button>`).join("")}</div>
   ${err?`<p class="err">${esc(err)}</p>`:""}<button class="primary" data-a="fdcreate" ${n&&!d.busy?"":"disabled"}>${d.busy?"Salvando no Drive…":`Criar ${n} ${n===1?"ideia":"ideias"} com imagem`}</button>`}
 function aiCfg(){const p=aiProvider();
@@ -1477,7 +1507,7 @@ async function actForm(a,el){
  case "elpickvoz":return elEscolherVoz(el.dataset.id,el.dataset.n);
  case "fask":{formQ=($("#fq").value||"").trim();if(!formQ)return toast("Descreva a ideia primeiro.");formBusy=true;formErr="";formRes=null;render();
   try{const t=await askAI(promptForm(),formQ);formRes=parseAI(t)||{raw:t}}catch(e){formErr=e.message||"Não foi possível falar com a IA."}formBusy=false;return render()}
- case "fsave":{const o=formRes.opcoes[+el.dataset.i];db.ideas.push(touch({id:uid("i"),text:`${formQ}\n\n${o.expressao}\n${o.porque||""}`,moment:"Formalização, com sugestão da IA",refId:"",concepts:[],ts:nowIso()}));changed();return toast("Guardada em Pendentes, para você marcar os conceitos")}
+ case "fsave":{const o=formRes.opcoes[+el.dataset.i];db.ideas.push(touch({id:uid("i"),text:`${formQ}\n\n${o.expressao}\n${o.porque||""}`,moment:"Formalização, com sugestão da IA",refId:"",concepts:[],ts:nowIso()}));changed();return toast("Guardada na Caixa de entrada, para você marcar os conceitos")}
  case "fdpick":{const f=fdraw.res.find(x=>x.id===id);fdraw.file=f;fdraw.imgs=null;err="";render();
   try{if(!window.JSZip)throw new Error("Componente de Word ainda carregando.");const ab=await(await api(`drive/v3/files/${f.id}?alt=media`)).arrayBuffer();const r=await desenhosDocx(ab);fdraw.imgs=r.imgs;fdraw.pulados=r.pulados}
   catch(e){fdraw.file=null;toast(e.message||"Não foi possível ler o documento.")}return render()}
@@ -1488,7 +1518,7 @@ async function actForm(a,el){
    for(const x of l){const nome=`${base} — ${(x.cap||"desenho").slice(0,80)}.${x.ext.toLowerCase()}`;const m=await upload({name:nome,parents:[pasta]},x.blob);
     db.ideas.push(touch({id:uid("i"),text:[x.cap,x.expl].filter(Boolean).join("\n")||"Desenho",moment:"Desenho de "+base,refId:"",concepts:[],image:m.id,ts:nowIso()}));x.sel=false;n++;changed()}}
   catch(e){toast("Parei no meio: "+n+" salvos. Verifique a internet e tente de novo.")}
-  fdraw.busy=false;render();return n&&toast(`${n} ${n===1?"ideia criada":"ideias criadas"} em Pendentes`)}
+  fdraw.busy=false;render();return n&&toast(`${n} ${n===1?"ideia criada":"ideias criadas"} na Caixa de entrada`)}
  }
  return actAcervo(a,el)}
 
@@ -1913,7 +1943,7 @@ let lvDepois=new Set();let rd={bookId:null,doc:null,loading:false,err:"",node:nu
 const book=id=>L("books").find(b=>b.id===id);
 const impressa=(b,p)=>b&&b.off!=null?String(p+b.off):"";
 function vLivros(){const l=L("books").sort((a,b)=>(b.updatedAt||"").localeCompare(a.updatedAt||""));
- return `<button class="back" data-a="nav" data-to="concepts">‹ Conceitos</button><h1>Ler um PDF</h1>
+ return `<button class="back" data-a="nav" data-to="biblioteca">‹ Biblioteca</button><h1>Ler um PDF</h1>
  <p class="hint" style="margin:-6px 0 16px">Abra um livro do Drive, sublinhe um trecho e leve como citação, com a página impressa.</p><div class="row" style="margin:0 0 14px"><button class="secondary" data-a="dicionario">Meu dicionário</button></div>
  <label class="label" for="lvq" style="margin-top:0">Procurar um PDF no Drive</label><input type="text" id="lvq" value="${esc(lvQ)}" placeholder="Parte do nome, ex.: Obras Completas volume 12"><div id="lvres">${lvResHTML()}</div>
  <div class="row" style="margin:10px 0 0">${lvUp&&lvUp.loading?`<p class="hint" style="margin:0">Enviando ${esc(lvUp.nome)}…</p>`:`<button class="secondary" data-a="lvupbtn">+ Enviar um PDF deste aparelho</button>`}</div>
@@ -2057,7 +2087,7 @@ async function actLeitor(a,el){const d=el?el.dataset:{};
    if(s.k==="nova"){dm={nome:"",insuf:"",pergunta:"",conceitos:"",resultado:"",descoberta:"",naoDemonstra:"",noinsu:"",logica:"",passagens:[],pars:[]};p.demos.push(dm)}else dm=p.demos[+s.k];
    mark.k=s.k==="nova"?p.demos.length-1:+s.k;dm.passagens.push({refId:b.refId||"",texto:r?r.label:b.name.replace(/\.pdf$/i,""),passagem:`‘${t}’`,pagina:s.printed?`p. ${s.printed} (PDF ${s.page})`:`PDF ${s.page} — página impressa a conferir`,uso:"",conferida:false});touch(p);mark.n=s.n}
   db.marks.push(touch(mark));const dest=s.dest,cs=s.cs.length;lsave=null;rd.sel=null;changed();render();
-  return toast(dest==="frag"?(cs?"Citação salva como fragmento":"Citação salva em Pendentes, sem conceito"):`Salva no ${mark.n}. Está em Sublinhados deste livro → Abrir no planejamento`)}
+  return toast(dest==="frag"?(cs?"Citação salva como fragmento":"Citação guardada na Caixa de entrada, sem conceito"):`Salva no ${mark.n}. Está em Sublinhados deste livro → Abrir no planejamento`)}
  case "lvmdel":{const m=db.marks.find(x=>x.id===d.id);if(!m||!confirm("Apagar este sublinhado? O fragmento ou a passagem que você criou com ele continuam onde estão."))return;m.deleted=true;touch(m);changed();return render()}
  }return actForm(a,el)}
 
@@ -2535,7 +2565,7 @@ async function actLeituraTextos(a,el){const d=el?el.dataset:{};
    if(x.k==="nova"){dm={nome:"",insuf:"",pergunta:"",conceitos:"",resultado:"",descoberta:"",naoDemonstra:"",noinsu:"",logica:"",passagens:[],pars:[]};p.demos.push(dm)}else dm=p.demos[+x.k];
    dm.passagens.push({refId:x.refId||"",texto:r?r.label:x.fonte,passagem:`‘${t}’`,pagina:x.page?`p. ${x.page}`:"página a conferir",uso:"",conferida:false});touch(p)}
   const dest=x.dest,cs=x.cs.length,n=x.n;ltCit=null;changed();render();
-  return toast(dest==="frag"?(cs?"Citação salva como fragmento":"Citação salva em Pendentes, sem conceito"):`Salva no planejamento do ${n}`)}
+  return toast(dest==="frag"?(cs?"Citação salva como fragmento":"Citação guardada na Caixa de entrada, sem conceito"):`Salva no planejamento do ${n}`)}
  case "ltia":case "ltpopia":{const c=capOf2(route.k);let t="";
   if(a==="ltia"){if(!ltSel)return;t=ltSel.texto;ltLimparSel()}else{if(!c||!ltPop)return;t=ltGrupo(c,ltPop.g).map(m=>m.texto).join("\n\n");ltPop=null}
   if(!aiKey()){iaLeit="cfg";return render()}
@@ -2996,24 +3026,139 @@ function elAudioSync(){const root=$("#elaudioroot");if(!root)return;
  else if(elAudioLastUrl!==null){root.innerHTML="";elAudioLastUrl=null}}
 
 /* ---------- desenho geral ---------- */
-const NAV=[["capture","Capturar"],["concepts","Conceitos"],["timeline","Linha do tempo","Tempo"],["pending","Pendentes"],["diss","Dissertação"]];
+const NAV=[["inicio","Início"],["capture","Capturar"],["biblioteca","Biblioteca"],["concepts","Conceitos"],["escrita","Minha escrita","Escrita"],["vida","Vida acadêmica","Acadêmica"],["agenda","Agenda"],["arquivos","Meus arquivos","Arquivos"]];
 const ICONE={
+ inicio:'<svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg>',
+ biblioteca:'<svg viewBox="0 0 24 24"><path d="M4 4h4v16H4zM10 4h4v16h-4z"/><path d="M16 6l4 1-3 13-4-1z"/></svg>',
+ escrita:'<svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13 7l4 4"/></svg>',
+ vida:'<svg viewBox="0 0 24 24"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c3 2.500 9 2.500 12 0v-5"/></svg>',
+ agenda:'<svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg>',
+ arquivos:'<svg viewBox="0 0 24 24"><path d="M3 7h6l2 2h10v10H3z"/></svg>',
  capture:'<svg viewBox="0 0 24 24"><path d="M20 4c-6.5 0-11 4-12 11l-3 5 5-3c7-1 10-5.500 10-13z"/><path d="M8 16l7-7"/></svg>',
  concepts:'<svg viewBox="0 0 24 24"><circle cx="9" cy="9.500" r="5"/><circle cx="15" cy="9.500" r="5"/><circle cx="12" cy="15" r="5"/></svg>',
  timeline:'<svg viewBox="0 0 24 24"><path d="M7 3h10M7 21h10"/><path d="M8 3c0 5 4 5 4 9s-4 4-4 9M16 3c0 5-4 5-4 9s4 4 4 9"/></svg>',
  pending:'<svg viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4M10 12h5M10 16h5"/></svg>',
  diss:'<svg viewBox="0 0 24 24"><path d="M12 6c-2-1.500-5-2-8-2v14c3 0 6 .500 8 2 2-1.500 5-2 8-2V4c-3 0-6 .500-8 2z"/><path d="M12 6v14"/></svg>'};
-const ARTE_A=["capture","concepts","concept","timeline","pending","batch","bib","auto","acervo","aficha"];
+const ARTE_A=["inicio","capture","concepts","concept","timeline","pending","batch","bib","auto","acervo","aficha"];
+/* ============ Entrelaços 2.0, Etapa 1: espaços, página inicial, busca, cópia de segurança ============ */
+let inicioPers=false,buscaQ="";
+const BLOCOS_INI=[["busca","Busca"],["captura","Capturar nova ideia"],["retomar","Retomar de onde parei"],["pensamentos","Pensamentos recentes"],["recentes","Documentos recentes"],["projetos","Projetos acadêmicos"],["compromissos","Próximos compromissos"]];
+const ROTAS_LEITURA=["leitor","leituracap"],ROTAS_ESCRITA=["escrever","artigo","artsub","artigointeiro","dtexto"];
+function rotuloRota(r){
+ if(r.name==="leitor"){const b=db.books.find(x=>x.id===r.k&&!x.deleted);return b?b.name.replace(/\.pdf$/i,""):null}
+ if(r.name==="leituracap"){const c=db.capitulos.find(x=>x.id===r.k&&!x.deleted);if(!c)return null;const t=db.textos.find(x=>x.id===c.textoId&&!x.deleted);return(t?t.nome+" · ":"")+c.nome}
+ if(r.name==="escrever")return"Escrever o "+r.k;
+ if(r.name==="artigo"||r.name==="artigointeiro"){const a=db.artigos.find(x=>x.id===r.k&&!x.deleted);return a?a.nome:null}
+ if(r.name==="artsub")return"Subtítulo de artigo";
+ if(r.name==="dtexto")return"Texto da dissertação";
+ return null}
+function lembrarRota(r){
+ const tipo=ROTAS_LEITURA.includes(r.name)?"ultLeitura":ROTAS_ESCRITA.includes(r.name)?"ultEscrita":null;if(!tipo)return;
+ const rot=rotuloRota(r);if(!rot)return;
+ const novo={r:{...r},rotulo:rot,em:nowIso()};
+ if(db.meta[tipo]&&db.meta[tipo].rotulo===rot&&JSON.stringify(db.meta[tipo].r)===JSON.stringify(novo.r)&&(Date.now()-new Date(db.meta[tipo].em))<6e4)return;
+ db.meta[tipo]=novo;saveLocal();setDirty(true);scheduleSync()}
+function rotaDe(el){try{return JSON.parse(el.dataset.r)}catch(e){return null}}
+const btnRota=(r,txt,sub)=>`<button class="ini-link" data-a="irrota" data-r="${esc(JSON.stringify(r))}"><span class="il-t">${esc(txt)}</span>${sub?`<span class="il-s">${esc(sub)}</span>`:""}</button>`;
+function hubCard(to,titulo,desc,extra){return `<button class="hub-card" data-a="nav" data-to="${to}"><span class="hc-t">${esc(titulo)}</span><span class="hc-d">${esc(desc)}</span>${extra?`<span class="hc-x">${esc(extra)}</span>`:""}</button>`}
+function hubPag(titulo,sub,cards,nota){return `<h1 style="margin-bottom:4px">${esc(titulo)}</h1><p class="hint" style="margin:0 0 18px">${esc(sub)}</p><div class="hub-grid">${cards.join("")}</div>${nota?`<p class="hint" style="margin-top:18px">${esc(nota)}</p>`:""}`}
+function vBiblioteca(){const nl=L("books").length,nr=L("refs").length;
+ return hubPag("Biblioteca","Seus livros, textos e obras de referência.",[
+  hubCard("livros","Ler um PDF","Abra um livro do Drive, sublinhe e leve como citação.",nl?`${nl} ${nl===1?"livro":"livros"}`:""),
+  hubCard("acervo","Acervo Freud e Lacan","Obras e conceitos da sua planilha no Drive."),
+  hubCard("leituratextos","Leitura de textos","Seminários e capítulos que você está lendo, com sublinhado e observações."),
+  hubCard("bib","Bibliografia","Obras e referências cadastradas.",nr?`${nr} ${nr===1?"obra":"obras"}`:""),
+  hubCard("dicionario","Dicionário pessoal","Termos e expressões que você registrou.")],
+  "Autores, áreas, mitos, fichamentos e organização por categorias chegam na Etapa 3.")}
+function vEscrita(){const na=L("artigos").length;
+ return hubPag("Minha escrita","Tudo o que você está produzindo.",[
+  hubCard("vida","Dissertação","Estrutura, planejamento, texto atual e ritmo de escrita."),
+  hubCard("artigos","Artigos","Seus artigos e os subtítulos de cada um.",na?`${na} ${na===1?"artigo":"artigos"}`:""),
+  hubCard("dtexto","Texto da dissertação","O texto atual da pesquisa.")],
+  "Ensaios, textos autorais, aulas e versões chegam na Etapa 3, ligados às ideias que lhes deram origem.")}
+function vVida(){
+ return hubPag("Vida acadêmica","Mestrado, pesquisa e formação.",[
+  hubCard("diss","Dissertação","Pergunta de pesquisa, capítulos, planejamento, medidor de produção, comentários e regras."),
+  hubCard("leituratextos","Leitura de textos","Leituras da dissertação, capítulo por capítulo."),
+  hubCard("artigos","Artigos","Artigos relacionados à pesquisa."),
+  hubCard("comentarios","Comentários da orientadora","Registro de orientações e retornos."),
+  hubCard("regras","Regras e normas","Normas de formatação e apresentação."),
+  hubCard("form","Formalização","Verificação do texto contra as normas.")],
+  "Disciplinas, estágio docente, docência, formação continuada, currículo e doutorado entram na Etapa 4.")}
+function proxCompromissos(n){const hoje=todayIso();
+ return L("subs").filter(x=>x.prazo&&x.prazo>=hoje).sort((a,b)=>a.prazo.localeCompare(b.prazo)).slice(0,n||8)}
+function vAgenda(){const pr=proxCompromissos(12);
+ return `<h1 style="margin-bottom:4px">Agenda</h1><p class="hint" style="margin:0 0 18px">Prazos e compromissos acadêmicos. Sem alertas insistentes: você só vê o que está por vir.</p>
+ ${pr.length?`<div class="hub-grid">${pr.map(x=>{const p=prazoNivel(x,false);return btnRota({name:"plano",k:x.n},`${x.n}${x.title?" · "+x.title:""}`,`${brDate(x.prazo)}${p?" · "+p.t:""}`)}).join("")}</div>`:`<div class="empty">Nenhum prazo marcado para os próximos dias.</div>`}
+ <p class="hint" style="margin-top:18px">Orientações, aulas, congressos, leituras planejadas e a integração completa com o Google Agenda chegam na Etapa 6. Os prazos da dissertação já podem ir para o Google Agenda pelo planejamento de cada subtítulo.</p>`}
+function vArquivos(){const tk=hasToken();
+ return hubPag("Meus arquivos","Drive, importação e cópias de segurança.",[
+  hubCard("batch","Organizar pasta do Drive","Classifique arquivos de uma pasta por conceito, sem mover nada."),
+  hubCard("auto","Trazer textos já nomeados","Encontra no Drive textos no padrão Conceito, título e data."),
+  hubCard("livros","Enviar um PDF","Leve um PDF do aparelho para a pasta do app no Drive.")],
+  tk?"Conectado ao Drive. Nada é movido, renomeado ou excluído no seu Drive sem a sua autorização.":"Toque em “Conectar ao Drive” no topo para sincronizar. Tudo continua salvo no aparelho.")
+ +`<div class="panel" style="margin-top:18px"><b>Cópia de segurança</b><p class="hint" style="margin:6px 0 12px">Gera um arquivo com todos os seus dados (ideias, conceitos, livros, textos, marcações, planejamento e o resto).${db.meta.ultCopia?` Última cópia neste aparelho: ${brDate(db.meta.ultCopia)}.`:""}</p><button class="secondary" data-a="copiaagora">Baixar cópia de segurança</button></div>`}
+function buscaTudo(q){
+ const f=fold(q.trim());if(f.length<2)return[];const ach=t=>fold(t||"").includes(f),out=[];
+ L("concepts").filter(c=>ach(c.name)).forEach(c=>out.push({t:"Conceito",x:c.name,r:{name:"concept",id:c.id}}));
+ L("ideas").filter(i=>ach(i.text)).sort((a,b)=>b.ts.localeCompare(a.ts)).slice(0,12).forEach(i=>{const c=i.concepts.find(id=>C(id));out.push({t:"Ideia",x:i.text.length>110?i.text.slice(0,110)+"…":i.text,s:fmtShort(i.ts),r:c?{name:"concept",id:c}:{name:"pending"}})});
+ L("books").filter(b=>ach(b.name)).forEach(b=>out.push({t:"Livro",x:b.name.replace(/\.pdf$/i,""),r:{name:"leitor",k:b.id}}));
+ L("refs").filter(r=>ach(r.label)).forEach(r=>out.push({t:"Obra",x:r.label,r:{name:"bib"}}));
+ L("docs").filter(d=>ach(d.title)||ach(d.name)).forEach(d=>out.push({t:"Documento",x:d.title||d.name,r:{name:"concept",id:d.main}}));
+ L("textos").filter(t=>ach(t.nome)).forEach(t=>out.push({t:"Texto",x:t.nome,r:{name:"leituracaps",k:t.id}}));
+ L("capitulos").forEach(c=>{const txt=(c.lerParas||[]).join(" ");if(ach(c.nome)||ach(txt)||ach(c.notas)){const i=fold(txt).indexOf(f);out.push({t:"Capítulo",x:c.nome,s:i>=0?"…"+txt.slice(Math.max(0,i-30),i+70)+"…":"",r:{name:"leituracap",k:c.id}})}});
+ L("artigos").filter(a=>ach(a.nome)).forEach(a=>out.push({t:"Artigo",x:a.nome,r:{name:"artigo",k:a.id}}));
+ L("subs").filter(x=>ach(x.title)||ach(x.n)).forEach(x=>out.push({t:"Dissertação",x:`${x.n} ${x.title||""}`,r:{name:"plano",k:x.n}}));
+ return out.slice(0,40)}
+function buscaHTML(q){if(q.trim().length<2)return q.trim()?`<p class="hint">Digite ao menos duas letras.</p>`:"";
+ const r=buscaTudo(q);return r.length?`<div class="busca-res">${r.map(x=>`<button class="ini-link" data-a="irrota" data-r="${esc(JSON.stringify(x.r))}"><span class="il-t"><span class="tag">${esc(x.t)}</span> ${esc(x.x)}</span>${x.s?`<span class="il-s">${esc(x.s)}</span>`:""}</button>`).join("")}</div>`:`<p class="hint">Nada encontrado para “${esc(q)}”.</p>`}
+function vBusca(){return `<h1>Busca</h1><input type="search" id="bq" placeholder="Buscar em tudo o que você registrou…" value="${esc(buscaQ)}" aria-label="Buscar" autocomplete="off"><div id="bres" style="margin-top:12px">${buscaHTML(buscaQ)}</div>`}
+function vInicio(){
+ const oc=new Set(db.meta.inicioOculto||[]),mostra=k=>inicioPers||!oc.has(k),B={};
+ B.busca=`<input type="search" id="bq" placeholder="Buscar em todo o meu universo acadêmico…" value="${esc(buscaQ)}" aria-label="Busca universal" autocomplete="off"><div id="bres" style="margin-top:10px">${buscaHTML(buscaQ)}</div>`;
+ B.captura=`<h2 class="ini-h">Capturar nova ideia</h2><textarea id="ic" rows="3" placeholder="Escreva o que está pensando. Não precisa classificar."></textarea><button class="primary" data-a="inicap" style="margin-top:8px">Guardar</button>`;
+ {const l=db.meta.ultLeitura,e=db.meta.ultEscrita,it=[];
+  if(l&&rotuloRota(l.r))it.push(btnRota(l.r,"Continuar leitura",rotuloRota(l.r)));
+  if(e&&rotuloRota(e.r))it.push(btnRota(e.r,"Continuar escrita",rotuloRota(e.r)));
+  B.retomar=`<h2 class="ini-h">Retomar de onde parei</h2>${it.length?it.join(""):`<p class="hint">Quando você ler ou escrever, o ponto onde parou aparece aqui.</p>`}`}
+ {const u=L("ideas").sort((a,b)=>b.ts.localeCompare(a.ts)).slice(0,5);
+  B.pensamentos=`<h2 class="ini-h">Pensamentos recentes</h2>${u.length?u.map(i=>{const c=i.concepts.find(id=>C(id));return btnRota(c?{name:"concept",id:c}:{name:"pending"},i.text.length>120?i.text.slice(0,120)+"…":i.text,fmtShort(i.ts)+(c?" · "+C(c).name:""))}).join("")+`<button class="secondary" data-a="nav" data-to="timeline" style="margin-top:8px">Linha do tempo</button>`:`<p class="hint">Suas ideias recentes aparecem aqui.</p>`}`}
+ {const it=[...L("docs").map(d=>({u:d.updatedAt||"",l:d.title||d.name,h:d.webViewLink})),...L("books").map(b=>({u:b.updatedAt||"",l:b.name.replace(/\.pdf$/i,""),r:{name:"leitor",k:b.id}}))].sort((a,b)=>b.u.localeCompare(a.u)).slice(0,5);
+  B.recentes=`<h2 class="ini-h">Documentos recentes</h2>${it.length?it.map(x=>x.h?`<a class="ini-link" href="${esc(x.h)}" target="_blank" rel="noopener"><span class="il-t">${esc(x.l)}</span></a>`:btnRota(x.r,x.l)).join(""):`<p class="hint">Documentos e livros que você abriu recentemente.</p>`}`}
+ {const ns=L("subs").length,na=L("artigos").length;
+  B.projetos=`<h2 class="ini-h">Projetos acadêmicos</h2>${btnRota({name:"diss"},"Dissertação de mestrado",ns?`${ns} ${ns===1?"subtítulo":"subtítulos"} planejados`:"Da constituição do sujeito à posição do analista")}${na?btnRota({name:"artigos"},"Artigos",`${na} ${na===1?"artigo":"artigos"}`):""}`}
+ {const pr=proxCompromissos(4);
+  B.compromissos=`<h2 class="ini-h">Próximos compromissos</h2>${pr.length?pr.map(x=>btnRota({name:"plano",k:x.n},`${x.n}${x.title?" · "+x.title:""}`,brDate(x.prazo))).join(""):`<p class="hint">Nenhum prazo à vista.</p>`}`}
+ const caixa=BLOCOS_INI.filter(([k])=>mostra(k)).map(([k,l])=>`<section class="ini-bloco bl-${k}${oc.has(k)?" oculto":""}">${inicioPers?`<label class="ini-tog"><input type="checkbox" data-a="inibloco" data-id="${k}" ${oc.has(k)?"":"checked"}> ${esc(l)}</label>`:""}${B[k]}</section>`).join("");
+ return `<h1 style="margin-bottom:2px">O que vamos pensar hoje?</h1><p class="hint" style="margin:0 0 16px">Primeiro, penso. A organização pode acontecer depois.</p>
+ <div class="ini-grid">${caixa}</div>
+ <p style="margin:18px 0 0"><button class="secondary" data-a="inipers">${inicioPers?"Concluir":"Personalizar esta página"}</button></p>`}
+document.addEventListener("input",e=>{const t=e.target;if(t&&t.id==="bq"){buscaQ=t.value;const r=$("#bres");if(r)r.innerHTML=buscaHTML(buscaQ)}});
+/* cópia de segurança: arquivo no aparelho */
+function copiaAgora(){const hoje=todayIso(),blob=new Blob([JSON.stringify(db)],{type:"application/json"}),a=document.createElement("a");
+ a.href=URL.createObjectURL(blob);a.download=`entrelacos-copia-${hoje}.json`;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},2000);
+ db.meta.ultCopia=hoje;changed();toast("Cópia de segurança baixada.");render()}
+
+function espacoDe(n){
+ if(["inicio","busca","timeline"].includes(n))return"inicio";
+ if(["capture","pending"].includes(n))return"capture";
+ if(["biblioteca","bib","acervo","aficha","livros","leitor"].includes(n))return"biblioteca";
+ if(["concepts","concept","dicionario"].includes(n))return"concepts";
+ if(n==="escrita")return"escrita";
+ if(["vida","diss","form","plano","ritmo","medidor","escrever","leituratextos","leituracaps","leituracap","artigos","artigo","artsub","artigointeiro","dtexto","comentarios","comentario","regras","dissbib"].includes(n))return"vida";
+ if(n==="agenda")return"agenda";
+ if(["arquivos","batch","auto"].includes(n))return"arquivos";
+ return"inicio"}
 function renderNav(){
- const sub=["concept","batch","bib","auto","acervo","aficha","livros","leitor","dicionario"].includes(route.name),cur=sub?"concepts":["form","plano","ritmo","medidor","escrever","leituratextos","leituracaps","leituracap","artigos","artigo","artsub","artigointeiro","dtexto","comentarios","comentario","regras","dissbib"].includes(route.name)?"diss":route.name,np=pending().length;
- $("#tabs").classList.toggle("cinco",NAV.length>4);$("#tabs").innerHTML=NAV.map(([k,l,s])=>`<button data-a="nav" data-to="${k}" aria-current="${cur===k}"><span class="ti">${ICONE[k]||""}</span><span class="tl">${s||l}</span>${k==="pending"&&np?`<span class="badge-n">${np}</span>`:""}</button>`).join("");
+ const cur=espacoDe(route.name),np=pending().length;
+ $("#tabs").classList.toggle("cinco",NAV.length>4);$("#tabs").classList.toggle("oito",NAV.length>6);$("#tabs").innerHTML=NAV.map(([k,l,s])=>`<button data-a="nav" data-to="${k}" aria-current="${cur===k}"><span class="ti">${ICONE[k]||""}</span><span class="tl">${s||l}</span></button>`).join("");
  {const ar=$("#arte");if(ar)ar.dataset.v=ARTE_A.includes(route.name)?"a":"b"}
  $("#side").innerHTML=`<div class="topb"><span class="mark">${KNOT}</span><span class="brandbox"><span class="brand">Entrelaços</span><span class="brandsub">Pesquisa · Escrita · Comunicação · Escuta</span></span></div><div style="display:flex;align-items:flex-start"><button class="syncbtn" data-a="sync"></button><button class="themebtn" data-a="tema" aria-label="Alternar tema claro e escuro"></button></div>
- <nav>${NAV.map(([k,l])=>`<button data-a="nav" data-to="${k}" aria-current="${cur===k&&!sub}">${l}${k==="pending"&&np?`<span class="badge-n">${np}</span>`:""}</button>`).join("")}
- <button data-a="nav" data-to="batch" aria-current="${route.name==="batch"}">Organizar pasta do Drive</button><button data-a="nav" data-to="bib" aria-current="${route.name==="bib"}">Bibliografia</button><button data-a="nav" data-to="acervo" aria-current="${route.name==="acervo"||route.name==="aficha"}">Acervo Freud e Lacan</button><button data-a="nav" data-to="form" aria-current="${route.name==="form"}">Formalização</button></nav>
+ <nav>${NAV.map(([k,l])=>`<button data-a="nav" data-to="${k}" aria-current="${cur===k}">${l}</button>`).join("")}
+ <button data-a="nav" data-to="timeline" aria-current="${route.name==="timeline"}">Linha do tempo</button></nav>
  <p class="sub">Seus conceitos</p><div class="cl">${sortedConcepts().map(c=>`<button data-a="open" data-id="${c.id}" aria-current="${route.name==="concept"&&route.id===c.id}"><span style="width:9px;height:9px;border-radius:50%;background:${c.color};display:inline-block;flex:none"></span>${esc(c.name)}</button>`).join("")}</div>`;
  setSync()}
-function render(){renderNav();$("#main").innerHTML=({capture:vCapture,concepts:vConcepts,concept:vConcept,timeline:vTimeline,pending:vPending,batch:vBatch,bib:vBib,diss:vDiss,auto:vAuto,acervo:vAcervo,aficha:vAficha,form:vForm,plano:vPlano,ritmo:vRitmo,medidor:vMedidor,escrever:vEscrever,livros:vLivros,leitor:vLeitor,dicionario:vDicionario,leituratextos:vLeituraTextos,leituracaps:vLeituraCaps,leituracap:vLeituraCap,artigos:vArtigos,artigo:vArtigo,artsub:vArtSub,artigointeiro:vArtigoInteiro,dtexto:vDissTexto,comentarios:vComentarios,comentario:vComentario,regras:vRegras,dissbib:vDissBib}[route.name]||vConcepts)();bind();$("#dicroot").innerHTML=dicPopDiv();elAudioSync()}
+function render(){renderNav();$("#main").innerHTML=({inicio:vInicio,busca:vBusca,biblioteca:vBiblioteca,escrita:vEscrita,vida:vVida,agenda:vAgenda,arquivos:vArquivos,capture:vCapture,concepts:vConcepts,concept:vConcept,timeline:vTimeline,pending:vPending,batch:vBatch,bib:vBib,diss:vDiss,auto:vAuto,acervo:vAcervo,aficha:vAficha,form:vForm,plano:vPlano,ritmo:vRitmo,medidor:vMedidor,escrever:vEscrever,livros:vLivros,leitor:vLeitor,dicionario:vDicionario,leituratextos:vLeituraTextos,leituracaps:vLeituraCaps,leituracap:vLeituraCap,artigos:vArtigos,artigo:vArtigo,artsub:vArtSub,artigointeiro:vArtigoInteiro,dtexto:vDissTexto,comentarios:vComentarios,comentario:vComentario,regras:vRegras,dissbib:vDissBib}[route.name]||vInicio)();bind();$("#dicroot").innerHTML=dicPopDiv();elAudioSync()}
 function softRender(){const a=document.activeElement;if(a&&$("#main").contains(a)&&/INPUT|TEXTAREA|SELECT/.test(a.tagName)){renderNav()}else render()}
 function on(sel,ev,fn){const e=$(sel);if(e)e.addEventListener(ev,fn);return e}
 function bind(){
@@ -3040,6 +3185,11 @@ async function act(a,el){
  try{switch(a){
  case "nav":if(el.dataset.to==="auto")auto=null;if(el.dataset.to==="batch"&&(!batch||batch.step==="classify"&&batch.idx>=batch.queue.length))batch={step:"folders",folders:null,filter:"",queue:[],idx:0,skipped:[],done:0,sel:[],title:"",state:"sem",text:null};return go({name:el.dataset.to});
  case "open":return go({name:"concept",id});
+  case "irrota":{const r=rotaDe(el);if(r)return go(r);return}
+  case "inicap":{const t=($("#ic").value||"").trim();if(!t){toast("Escreva a ideia antes de guardar.");return}db.ideas.push(touch({id:uid("i"),text:t,moment:"",refId:"",concepts:[],ts:nowIso()}));changed();render();return toast("Ideia guardada na Caixa de entrada")}
+  case "inipers":inicioPers=!inicioPers;return render();
+  case "inibloco":{const o=new Set(db.meta.inicioOculto||[]);o.has(id)?o.delete(id):o.add(id);db.meta.inicioOculto=[...o];changed();return render()}
+  case "copiaagora":return copiaAgora();
  case "tema":return alternarTema();
  case "sync":case "connect":await sync(true);return render();
  case "dtog":draft.concepts.has(id)?draft.concepts.delete(id):draft.concepts.add(id);return el.setAttribute("aria-pressed",draft.concepts.has(id));
@@ -3050,7 +3200,7 @@ async function act(a,el){
  case "mkc2":{const c=makeConcept(($("#nc2")||{}).value||"");if(c){showNew2=false;render();toast(`Conceito criado: ${c.name}`)}return}
  case "save":{if(!draft.text.trim()){err="Escreva a ideia antes de salvar.";render();$("#t").focus();return}
   db.ideas.push(touch({id:uid("i"),text:draft.text.trim(),moment:draft.moment.trim(),refId:draft.refId,concepts:[...draft.concepts],ts:nowIso()}));
-  const pend=!draft.concepts.size;draft={text:"",moment:"",refId:"",concepts:new Set()};changed();render();return toast(pend?"Ideia salva em Pendentes":"Ideia salva")}
+  const pend=!draft.concepts.size;draft={text:"",moment:"",refId:"",concepts:new Set()};changed();render();return toast(pend?"Ideia guardada na Caixa de entrada":"Ideia salva")}
  case "ptog":{const s=psel[el.dataset.i];s.has(id)?s.delete(id):s.add(id);return el.setAttribute("aria-pressed",s.has(id))}
  case "classify":{const s=psel[el.dataset.i];if(!s||!s.size)return toast("Marque ao menos um conceito.");const i=db.ideas.find(x=>x.id===el.dataset.i);i.concepts=[...s];touch(i);delete psel[i.id];changed();render();return toast("Ideia classificada")}
  case "iedit":{const i=db.ideas.find(x=>x.id===id);editIdea=id;ieSel=i.concepts.filter(C);return render()}
